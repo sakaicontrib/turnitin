@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="dao/src/java"/>
+	<classpathentry kind="src" path="turnitin/src/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="MAVEN_REPO/commons-logging/jars/commons-logging-1.0.4.jar"/>
+	<classpathentry kind="var" path="MAVEN_REPO/sakaiproject/jars/sakai-user-api-2.3.x.jar"/>
+	<classpathentry kind="var" path="MAVEN_REPO/generic-dao/jars/generic-dao-0.9.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/content-review-api"/>
+	<classpathentry kind="var" path="MAVEN_REPO/sakaiproject/jars/sakai-content-api-2.3.x.jar"/>
+	<classpathentry kind="var" path="MAVEN_REPO/sakaiproject/jars/sakai-tool-api-2.3.x.jar"/>
+	<classpathentry kind="var" path="MAVEN_REPO/xerces/jars/xercesImpl-2.6.2.jar"/>
+	<classpathentry kind="var" path="MAVEN_REPO/sakaiproject/jars/sakai-component-api-2.3.x.jar"/>
+	<classpathentry kind="var" path="MAVEN_REPO/sakaiproject/jars/sakai-entity-api-2.3.x.jar"/>
+	<classpathentry kind="var" path="MAVEN_REPO/sakaiproject/jars/sakai-util-api-2.3.x.jar"/>
+	<classpathentry kind="var" path="MAVEN_REPO/org.springframework/jars/spring-1.2.8.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/assignment-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/site-api"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
