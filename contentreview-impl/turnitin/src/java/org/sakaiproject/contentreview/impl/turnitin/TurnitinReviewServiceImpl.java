@@ -988,9 +988,9 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			}
 
 			
-			String uem = user.getEmail();
+			String uem = user.getEmail().trim();
 			log.debug("got email of " + uem);
-			if (uem == null) {
+			if (uem == null || uem.equals("")) {
 				log.debug("Submission attempt unsuccessful - User has no email address");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("user has no email");
