@@ -160,7 +160,12 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		this.sakaiPersonManager = s;
 	}
 	
-
+	//Should the service use a authoratative source for email?
+	private boolean authoratativeEmail;
+	
+	public void setAuthoratativeEmail(boolean b) {
+		authoratativeEmail = b;
+	}
 	/**
 	 * Place any code that should run when this class is initialized by spring
 	 * here
@@ -1001,29 +1006,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			}
 
 			
-			String uem = user.getEmail().trim();
-			log.debug("got email of " + uem);
-			if (uem == null || uem.equals("") || !isValidEmail(uem)) {
-				//try the systemProfile
-				SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
-				if (sp != null ) {
-					String uem2 = sp.getMail().trim();
-					if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
-						log.debug("Submission attempt unsuccessful - User has no email address");
-						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
-						currentItem.setLastError("user has no email");
-						dao.update(currentItem);
-						continue;
-					} else {
-						uem =  uem2;
-					}
-				} else {
-					log.debug("Submission attempt unsuccessful - User has no email address");
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
-					currentItem.setLastError("user has no email");
-					dao.update(currentItem);
-					continue;
-				}
+			String uem = getEmail(user);
+			if (uem == null ){
+				log.debug("User: " + user.getEid() + " has no valid email");
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
+				currentItem.setLastError("no valid email");
+				dao.update(currentItem);
+				continue;
 			}
 			
 			String ufn = user.getFirstName();
@@ -1637,5 +1626,52 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		
 		return true;
+	}
+	
+	// returns null if no valid email exits
+	private String getEmail(User user) {
+		String uem = null;
+		
+		if (!this.authoratativeEmail) {
+			uem = user.getEmail().trim();
+			log.debug("got email of " + uem);
+			if (uem == null || uem.equals("") || !isValidEmail(uem)) {
+				//try the systemProfile
+				SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
+				if (sp != null ) {
+					String uem2 = sp.getMail().trim();
+					if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
+						uem = null;
+					} else {
+						uem =  uem2;
+					}
+				} else {
+					uem = null;
+				}
+		} else {
+			//try sakaiperson first
+			SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
+			if (sp != null ) {
+				String uem2 = sp.getMail().trim();
+				if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
+					uem = user.getEmail().trim();
+					if (uem == null || uem.equals("") || !isValidEmail(uem))
+						uem = null;
+				} else {
+					uem =  uem2;
+				}
+			} else {
+				uem = user.getEmail().trim();
+				if (uem == null || uem.equals("") || !isValidEmail(uem))
+					uem = null;
+			}
+		}
+			
+			
+			
+			
+		
+	}
+		return uem;
 	}
 }
