@@ -1640,23 +1640,29 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
 				if (sp != null ) {
 					String uem2 = sp.getMail().trim();
+					log.debug("Got system email of " + uem2);
 					if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
 						uem = null;
 					} else {
 						uem =  uem2;
 					}
 				} else {
+					log.debug("this user has no systemMutable profile");
 					uem = null;
 				}
 		} else {
 			//try sakaiperson first
+			log.debug("try authoratative email first");
 			SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
 			if (sp != null ) {
 				String uem2 = sp.getMail().trim();
 				if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
 					uem = user.getEmail().trim();
+					log.debug("Got system email of " + uem2);
 					if (uem == null || uem.equals("") || !isValidEmail(uem))
-						uem = null;
+						uem = user.getEmail().trim();
+						if (uem == null || uem.equals("") || !isValidEmail(uem))
+							uem = null;
 				} else {
 					uem =  uem2;
 				}
