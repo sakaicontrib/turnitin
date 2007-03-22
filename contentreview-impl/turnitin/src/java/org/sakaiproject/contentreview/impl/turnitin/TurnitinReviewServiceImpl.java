@@ -1650,6 +1650,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					log.debug("this user has no systemMutable profile");
 					uem = null;
 				}
+			}
 		} else {
 			//try sakaiperson first
 			log.debug("try authoratative email first");
@@ -1674,10 +1675,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		}
 			
 			
-			
-			
-		
-	}
 		return uem;
 	}
 }
