@@ -16,5 +16,6 @@
 	<classpathentry kind="var" path="MAVEN_REPO/org.springframework/jars/spring-1.2.8.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/assignment-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/site-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/profile"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -27,6 +27,8 @@
 			ref="org.sakaiproject.component.api.ServerConfigurationService" />
 		<property name="entityManager" 
 			ref="org.sakaiproject.entity.api.EntityManager" />	
+		<property name="sakaiPersonManager"
+			ref="org.sakaiproject.api.common.edu.person.SakaiPersonManager" />
 	</bean>
 
 </beans>
