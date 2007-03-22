@@ -138,7 +138,17 @@
 			<artifactId>sakai-common-edu-person-api</artifactId>
 			<version>${sakai.version}</version>
 		</dependency>
-		
+		<dependency>
+			<groupId>sakaiproject</groupId>
+			<artifactId>sakai-common-type-api</artifactId>
+			<version>${sakai.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>sakaiproject</groupId>
+			<artifactId>sakai-common-manager-api</artifactId>
+			<version>${sakai.version}</version>
+		</dependency>
+				
 		<!-- include the dependency for the exceptions thrown -->
 		
 		<dependency>

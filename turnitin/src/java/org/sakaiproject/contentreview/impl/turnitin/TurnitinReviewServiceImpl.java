@@ -71,6 +71,8 @@ import org.sakaiproject.assignment.api.Assignment;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
+import org.sakaiproject.api.common.type.Type;
+import org.sakaiproject.api.common.manager.Persistable;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
