@@ -69,6 +69,8 @@ import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.assignment.api.Assignment;
 import org.sakaiproject.site.api.Site;
+import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
+import org.sakaiproject.api.common.edu.person.SakaiPerson;
 
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -144,9 +146,16 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	}
 
 	
-	private ServerConfigurationService serverConfigurationService; public
-	void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
+	private ServerConfigurationService serverConfigurationService; 
+	
+	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
 		this.serverConfigurationService = serverConfigurationService;
+	}
+	
+	
+	private SakaiPersonManager sakaiPersonManager;
+	public void setSakaiPersonManager(SakaiPersonManager s) {
+		this.sakaiPersonManager = s;
 	}
 	
 
@@ -808,7 +817,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	
 	
 	
-	private void enrollInClass(String userId, String siteId) throws SubmissionException {
+	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException {
 
 		
 		
@@ -828,10 +837,12 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		log.debug("Enrolling user " + user.getEid() + "(" + userId + ")  in class " + siteId);
 		
+		/* not using this as we may be getting email from profile
 		String uem = user.getEmail();
 		if (uem == null) {
 			throw new SubmissionException ("User has no email address");
 		}
+		*/
 		
 		String ufn = user.getFirstName();
 		if (ufn == null) {
@@ -975,7 +986,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
 			
-			
+	
 			User user;
 			
 			try {
@@ -990,12 +1001,27 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			
 			String uem = user.getEmail().trim();
 			log.debug("got email of " + uem);
-			if (uem == null || uem.equals("")) {
-				log.debug("Submission attempt unsuccessful - User has no email address");
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
-				currentItem.setLastError("user has no email");
-				dao.update(currentItem);
-				continue;
+			if (uem == null || uem.equals("") || !isValidEmail(uem)) {
+				//try the systemProfile
+				SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
+				if (sp != null ) {
+					String uem2 = sp.getMail().trim();
+					if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
+						log.debug("Submission attempt unsuccessful - User has no email address");
+						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
+						currentItem.setLastError("user has no email");
+						dao.update(currentItem);
+						continue;
+					} else {
+						uem =  uem2;
+					}
+				} else {
+					log.debug("Submission attempt unsuccessful - User has no email address");
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
+					currentItem.setLastError("user has no email");
+					dao.update(currentItem);
+					continue;
+				}
 			}
 			
 			String ufn = user.getFirstName();
@@ -1033,7 +1059,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			}
 			
 			try {
-				enrollInClass(currentItem.getUserId(), currentItem.getSiteId());
+				enrollInClass(currentItem.getUserId(), uem, currentItem.getSiteId());
 			} catch (Throwable t) {
 				log.debug ("Submission attempt unsuccessful: Could not enroll user in class", t);
 				
@@ -1584,6 +1610,30 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	}
 	
 	public boolean isSiteAcceptable(Site s) {
+		return true;
+	}
+	
+	/**
+	 * Is this a valid email the service will recognize
+	 * @param email
+	 * @return
+	 */
+	private boolean isValidEmail(String email) {
+		
+		if (email == null || email.equals(""))
+			return false;
+		
+		email = email.trim();
+		//must contain @
+		if (email.indexOf("@") == -1)
+			return false;
+		
+		
+		//an email can't contain spaces
+		if (email.indexOf(" ") > 0)
+			return false;
+		
+		
 		return true;
 	}
 }
