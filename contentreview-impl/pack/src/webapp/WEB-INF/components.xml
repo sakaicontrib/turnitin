@@ -29,7 +29,7 @@
 			ref="org.sakaiproject.entity.api.EntityManager" />	
 		<property name="sakaiPersonManager"
 			ref="org.sakaiproject.api.common.edu.person.SakaiPersonManager" />
-		<property name="authoratativeEmail"><value>true</value></property>
+		<property name="preferSystemProfileEmail"><value>true</value></property>
 	</bean>
 
 </beans>
