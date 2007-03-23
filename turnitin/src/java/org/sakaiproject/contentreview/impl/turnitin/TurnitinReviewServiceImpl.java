@@ -163,7 +163,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	//Should the service use a authoratative source for email?
 	private boolean authoratativeEmail;
 	
-	public void setAuthoratativeEmail(boolean b) {
+	public void setPreferSystemProfileEmail(boolean b) {
 		authoratativeEmail = b;
 	}
 	/**
