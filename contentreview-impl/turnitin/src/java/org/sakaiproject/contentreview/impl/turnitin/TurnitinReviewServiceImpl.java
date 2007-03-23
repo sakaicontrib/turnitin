@@ -1015,8 +1015,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				continue;
 			}
 			
-			String ufn = user.getFirstName();
-			if (ufn == null) {
+			String ufn = user.getFirstName().trim();
+			if (ufn == null || ufn.equals("")) {
 				log.debug("Submission attempt unsuccessful - User has no first name");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no first name");
@@ -1024,8 +1024,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				continue;
 			}
 			
-			String uln = user.getLastName();
-			if (uln == null) {
+			String uln = user.getLastName().trim();
+			if (uln == null || uln.equals("")) {
 				log.debug("Submission attempt unsuccessful - User has no last name");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no last name");
