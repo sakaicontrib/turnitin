@@ -161,10 +161,10 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	}
 	
 	//Should the service use a authoratative source for email?
-	private boolean authoratativeEmail;
+	private boolean preferSystemProfileEmail;
 	
 	public void setPreferSystemProfileEmail(boolean b) {
-		authoratativeEmail = b;
+		preferSystemProfileEmail = b;
 	}
 	/**
 	 * Place any code that should run when this class is initialized by spring
@@ -1631,8 +1631,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	// returns null if no valid email exits
 	private String getEmail(User user) {
 		String uem = null;
-		log.debug("Looking for email for " + user.getEid() + " with authorative email set to " + this.authoratativeEmail);
-		if (!this.authoratativeEmail) {
+		log.debug("Looking for email for " + user.getEid() + " with authorative email set to " + this.preferSystemProfileEmail);
+		if (!this.preferSystemProfileEmail) {
 			uem = user.getEmail().trim();
 			log.debug("got email of " + uem);
 			if (uem == null || uem.equals("") || !isValidEmail(uem)) {
