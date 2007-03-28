@@ -242,8 +242,14 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		List existingItems = dao
 				.findByExample(new ContentReviewItem(contentId));
 		if (existingItems.size() > 0) {
-			log.debug("Content: " + contentId + " is already queued, not re-queued");
-			throw new QueueException("Content " + contentId + " is already queued, not re-queued");
+			if (this.allowResubmission()) {
+				log.debug("Content: " + contentId + " is already queued, assuming resubmission");
+				for (int i =0; i < existingItems.size(); i++) {
+					dao.delete(existingItems.get(i));
+				}
+			} else {
+				throw new QueueException("Content " + contentId + " is already queued, not re-queued");
+			}
 		}
 
 		dao.save(new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
@@ -1676,5 +1682,9 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			
 			
 		return uem;
+	}
+	
+	public boolean allowResubmission() {
+		return true;
 	}
 }
