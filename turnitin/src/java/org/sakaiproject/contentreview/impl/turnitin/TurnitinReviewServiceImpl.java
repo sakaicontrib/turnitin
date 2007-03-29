@@ -1049,7 +1049,10 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setLastError("Class creation error: " + t.getMessage());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					if (t.getMessage().equals("Class creation call to Turnitin API failed"))
+						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					else	
+						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
 				dao.update(currentItem);
 				continue;
@@ -1393,7 +1396,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				} catch (NoSuchAlgorithmException e) {
 					log.debug("Update failed due to MD5 generation error");
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError("to MD5 generation error");
+					currentItem.setLastError("MD5 generation error");
 					dao.update(currentItem);
 					listIterator.remove();
 					break;
@@ -1630,8 +1633,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		if (email.indexOf(" ") > 0)
 			return false;
 		
-		
-		return true;
+		//"^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*$" 
+		if (email.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*$")) 
+			return true;
+	
+		return false;
 	}
 	
 	// returns null if no valid email exits
