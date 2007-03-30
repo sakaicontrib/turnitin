@@ -1085,7 +1085,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				} else {
 					//this is a to be expected error
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError(t.getMessage());
+					currentItem.setLastError("createAssignment: " + t.getMessage());
 				}
 				
 				dao.update(currentItem);
@@ -1292,7 +1292,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError(((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
+				currentItem.setLastError("Submission Error: " +((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 				dao.update(currentItem);
 			}
 		}
