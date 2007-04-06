@@ -552,6 +552,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		try{
 			md5 = this.getMD5(md5_str);
 		} catch (Throwable t) {
+			log.warn("MD5 error creating class on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Turnitin API call", t);
 		}
 		
@@ -719,6 +720,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		try{
 			md5 = this.getMD5(md5_str);
 		} catch (Throwable t) {
+			log.warn("MD5 error creating assignment on turnitin");
 			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
 		}
 		
@@ -881,6 +883,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		try{
 			md5 = this.getMD5(md5_str);
 		} catch (Throwable t) {
+			log.warn("MD5 error enrolling student on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Class Enrollment Turnitin API call", t);
 		}
 		
