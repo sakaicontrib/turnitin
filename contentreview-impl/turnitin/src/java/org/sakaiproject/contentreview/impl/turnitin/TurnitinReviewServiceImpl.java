@@ -1390,9 +1390,9 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 
 				String gmtime = this.getGMTime();
 				
-				String md5_str = aid + assign.getBytes("UTF-8") + assignid + cid + ctl
+				String md5_str = aid + assign + assignid + cid + ctl
 							+ diagnostic + encrypt + fcmd + fid + gmtime + said
-							+ tem + uem + ufn.getBytes("UTF-8") + uid + uln.getBytes("UTF-8") + utp + secretKey;
+							+ tem + uem + ufn + uid + uln + utp + secretKey;
 					
 				String md5;
 				try{
