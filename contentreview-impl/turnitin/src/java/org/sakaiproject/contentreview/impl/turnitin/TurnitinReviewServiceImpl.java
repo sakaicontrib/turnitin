@@ -716,8 +716,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		String assignEnc = assign;
 		try {
 			if (assign.contains("&")) {
-				log.debug("replacing & in assingment title");
-				assign = assign.replace('&', 'n');
+				//log.debug("replacing & in assingment title");
+				//assign = assign.replace('&', 'n');
 				
 			}
 			//assignEnc = URLEncoder.encode(assign,"UTF-8");
@@ -758,7 +758,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			outStream.write(aid.getBytes("UTF-8"));
 			
 			outStream.write("&assign=".getBytes("UTF-8"));
-			outStream.write(assign.getBytes("UTF-8"));
+			outStream.write(assign.getBytes());
 			
 			outStream.write("&assignid=".getBytes("UTF-8"));
 			outStream.write(assignid.getBytes("UTF-8"));
