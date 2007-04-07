@@ -729,9 +729,14 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			e.printStackTrace();
 		}
 		
-		String md5_str = aid + assign.getBytes("UTF-8") + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-						 fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-		
+		String md5_str =null;
+		try {
+			md5_str = aid + assign.getBytes("UTF-8") + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+							fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
