@@ -717,10 +717,9 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		try {
 			if (assign.contains("&")) {
 				//log.debug("replacing & in assingment title");
-				//assign = assign.replace('&', 'n');
+				assign = assign.replace('&', 'n');
 				
 			}
-			//assignEnc = URLEncoder.encode(assign,"UTF-8");
 			assignEnc = assign;
 			log.debug("Assign title is " + assignEnc);
 			
@@ -729,14 +728,9 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			e.printStackTrace();
 		}
 		
-		String md5_str =null;
-		try {
-			md5_str = aid + assign.getBytes("UTF-8") + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
 							fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
+		
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
@@ -763,7 +757,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			outStream.write(aid.getBytes("UTF-8"));
 			
 			outStream.write("&assign=".getBytes("UTF-8"));
-			outStream.write(assign.getBytes("UTF-8"));
+			outStream.write(assignEnc.getBytes("UTF-8"));
 			
 			outStream.write("&assignid=".getBytes("UTF-8"));
 			outStream.write(assignid.getBytes("UTF-8"));
