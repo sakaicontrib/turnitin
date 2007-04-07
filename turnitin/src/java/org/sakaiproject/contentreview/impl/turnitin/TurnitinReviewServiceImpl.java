@@ -713,8 +713,15 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		String ctl = siteId;
 		
 		String gmtime = getGMTime();
-		    	
-		String md5_str = aid + assign + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+		String assignEnc = assign;
+		try {
+			assignEnc = URLEncoder.encode(assign,"UTF-8");
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		String md5_str = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
 						 fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
 		
 		String md5;
