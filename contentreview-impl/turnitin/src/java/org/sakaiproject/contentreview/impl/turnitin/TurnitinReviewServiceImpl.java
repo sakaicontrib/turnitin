@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
@@ -665,7 +666,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			if (ent instanceof Assignment) {
 				Assignment as = (Assignment)ent;
 				log.debug("Got assignemment with title " + as.getTitle());
-				return as.getTitle();
+				return URLDecoder(as.getTitle(),"UTF-8");
 			}
 			
 		} catch (Exception e) {
@@ -1163,7 +1164,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 
 			String gmtime = this.getGMTime();
 
-			String md5_str = aid + URLEncoder.encode(assign,"UTF-8 ") + assignid + cid + ctl
+			String md5_str = aid + assign + assignid + cid + ctl
 						+ diagnostic + encrypt + fcmd + fid + gmtime + ptl
 						+ ptype + said + tem + uem + ufn + uid + uln + utp
 						+ secretKey;
@@ -1497,6 +1498,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 													
 				try{
 					parser.parse(new InputSource(in));
+					
 					
 				} catch (SAXException e1) {
 					log.debug("Update failed due to Parsing error: " + e1.getMessage());
