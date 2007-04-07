@@ -716,10 +716,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		String assignEnc = assign;
 		try {
 			if (assign.contains("&")) {
-				assign.replace('&', 'n');
+				log.debug("replacing & in assingment title");
+				assign = assign.replace('&', 'n');
+				
 			}
 			//assignEnc = URLEncoder.encode(assign,"UTF-8");
 			assignEnc = assign;
+			log.debug("Assign title is " + assignEnc);
 			
 		}
 		catch (Exception e) {
