@@ -666,7 +666,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			if (ent instanceof Assignment) {
 				Assignment as = (Assignment)ent;
 				log.debug("Got assignemment with title " + as.getTitle());
-				return URLDecoder(as.getTitle(),"UTF-8");
+				return URLDecoder.decode(as.getTitle(),"UTF-8");
 			}
 			
 		} catch (Exception e) {
