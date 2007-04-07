@@ -1163,7 +1163,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 
 			String gmtime = this.getGMTime();
 
-			String md5_str = aid + assign + assignid + cid + ctl
+			String md5_str = aid + URLEncoder.encode(assign,"UTF-8 ") + assignid + cid + ctl
 						+ diagnostic + encrypt + fcmd + fid + gmtime + ptl
 						+ ptype + said + tem + uem + ufn + uid + uln + utp
 						+ secretKey;
@@ -1389,9 +1389,9 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 
 				String gmtime = this.getGMTime();
 				
-				String md5_str = aid + assign + assignid + cid + ctl
+				String md5_str = aid + assign.getBytes("UTF-8") + assignid + cid + ctl
 							+ diagnostic + encrypt + fcmd + fid + gmtime + said
-							+ tem + uem + ufn + uid + uln + utp + secretKey;
+							+ tem + uem + ufn.getBytes("UTF-8") + uid + uln.getBytes("UTF-8") + utp + secretKey;
 					
 				String md5;
 				try{
@@ -1497,13 +1497,14 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 													
 				try{
 					parser.parse(new InputSource(in));
+					
 				} catch (SAXException e1) {
 					log.debug("Update failed due to Parsing error: " + e1.getMessage());
 					log.debug(in);
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e1.getMessage());
 					dao.update(currentItem);
-					break;
+					continue;
 				} catch (IOException e2) {
 					log.debug("Update failed due to IO error: " + e2.getMessage());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
