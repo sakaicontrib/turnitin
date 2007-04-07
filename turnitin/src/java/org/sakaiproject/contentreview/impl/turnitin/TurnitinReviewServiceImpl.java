@@ -729,7 +729,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			e.printStackTrace();
 		}
 		
-		String md5_str = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+		String md5_str = aid + assign.getBytes("UTF-8") + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
 						 fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
 		
 		String md5;
@@ -757,8 +757,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
     		outStream.write("aid=".getBytes("UTF-8"));
 			outStream.write(aid.getBytes("UTF-8"));
 			
-			outStream.write("&assign=".getBytes());
-			outStream.write(assign.getBytes());
+			outStream.write("&assign=".getBytes("UTF-8"));
+			outStream.write(assign.getBytes("UTF-8"));
 			
 			outStream.write("&assignid=".getBytes("UTF-8"));
 			outStream.write(assignid.getBytes("UTF-8"));
