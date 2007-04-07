@@ -715,7 +715,12 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		String gmtime = getGMTime();
 		String assignEnc = assign;
 		try {
-			assignEnc = URLEncoder.encode(assign,"UTF-8");
+			if (assign.contains("&")) {
+				assign.replace('&', 'n');
+			}
+			//assignEnc = URLEncoder.encode(assign,"UTF-8");
+			assignEnc = assign;
+			
 		}
 		catch (Exception e) {
 			e.printStackTrace();
