@@ -757,7 +757,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
     		outStream.write("aid=".getBytes("UTF-8"));
 			outStream.write(aid.getBytes("UTF-8"));
 			
-			outStream.write("&assign=".getBytes("UTF-8"));
+			outStream.write("&assign=".getBytes());
 			outStream.write(assign.getBytes());
 			
 			outStream.write("&assignid=".getBytes("UTF-8"));
