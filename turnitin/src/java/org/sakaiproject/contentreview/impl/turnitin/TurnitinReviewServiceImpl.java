@@ -1516,12 +1516,12 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					
 				} catch (SAXException e1) {
 					log.debug("Update failed due to Parsing error: " + e1.getMessage());
-					log.debug(in);
+					log.debug(e1.toString());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e1.getMessage());
 					dao.update(currentItem);
-					log.debug(readerToString(in));
-					continue;
+					//we may as well go on as the document may be in the part of the file that was parsed
+					//continue;
 				} catch (IOException e2) {
 					log.debug("Update failed due to IO error: " + e2.getMessage());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
