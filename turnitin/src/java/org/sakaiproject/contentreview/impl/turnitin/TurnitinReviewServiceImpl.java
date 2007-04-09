@@ -1520,6 +1520,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e1.getMessage());
 					dao.update(currentItem);
+					log.debug(readerToString(in));
 					continue;
 				} catch (IOException e2) {
 					log.debug("Update failed due to IO error: " + e2.getMessage());
@@ -1712,5 +1713,16 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	
 	public boolean allowResubmission() {
 		return true;
+	}
+	
+	private String readerToString(BufferedReader in) {
+		
+        String inputLine;
+        String retval = "";
+        while ((inputLine = in.readLine()) != null) 
+            retval.concat(inputLine);
+        
+        return retval;
+		
 	}
 }
