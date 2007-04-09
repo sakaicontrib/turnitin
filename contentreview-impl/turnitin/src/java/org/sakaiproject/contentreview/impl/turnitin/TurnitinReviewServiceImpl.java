@@ -1719,9 +1719,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
         String inputLine;
         String retval = "";
-        while ((inputLine = in.readLine()) != null) 
+        try {
+        	while ((inputLine = in.readLine()) != null) 
             retval.concat(inputLine);
-        
+        }
+        catch (Exception e) {
+        	e.printStackTrace();
+        }
         return retval;
 		
 	}
