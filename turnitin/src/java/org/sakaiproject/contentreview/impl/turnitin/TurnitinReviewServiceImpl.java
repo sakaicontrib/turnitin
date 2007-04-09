@@ -1527,7 +1527,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e2.getMessage());
 					dao.update(currentItem);
-					break;
+					continue;
 				}
 				
 				Document document = parser.getDocument();
