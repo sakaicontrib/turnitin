@@ -104,6 +104,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	private String defaultInstructorLName = null;
 	
 	private String defaultInstructorPassword = null;
+	
+	private Long maxRetry = null;
 
 	//note that the assignment id actually has to be unique globally so use this as a prefix
 	// eg. assignid = defaultAssignId + siteId
@@ -204,8 +206,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		defaultClassPassword = serverConfigurationService.getString("turnitin.defaultClassPassword");;
 		
 		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
-		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId");;
+		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId");
 		
+		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry"));
+		if (maxRetry == null)
+			maxRetry = new Long(100);
 		//get the settings from sakai.properties
 		System.setProperty("javax.net.ssl.trustStore", serverConfigurationService.getString("turnitin.keystore_name"));
 		System.setProperty("javax.net.ssl.trustStorePassword", serverConfigurationService.getString("turnitin.keystore_password"));
@@ -1017,7 +1022,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
 			
-	
+			if (currentItem.getRetryCount() == null ) {
+				currentItem.setRetryCount(new Long(0));
+			} else if (currentItem.getRetryCount().intValue() > maxRertry) {
+				currentItem.setStatus(ContentReviewItem.SUMBISSION_ERROR_RETRY_EXCEEDED);
+				dao.update(currentItem);
+				continue;
+			}
 			User user;
 			
 			try {
