@@ -208,9 +208,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
 		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId");
 		
-		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry"));
-		if (maxRetry == null)
-			maxRetry = new Long(100);
+		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
+		
 		//get the settings from sakai.properties
 		System.setProperty("javax.net.ssl.trustStore", serverConfigurationService.getString("turnitin.keystore_name"));
 		System.setProperty("javax.net.ssl.trustStorePassword", serverConfigurationService.getString("turnitin.keystore_password"));
@@ -1024,7 +1023,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(new Long(0));
-			} else if (currentItem.getRetryCount().intValue() > maxRertry) {
+			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
 				currentItem.setStatus(ContentReviewItem.SUMBISSION_ERROR_RETRY_EXCEEDED);
 				dao.update(currentItem);
 				continue;
