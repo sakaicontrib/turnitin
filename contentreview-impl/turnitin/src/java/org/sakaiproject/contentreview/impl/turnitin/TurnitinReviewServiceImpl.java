@@ -1531,7 +1531,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					currentItem.setLastError(e1.getMessage());
 					dao.update(currentItem);
 					//we may as well go on as the document may be in the part of the file that was parsed
-					//continue;
+					continue;
 				} catch (IOException e2) {
 					log.debug("Update failed due to IO error: " + e2.getMessage());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
