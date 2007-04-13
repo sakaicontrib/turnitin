@@ -1319,7 +1319,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				dao.update(currentItem);
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+				if (((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim().equals("User password does not match user email")) {
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+				} else {
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+				}
 				currentItem.setLastError("Submission Error: " +((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 				dao.update(currentItem);
 			}
