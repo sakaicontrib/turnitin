@@ -177,7 +177,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	public void init() {
 		// TODO check on this function manager - sakai permissions?
 		// TODO what does the example init method do exactly? is it important?
-		log.debug("init");
+		log.info("init");
 		//System.setProperty("javax.net.ssl.trustStore", "dave_keystore");
 		//System.setProperty("javax.net.ssl.trustStorePassword", "dave_keystore");
 		
@@ -571,7 +571,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.debug("HTTPS Connection made to TII");
+			log.info("HTTPS Connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
 		
@@ -753,7 +753,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.debug("HTTPS connection made to TII");
+			log.info("HTTPS connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
 		
@@ -916,7 +916,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.debug("Connection made to TII");
+			log.info("Connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
 		
@@ -1227,7 +1227,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				// set up the connection to use multipart/form-data
 				connection.setRequestProperty("Content-Type","multipart/form-data; boundary=" + boundary);
 
-				log.debug("HTTPS connection made to TII");
+				log.info("HTTPS connection made to Turnitin");
 
 				outStream = connection.getOutputStream();
 
@@ -1298,12 +1298,12 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			try {
 				parser.parse(new org.xml.sax.InputSource(in));
 			} catch (SAXException e) {
-				log.debug("Unable to determine Submission status due to response parsing error: " + e.getMessage() + ". Assume unsuccessful");
+				log.error("Unable to determine Submission status due to response parsing error: " + e.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				dao.update(currentItem);
 				continue;
 			} catch (IOException e) {
-				log.debug("Unable to determine Submission status due to response IO error: " + e.getMessage() + ". Assume unsuccessful");
+				log.warn("Unable to determine Submission status due to response IO error: " + e.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				dao.update(currentItem);
 				continue;
@@ -1444,7 +1444,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					connection.setDoOutput(true);
 					connection.setDoInput(true);
 
-					log.debug("HTTPS connection made to TII");
+					log.info("HTTPS connection made to Turnitin");
 
 					OutputStream out = connection.getOutputStream();
 
@@ -1529,7 +1529,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					
 					
 				} catch (SAXException e1) {
-					log.debug("Update failed due to Parsing error: " + e1.getMessage());
+					log.error("Update failed due to Parsing error: " + e1.getMessage());
 					log.debug(e1.toString());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e1.getMessage());
@@ -1537,7 +1537,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					//we may as well go on as the document may be in the part of the file that was parsed
 					continue;
 				} catch (IOException e2) {
-					log.debug("Update failed due to IO error: " + e2.getMessage());
+					log.warn("Update failed due to IO error: " + e2.getMessage());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e2.getMessage());
 					dao.update(currentItem);
