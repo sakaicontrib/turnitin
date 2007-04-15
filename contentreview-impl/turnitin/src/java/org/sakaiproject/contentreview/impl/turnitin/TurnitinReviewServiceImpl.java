@@ -84,7 +84,6 @@ import org.xml.sax.SAXException;
 
 public class TurnitinReviewServiceImpl implements ContentReviewService {
 
-
 	private static final String SERVICE_NAME="Turnitin";
 	
 	private String aid = null;
@@ -139,6 +138,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	}
 	
 	private EntityManager entityManager;
+	
 	public void setEntityManager(EntityManager en){
 		this.entityManager = en;
 	}
@@ -149,7 +149,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			ContentHostingService contentHostingService) {
 		this.contentHostingService = contentHostingService;
 	}
-
 	
 	private ServerConfigurationService serverConfigurationService; 
 	
@@ -157,13 +156,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		this.serverConfigurationService = serverConfigurationService;
 	}
 	
-	
 	private SakaiPersonManager sakaiPersonManager;
+	
 	public void setSakaiPersonManager(SakaiPersonManager s) {
 		this.sakaiPersonManager = s;
 	}
 	
-	//Should the service use a authoratative source for email?
+	//Should the service prefer the system profile email address for users if set?
 	private boolean preferSystemProfileEmail;
 	
 	public void setPreferSystemProfileEmail(boolean b) {
@@ -175,11 +174,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	 */
 
 	public void init() {
-		// TODO check on this function manager - sakai permissions?
-		// TODO what does the example init method do exactly? is it important?
-		log.info("init");
-		//System.setProperty("javax.net.ssl.trustStore", "dave_keystore");
-		//System.setProperty("javax.net.ssl.trustStorePassword", "dave_keystore");
+
+		log.info("init()");
 		
 		aid = serverConfigurationService.getString("turnitin.aid");
 
@@ -210,7 +206,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
 		
-		//get the settings from sakai.properties
+		// Set the keystore name and password, which must contain the public certificate of the Turnitin API site 
 		System.setProperty("javax.net.ssl.trustStore", serverConfigurationService.getString("turnitin.keystore_name"));
 		System.setProperty("javax.net.ssl.trustStorePassword", serverConfigurationService.getString("turnitin.keystore_password"));
 	}
@@ -261,9 +257,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				ContentReviewItem.NOT_SUBMITTED_CODE));
 	}
 	
-	
-	
-
 	public int getReviewScore(String contentId)
 			throws QueueException, ReportException, Exception {
 		log.debug("Getting review score for content: " + contentId);
@@ -285,14 +278,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		return item.getReviewScore().intValue();
 	}
-	
-	
-	
 
 	public String getReviewReport(String contentId)
 		throws QueueException, ReportException {
 
-		// first retreive the record from the database to get the externalId of
+		// first retrieve the record from the database to get the externalId of
 		// the content
 		log.debug("Getting report for content: " + contentId);
 
@@ -353,7 +343,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		try {
 			md5 = getMD5(md5_str);
 		} catch (Throwable t) {
-			throw new ReportException("Cannont do MD5 hash of data for Turnitin API call to retrieve report", t);
+			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
 		}
 
 		String reportURL = apiURL;
@@ -408,53 +398,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 
 		return reportURL;
 	}
-
-	// TODO put this somewhere else
-	// ///////////////////////////////////IGNORE THIS
-	// STUFF/////////////////////////////////////////////
-	// this stuff was used to set up the keystore and test https connection
-	/*
-	 * 
-	 * String retStr = "";
-	 * 
-	 * try{
-	 * 
-	 * //TODO get this info from somewhere else - the sakai.properties or
-	 * something System.setProperty("javax.net.ssl.trustStore",
-	 * "dave_keystore"); System.setProperty("javax.net.ssl.trustStorePassword",
-	 * "dave_keystore");
-	 * 
-	 * URL url = new URL("https://www.turnitin.com/api.asp"); HttpsURLConnection
-	 * con = (HttpsURLConnection) url.openConnection(); con.setDoOutput(true);
-	 * con.getOutputStream().close();
-	 * 
-	 * BufferedReader in = new BufferedReader(new
-	 * InputStreamReader(con.getInputStream()));
-	 * 
-	 * String inLine = ""; while ((inLine = in.readLine()) != null) { retStr =
-	 * retStr.concat(inLine); log.info(inLine); } } catch (SSLHandshakeException
-	 * e1) { log.error(e1.toString()); //this stuff only for saving the
-	 * necessary certificates to use turnitin CertPath certPath =
-	 * ((CertPathValidatorException)(e1.getCause().getCause())).getCertPath();
-	 * List certs = certPath.getCertificates(); Iterator it = certs.iterator();
-	 * try { KeyStore ks = KeyStore.getInstance("JKS"); //ks.load(new
-	 * FileInputStream(new File("dave_keystore")),
-	 * "dave_keystore".toCharArray()); ks.load(null,
-	 * "dave_keystore".toCharArray()); int i=0; Certificate cert; while
-	 * (it.hasNext()) { cert = (Certificate) it.next();
-	 * ks.setCertificateEntry("Turnitin path " + i++, cert);
-	 * log.info(cert.toString()); } log.info(ks.size() + " certificates added to
-	 * the keystore"); OutputStream outStream = new FileOutputStream(new
-	 * File("dave_keystore")); ks.store(outStream,
-	 * "dave_keystore".toCharArray()); } catch (Exception e) {
-	 * log.error(e.toString()); } } catch (Exception e) {
-	 * log.error(e.toString()); }
-	 * 
-	 * return retStr; }
-	 */// ////////////////////////////////////OK STOP IGNORING
-	// NOW//////////////////////////////////////////
-	
-	
 	
 	public Long getReviewStatus(String contentId)
 			throws QueueException {
@@ -472,9 +415,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 
 		return ((ContentReviewItem) matchingItems.iterator().next()).getStatus();
 	}
-	
-	
-	
 
 	public Date getDateQueued(String contentId)
 			throws QueueException {
@@ -491,9 +431,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 
 		return ((ContentReviewItem) matchingItems.iterator().next()).getDateQueued();
 	}
-	
-	
-	
 
 	public Date getDateSubmitted(String contentId)
 		throws QueueException, SubmissionException {
@@ -517,19 +454,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 
 		return item.getDateSubmitted();
 	}
-
-	
-	
-	
 	
 	private String encodeParam(String name, String value, String boundary) {
 		return "--" + boundary + "\r\nContent-Disposition: form-data; name=\""
 				+ name + "\"\r\n\r\n" + value + "\r\n";
 	}
 
-
-
-	private void createClass(String siteId) throws SubmissionException{
+	private void createClass(String siteId) throws SubmissionException {
     	
 		log.debug("Creating class for site: " + siteId);
 		
@@ -657,8 +588,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			throw new SubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
 		}
     }
-	
-	
+		
 	private String getAssignmentTitle(String taskId){
 		try {
 			Reference ref = entityManager.newReference(taskId);
@@ -679,9 +609,10 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		return taskId;
 		
 	}
+	
 	private void createAssignment(String siteId, String taskId) throws SubmissionException {
 		
-		//get the assignement reference
+		//get the assignment reference
 		String taskTitle = getAssignmentTitle(taskId);
 		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
     	
@@ -848,12 +779,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
     }
-	
-	
-	
-	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException {
-
 		
+	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException {
 		
     	String ctl = siteId; 			//class title
     	String fid = "3";
@@ -998,8 +925,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			throw new SubmissionException("Enrollment in Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
 		}
     }
-
-
 	
 	public void processQueue() {
 		log.debug("Processing submission queue");
@@ -1622,29 +1547,30 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	public String getIconUrlforScore(Long score) {
 		
 		String urlBase = "/sakai-content-review-tool/images/score_";
-		String sufix = ".gif";
+		String suffix = ".gif";
 		
 		if (score.equals(new Long(0))) {
-			return urlBase + "blue" + sufix;
+			return urlBase + "blue" + suffix;
 		} else if (score.compareTo(new Long(25)) < 0 ) {
-			return urlBase + "green" + sufix;
+			return urlBase + "green" + suffix;
 		} else if (score.compareTo(new Long(50)) < 0  ) {
-			return urlBase + "yellow" + sufix;
+			return urlBase + "yellow" + suffix;
 		} else if (score.compareTo(new Long(75)) < 0 ) {
-			return urlBase + "orange" + sufix;
+			return urlBase + "orange" + suffix;
 		} else {
-			return urlBase + "red" + sufix;
+			return urlBase + "red" + suffix;
 		}
 		
 	}
 	
-	
 	public boolean isAcceptableContent(ContentResource resource) {
 		//for now we accept all content
+		// TODO: Check against content types accepted by Turnitin
 		return true;
 	}
 	
 	public boolean isSiteAcceptable(Site s) {
+		// TODO: Allow for visibility in course but not project sites
 		return true;
 	}
 	
@@ -1655,6 +1581,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	 */
 	private boolean isValidEmail(String email) {
 		
+		// TODO: Use a generic Sakai utility class (when a suitable one exists)
+		
 		if (email == null || email.equals(""))
 			return false;
 		
@@ -1662,7 +1590,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		//must contain @
 		if (email.indexOf("@") == -1)
 			return false;
-		
 		
 		//an email can't contain spaces
 		if (email.indexOf(" ") > 0)
@@ -1675,10 +1602,10 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		return false;
 	}
 	
-	// returns null if no valid email exits
+	// returns null if no valid email exists
 	private String getEmail(User user) {
 		String uem = null;
-		log.debug("Looking for email for " + user.getEid() + " with authorative email set to " + this.preferSystemProfileEmail);
+		log.debug("Looking for email for " + user.getEid() + " with prefer system profile email set to " + this.preferSystemProfileEmail);
 		if (!this.preferSystemProfileEmail) {
 			uem = user.getEmail().trim();
 			log.debug("got email of " + uem);
@@ -1687,7 +1614,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
 				if (sp != null ) {
 					String uem2 = sp.getMail().trim();
-					log.debug("Got system email of " + uem2);
+					log.debug("Got system profile email of " + uem2);
 					if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
 						uem = null;
 					} else {
@@ -1700,13 +1627,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			}
 		} else {
 			//try sakaiperson first
-			log.debug("try authoratative email first");
+			log.debug("try system profile email first");
 			SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
 			if (sp != null ) {
 				String uem2 = sp.getMail().trim();
 				if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
 					uem = user.getEmail().trim();
-					log.debug("Got system email of " + uem2);
+					log.debug("Got system profile email of " + uem2);
 					if (uem == null || uem.equals("") || !isValidEmail(uem))
 						uem = user.getEmail().trim();
 						if (uem == null || uem.equals("") || !isValidEmail(uem))
@@ -1720,7 +1647,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					uem = null;
 			}
 		}
-			
 			
 		return uem;
 	}
