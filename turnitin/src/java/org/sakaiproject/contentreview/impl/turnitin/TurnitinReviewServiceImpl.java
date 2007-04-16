@@ -949,7 +949,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(new Long(0));
 			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
-				currentItem.setStatus(ContentReviewItem.SUMBISSION_ERROR_RETRY_EXCEEDED);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
 				dao.update(currentItem);
 				continue;
 			} else {
