@@ -952,6 +952,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				currentItem.setStatus(ContentReviewItem.SUMBISSION_ERROR_RETRY_EXCEEDED);
 				dao.update(currentItem);
 				continue;
+			} else {
+				long l = currentItem.getRetryCount().longValue();
+				l++;
+				currentItem.setRetryCount(new Long(l));
+				dao.update(currentItem);
 			}
 			User user;
 			
