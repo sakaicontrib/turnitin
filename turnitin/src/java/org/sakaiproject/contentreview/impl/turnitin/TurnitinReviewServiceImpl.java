@@ -26,6 +26,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.SocketAddress;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.URLDecoder;
@@ -93,6 +96,10 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	private String secretKey = null;
 
 	private String apiURL = "https://www.turnitin.com/api.asp?";
+	
+	private String proxyHost = null;
+	
+	private String proxyPort = null;
 
 	private String defaultAssignmentName = null;
 
@@ -106,6 +113,9 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	
 	private Long maxRetry = null;
 
+	// Proxy if set
+	private Proxy proxy = null; 
+	
 	//note that the assignment id actually has to be unique globally so use this as a prefix
 	// eg. assignid = defaultAssignId + siteId
 	private String defaultAssignId = null;
@@ -176,6 +186,16 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	public void init() {
 
 		log.info("init()");
+		
+		proxyHost = serverConfigurationService.getString("turnitin.proxyHost"); 
+		
+		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
+		
+		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
+			SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
+			Proxy proxy = new Proxy(Proxy.Type.HTTP, addr);
+			log.debug("Using proxy: " + proxyHost + " " + proxyPort);
+		}
 		
 		aid = serverConfigurationService.getString("turnitin.aid");
 
@@ -496,7 +516,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		try {
 			URL hostURL = new URL(apiURL);
-			connection = (HttpsURLConnection) hostURL.openConnection();
+			if (proxy == null) {
+				connection = (HttpsURLConnection) hostURL.openConnection();
+			} else {
+				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
+			}
 
 			connection.setRequestMethod("GET");
 			connection.setDoOutput(true);
@@ -678,7 +702,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		try {
 			URL hostURL = new URL(apiURL);
-			connection = (HttpsURLConnection) hostURL.openConnection();
+			if (proxy == null) {
+				connection = (HttpsURLConnection) hostURL.openConnection();
+			} else {
+				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
+			}
 
 			connection.setRequestMethod("GET");
 			connection.setDoOutput(true);
@@ -837,7 +865,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		try {
 			URL hostURL = new URL(apiURL);
-			connection = (HttpsURLConnection) hostURL.openConnection();
+			if (proxy == null) {
+				connection = (HttpsURLConnection) hostURL.openConnection();
+			} else {
+				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
+			}
 
 			connection.setRequestMethod("GET");
 			connection.setDoOutput(true);
@@ -1142,7 +1174,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			try {
 				
 				URL hostURL = new URL(apiURL);
-				connection = (HttpsURLConnection) hostURL.openConnection();
+				if (proxy == null) {
+					connection = (HttpsURLConnection) hostURL.openConnection();
+				} else {
+					connection = (HttpsURLConnection) hostURL.openConnection(proxy);
+				}
 
 				connection.setRequestMethod("POST");
 				connection.setDoOutput(true);
@@ -1304,6 +1340,9 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	}
 
 	public void checkForReports() {
+		
+		log.info("Checking for updated reports from Turnitin");
+		
 		// get the list of all items that are waiting for reports
 		List awaitingReport = dao.findByProperties(ContentReviewItem.class,
 				new String[] { "status" },
@@ -1368,7 +1407,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				
 				try {
 					URL hostURL = new URL(apiURL);
-					connection = (HttpsURLConnection) hostURL.openConnection();
+					if (proxy == null) {
+						connection = (HttpsURLConnection) hostURL.openConnection();
+					} else {
+						connection = (HttpsURLConnection) hostURL.openConnection(proxy);
+					}
 
 					connection.setRequestMethod("GET");
 					connection.setDoOutput(true);
