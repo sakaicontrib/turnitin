@@ -192,9 +192,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
 		
 		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
-			SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
-			proxy = new Proxy(Proxy.Type.HTTP, addr);
-			log.debug("Using proxy: " + proxyHost + " " + proxyPort);
+			try {
+				SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
+				proxy = new Proxy(Proxy.Type.HTTP, addr);
+				log.debug("Using proxy: " + proxyHost + " " + proxyPort);
+			} catch (NumberFormatException e) {
+				log.debug("Invalid proxy port specified: " + proxyPort);
+			}
 		}
 		
 		aid = serverConfigurationService.getString("turnitin.aid");
