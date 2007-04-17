@@ -193,7 +193,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
 			SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
-			Proxy proxy = new Proxy(Proxy.Type.HTTP, addr);
+			proxy = new Proxy(Proxy.Type.HTTP, addr);
 			log.debug("Using proxy: " + proxyHost + " " + proxyPort);
 		}
 		
