@@ -1681,7 +1681,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			//try sakaiperson first
 			log.debug("try system profile email first");
 			SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
-			if (sp != null ) {
+			if (sp != null && sp.getMail()!=null && sp.getMail().length()>0 ) {
 				String uem2 = sp.getMail().trim();
 				if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
 					uem = user.getEmail().trim();
