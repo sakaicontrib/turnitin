@@ -45,10 +45,12 @@ import java.util.Random;
 import java.util.TimeZone;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.xerces.parsers.DOMParser;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
@@ -598,16 +600,19 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
-			
-		DOMParser parser = new DOMParser();
-											
-		try {
-			parser.parse(new org.xml.sax.InputSource(in));
+		Document document = null;
+		try {	
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+			document = parser.parse(new org.xml.sax.InputSource(in));
+		}
+		catch (ParserConfigurationException pce){
+				log.error("parser configuration error: " + pce.getMessage());
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 	
-		Document document = parser.getDocument();
+		
 		Element root = document.getDocumentElement();
 		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("20") == 0 || 
 			((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("21") == 0 ) {
@@ -793,15 +798,18 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 		
-		DOMParser parser = new DOMParser();
-		
-		try {
-			parser.parse(new org.xml.sax.InputSource(in));
-		} catch (Throwable t) {
-			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful");
+		Document document = null;
+		try {	
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+			document = parser.parse(new org.xml.sax.InputSource(in));
 		}
+		catch (ParserConfigurationException pce){
+				log.error("parser configuration error: " + pce.getMessage());
+		} catch (Throwable t) {
+			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+		}		
 		
-		Document document = parser.getDocument();
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
 		if ((rcode > 0 && rcode < 100) || rcode == 419) {
@@ -944,23 +952,18 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 		
-		DOMParser parser = new DOMParser();
-											
-		try {
-			parser.parse(new org.xml.sax.InputSource(in));
+		Document document = null;
+		try {	
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+			document = parser.parse(new org.xml.sax.InputSource(in));
+		}
+		catch (ParserConfigurationException pce){
+				log.error("parser configuration error: " + pce.getMessage());
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
-				
-		Document document = parser.getDocument();
-		Element root = document.getDocumentElement();
-		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("30") == 0 || 
-			((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("31") == 0 ) {
-			log.debug("Enrollment in Class successful");						
-		} else {
-			throw new SubmissionException("Enrollment in Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
-		}
-    }
+	}
 	
 	public void processQueue() {
 		log.debug("Processing submission queue");
@@ -1263,15 +1266,21 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				continue;
 			}
 
-			DOMParser parser = new DOMParser();
-												
-			try {
-				parser.parse(new org.xml.sax.InputSource(in));
-			} catch (SAXException e) {
-				log.error("Unable to determine Submission status due to response parsing error: " + e.getMessage() + ". Assume unsuccessful");
+			Document document = null;
+			try {	
+				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+				document = parser.parse(new org.xml.sax.InputSource(in));
+			}
+			catch (ParserConfigurationException pce){
+					log.error("parser configuration error: " + pce.getMessage());
+			}
+			catch (SAXException se) {
+				log.error("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				dao.update(currentItem);
 				continue;
+			
 			} catch (IOException e) {
 				log.warn("Unable to determine Submission status due to response IO error: " + e.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
@@ -1279,7 +1288,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				continue;
 			}
 			
-			Document document = parser.getDocument();
+			
 			Element root = document.getDocumentElement();
 			if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("51") == 0) {
 				log.debug("Submission successful");
@@ -1498,12 +1507,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					dao.update(currentItem);
 					break;
 				}
-			
-		    	DOMParser parser = new DOMParser();
-													
+				Document document = null;
 				try{
-					parser.parse(new InputSource(in));
-					
+					DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+					DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+					document= parser.parse(new InputSource(in));
 					
 				} catch (SAXException e1) {
 					log.error("Update failed due to Parsing error: " + e1.getMessage());
@@ -1519,9 +1527,11 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					currentItem.setLastError(e2.getMessage());
 					dao.update(currentItem);
 					continue;
+				} catch (ParserConfigurationException pce) {
+					log.error("Parse configuration error: " + pce.getMessage());
 				}
 				
-				Document document = parser.getDocument();
+				 
 				Element root = document.getDocumentElement();
 				if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
 					log.debug("Report list returned successfully");
