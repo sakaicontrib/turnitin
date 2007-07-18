@@ -233,8 +233,10 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
 		
 		// Set the keystore name and password, which must contain the public certificate of the Turnitin API site 
-		System.setProperty("javax.net.ssl.trustStore", serverConfigurationService.getString("turnitin.keystore_name"));
-		System.setProperty("javax.net.ssl.trustStorePassword", serverConfigurationService.getString("turnitin.keystore_password"));
+		if (serverConfigurationService.getString("turnitin.keystore_name") != null ) {
+			System.setProperty("javax.net.ssl.trustStore", serverConfigurationService.getString("turnitin.keystore_name"));
+			System.setProperty("javax.net.ssl.trustStorePassword", serverConfigurationService.getString("turnitin.keystore_password"));
+		}
 	}
 
 	public void queueContent(String userId, String siteId, String taskId, String contentId)
