@@ -34,7 +34,7 @@ limitations under the License.
   <modules>
     <module>dao</module>
     <module>hbm</module>
-  <!--  <module>pack</module>-->
+  <module>pack</module>
   <!--  <module>tool</module>-->
     <module>turnitin</module>
   </modules>
