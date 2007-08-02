@@ -1142,8 +1142,15 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				continue;
 			}
 				
-				
-			String ptl = currentItem.getUserId()  + ":" + fileName;
+			String userEid = currentItem.getUserId();
+			try {
+				userEid = userDirectoryService.getUserEid(currentItem.getUserId());
+			}
+			catch (UserNotDefinedException unde) {
+				//nothing realy to do?
+			}
+			
+			String ptl =  userEid  + ":" + fileName;
 			String ptype = "2";
 
 			String tem = defaultInstructorEmail;
