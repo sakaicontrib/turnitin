@@ -1645,6 +1645,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	public boolean isAcceptableContent(ContentResource resource) {
 		//for now we accept all content
 		// TODO: Check against content types accepted by Turnitin
+		
+		//TODO: if file is too big reject here 10.48576 MB
+
+		if (resource.getContentLength() > 10995116) {
+			log.debug("File is too big: " + resource.getContentLength());
+			return false;
+		}
 		return true;
 	}
 	
