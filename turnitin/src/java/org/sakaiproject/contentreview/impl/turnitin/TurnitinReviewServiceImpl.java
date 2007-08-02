@@ -1296,11 +1296,13 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				log.debug("Submission successful");
 				currentItem.setExternalId(((CharacterData) (root.getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim());
 				currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
+				currentItem.setRetryCount(new Long(0));
 				currentItem.setDateSubmitted(new Date());
 				dao.update(currentItem);
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
-				if (((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim().equals("User password does not match user email")) {
+				if (((CharacterData) (root.getElementsByTagName("rCode").item(0).getFirstChild())).getData().trim().equals("User password does not match user email") 
+							|| ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim().equals("1001")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
