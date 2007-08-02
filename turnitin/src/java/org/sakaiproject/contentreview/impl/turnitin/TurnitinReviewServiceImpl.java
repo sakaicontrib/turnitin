@@ -1376,6 +1376,19 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		while (listIterator.hasNext()) {
 			currentItem = (ContentReviewItem) listIterator.next();
 
+			if (currentItem.getRetryCount() == null ) {
+				currentItem.setRetryCount(new Long(0));
+			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
+				dao.update(currentItem);
+				continue;
+			} else {
+				long l = currentItem.getRetryCount().longValue();
+				l++;
+				currentItem.setRetryCount(new Long(l));
+				dao.update(currentItem);
+			}
+			
 			if (!reportTable.containsKey(currentItem.getExternalId())) {
 				// get the list from turnitin and see if the review is available
 				
