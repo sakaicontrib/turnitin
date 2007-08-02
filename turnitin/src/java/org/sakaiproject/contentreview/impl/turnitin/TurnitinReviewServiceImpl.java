@@ -1300,12 +1300,21 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			
 			Element root = document.getDocumentElement();
 			if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("51") == 0) {
-				log.debug("Submission successful");
-				currentItem.setExternalId(((CharacterData) (root.getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim());
-				currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
-				currentItem.setRetryCount(new Long(0));
-				currentItem.setDateSubmitted(new Date());
-				dao.update(currentItem);
+				String externalId = ((CharacterData) (root.getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
+				if (externalId != null && externalId.length() >0 ) {
+					log.debug("Submission successful");
+					currentItem.setExternalId(externalId);
+					currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
+					currentItem.setRetryCount(new Long(0));
+					currentItem.setDateSubmitted(new Date());
+					dao.update(currentItem);
+				} else {
+					log.warn("invalid external id");
+					currentItem.setLastError("Submission error: no external id received");
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					dao.update(currentItem);
+				}
+				
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 				if (((CharacterData) (root.getElementsByTagName("rCode").item(0).getFirstChild())).getData().trim().equals("User password does not match user email") 
