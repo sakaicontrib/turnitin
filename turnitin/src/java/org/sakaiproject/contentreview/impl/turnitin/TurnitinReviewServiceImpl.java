@@ -1318,13 +1318,28 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
-				if (((CharacterData) (root.getElementsByTagName("rCode").item(0).getFirstChild())).getData().trim().equals("User password does not match user email") 
-							|| ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim().equals("1001")) {
+				
+				String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
+				String rCode = ((CharacterData) (root.getElementsByTagName("rCode").item(0).getFirstChild())).getData();
+				
+				if (rCode == null)
+					rCode = "";
+				else
+					rCode = rCode.trim();
+				
+				if (rMessage == null)
+					rMessage = rCode;
+				else 
+					rMessage = rMessage.trim();
+				
+				 
+				if (rMessage.equals("User password does not match user email") 
+							|| rCode.equals("1001") || rMessage.equals("")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
-				currentItem.setLastError("Submission Error: " +((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
+				currentItem.setLastError("Submission Error: " + rMessage + "(" + rCode + ")");
 				dao.update(currentItem);
 			}
 		}
