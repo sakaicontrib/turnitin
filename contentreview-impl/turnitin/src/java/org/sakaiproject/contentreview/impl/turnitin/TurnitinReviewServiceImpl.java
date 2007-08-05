@@ -1320,7 +1320,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 				
 				String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
-				String rCode = ((CharacterData) (root.getElementsByTagName("rCode").item(0).getFirstChild())).getData();
+				String rCode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData();
 				
 				if (rCode == null)
 					rCode = "";
