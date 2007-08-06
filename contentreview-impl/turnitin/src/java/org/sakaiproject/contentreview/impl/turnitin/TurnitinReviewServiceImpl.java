@@ -114,6 +114,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	private String defaultInstructorPassword = null;
 	
 	private Long maxRetry = null;
+	
+	private int tiiMaxfileSize = 10995116;
 
 	// Proxy if set
 	private Proxy proxy = null; 
@@ -232,6 +234,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
 		
+		tiiMaxfileSize = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
+		
 		// Set the keystore name and password, which must contain the public certificate of the Turnitin API site 
 		if (serverConfigurationService.getString("turnitin.keystore_name", null) != null ) {
 			System.setProperty("javax.net.ssl.trustStore", serverConfigurationService.getString("turnitin.keystore_name"));
@@ -261,6 +265,14 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		log.debug("Adding content: " + contentId + " from site " + siteId
 				+ " and user: " + userId + " for task: " + taskId + " to submission queue");
 
+		/*
+		 *  Does this item match the criteria for a valid item?
+		 */
+		if (! this.isAcceptableContent(contentId)) {
+			throw new QueueException("Content " + contentId + " is not acceptable");
+		}
+		
+		
 		/*
 		 * first check that this content has not been submitted before this may
 		 * not be the best way to do this - perhaps use contentId as the primary
@@ -656,6 +668,8 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
 		dform.applyPattern("yyyyMMdd");
 		Calendar cal = Calendar.getInstance();
+		//set this to yesterday so we avoid timezine probelms etc
+		cal.add(Calendar.DAY_OF_MONTH, -1);
 		String dtstart = dform.format(cal.getTime());
 		
 		
@@ -1680,13 +1694,27 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		//TODO: if file is too big reject here 10.48576 MB
 
-		if (resource.getContentLength() > 10995116) {
+		if (resource.getContentLength() > tiiMaxfileSize) {
 			log.debug("File is too big: " + resource.getContentLength());
 			return false;
 		}
 		return true;
 	}
 	
+	private boolean isAcceptableContent(String contentId) {
+		try {
+			ContentResource cr = contentHostingService.getResource(contentId);
+			return this.isAcceptableContent(cr);
+		}
+		catch (IdUnusedException ue) {
+			log.warn("resource: " + contentId + "not found");
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+		
+	}
 	public boolean isSiteAcceptable(Site s) {
 		// TODO: Allow for visibility in course but not project sites
 		return true;
