@@ -1314,7 +1314,21 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 			
 			
 			Element root = document.getDocumentElement();
-			if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("51") == 0) {
+			
+			String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
+			String rCode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData();
+			
+			if (rCode == null)
+				rCode = "";
+			else
+				rCode = rCode.trim();
+			
+			if (rMessage == null)
+				rMessage = rCode;
+			else 
+				rMessage = rMessage.trim();
+			
+			if (rCode.compareTo("51") == 0) {
 				String externalId = ((CharacterData) (root.getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
 				if (externalId != null && externalId.length() >0 ) {
 					log.debug("Submission successful");
@@ -1333,20 +1347,6 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 				
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
-				
-				String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
-				String rCode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData();
-				
-				if (rCode == null)
-					rCode = "";
-				else
-					rCode = rCode.trim();
-				
-				if (rMessage == null)
-					rMessage = rCode;
-				else 
-					rMessage = rMessage.trim();
-				
 				 
 				if (rMessage.equals("User password does not match user email") 
 							|| rCode.equals("1001") || rMessage.equals("")) {
