@@ -1321,6 +1321,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 					currentItem.setExternalId(externalId);
 					currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
 					currentItem.setRetryCount(new Long(0));
+					currentItem.setLastError(null);
 					currentItem.setDateSubmitted(new Date());
 					dao.update(currentItem);
 				} else {
@@ -1691,6 +1692,21 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	public boolean isAcceptableContent(ContentResource resource) {
 		//for now we accept all content
 		// TODO: Check against content types accepted by Turnitin
+		/*
+		 * Turnitin currently accepts the following file types for submission: MS Word (.doc), WordPerfect (.wpd), PostScript (.eps), Portable Document Format (.pdf), HTML (.htm), Rich Text (.rtf) and Plain Text (.txt)
+		 * text/plain
+		 * text/html
+		 * application/msword
+		 * application/msword
+		 * application/postscript
+		 */
+		
+		String mime = resource.getContentType();
+		log.debug("Got a content type of " + mime);
+		if (!(mime.equals("text/plain") || mime.equals("text/html") || mime.equals("application/msword") || 
+				mime.equals("application/postscript") || mime.equals("application/pdf") || mime.equals("text/rtf")) ) {
+			return false;
+		}
 		
 		//TODO: if file is too big reject here 10.48576 MB
 
