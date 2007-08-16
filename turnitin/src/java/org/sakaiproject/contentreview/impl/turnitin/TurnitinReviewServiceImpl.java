@@ -1703,8 +1703,30 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 		
 		String mime = resource.getContentType();
 		log.debug("Got a content type of " + mime);
+		
+		Boolean fileTypeOk = false;
 		if (!(mime.equals("text/plain") || mime.equals("text/html") || mime.equals("application/msword") || 
 				mime.equals("application/postscript") || mime.equals("application/pdf") || mime.equals("text/rtf")) ) {
+			fileTypeOk =  false;
+			log.debug("FileType does not match know mime");
+		}
+		
+		//as mime's can be tricky check the extensions
+		if (!fileTypeOk) {
+			ResourceProperties resourceProperties = resource.getProperties();
+			String fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
+			if (fileName.indexOf(".")>0) {
+			
+				String extension = fileName.substring(fileName.lastIndexOf("."));
+				log.debug("file has an extension of " + extension);
+				if (extension.equals(".doc") || extension.equals(".wpd") || extension.equals(".eps") 
+						||  extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") || extension.equals(".pdf"))
+					fileTypeOk = true;
+			
+			}
+		}
+		
+		if (!fileTypeOk) {
 			return false;
 		}
 		
