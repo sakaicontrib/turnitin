@@ -87,7 +87,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-public class TurnitinReviewServiceImpl implements ContentReviewService {
+public class BaseReviewServiceImpl implements ContentReviewService {
 
 	private static final String SERVICE_NAME="Turnitin";
 	
@@ -130,7 +130,7 @@ public class TurnitinReviewServiceImpl implements ContentReviewService {
 	private String defaultInstructorId = null;
 
 	private static final Log log = LogFactory
-			.getLog(TurnitinReviewServiceImpl.class);
+			.getLog(BaseReviewServiceImpl.class);
 
 	private ContentReviewDao dao;
 
