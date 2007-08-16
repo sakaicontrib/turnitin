@@ -280,9 +280,12 @@ private static final String SERVICE_NAME="Turnitin";
 				String extension = fileName.substring(fileName.lastIndexOf("."));
 				log.debug("file has an extension of " + extension);
 				if (extension.equals(".doc") || extension.equals(".wpd") || extension.equals(".eps") 
-						||  extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") || extension.equals(".pdf"))
+						||  extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") || extension.equals(".pdf") || extension.equals(".docx"))
 					fileTypeOk = true;
 			
+			} else {
+				//we don't know what this is so lets submit it anyway
+				fileTypeOk = true;
 			}
 		}
 		
