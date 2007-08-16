@@ -148,6 +148,7 @@ private static final String SERVICE_NAME="Turnitin";
 	private ContentReviewDao dao;
 
 	public void setDao(ContentReviewDao dao) {
+		super.setDao(dao);
 		this.dao = dao;
 	}
 	
@@ -156,6 +157,7 @@ private static final String SERVICE_NAME="Turnitin";
 
 	public void setUserDirectoryService(
 			UserDirectoryService userDirectoryService) {
+		super.setUserDirectoryService(userDirectoryService);
 		this.userDirectoryService = userDirectoryService;
 	}
 	
