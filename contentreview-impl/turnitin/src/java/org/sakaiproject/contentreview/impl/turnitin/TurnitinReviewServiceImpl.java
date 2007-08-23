@@ -1074,6 +1074,7 @@ private static final String SERVICE_NAME="Turnitin";
 				resource = contentHostingService.getResource(currentItem.getContentId());
 				resourceProperties = resource.getProperties();
 				fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
+				
 				log.debug("origional filename is: " + fileName);
 				if (fileName == null) {
 					//use the id 
@@ -1081,6 +1082,7 @@ private static final String SERVICE_NAME="Turnitin";
 				} else if (fileName.length() > 199) {
 					fileName = fileName.substring(0, 199);
 				}
+				fileName = fileName.replace(' ', '_');
 			}
 			catch (PermissionException e2) {
 				log.debug("Submission failed due to permission error: " + e2.getMessage());
