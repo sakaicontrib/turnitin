@@ -1010,7 +1010,7 @@ private static final String SERVICE_NAME="Turnitin";
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setLastError("Class creation error: " + t.getMessage());
-					if (t.getMessage().equals("Class creation call to Turnitin API failed"))
+					if (t.getMessage().equals("Class creation call to Turnitin API failed") || t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful"))
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					else	
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
@@ -1025,7 +1025,7 @@ private static final String SERVICE_NAME="Turnitin";
 				log.debug ("Submission attempt unsuccessful: Could not enroll user in class", t);
 				
 				if (t.getClass() == IOException.class) {
-					currentItem.setLastError("Enrolment error: " + t.getMessage());
+					currentItem.setLastError("Enrolment error: " + t.getMessage() );
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setLastError("Enrolment error: " + t.getMessage());
