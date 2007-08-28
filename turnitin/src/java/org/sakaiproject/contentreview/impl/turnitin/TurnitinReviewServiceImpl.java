@@ -1387,6 +1387,12 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 			}
 			
+			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
+				currentItem.setStatus(new Long(4));
+				dao.update(currentItem);
+				continue;
+			}
+			
 			if (!reportTable.containsKey(currentItem.getExternalId())) {
 				// get the list from turnitin and see if the review is available
 				
