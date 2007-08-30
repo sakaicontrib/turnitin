@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
@@ -1087,6 +1088,7 @@ private static final String SERVICE_NAME="Turnitin";
 					fileName = fileName.substring(0, 199);
 				}
 				log.debug("fileName is :" + fileName);
+				fileName = URLDecoder.decode(fileName, "UTF-8");
 				fileName = fileName.replace(' ', '_');
 			}
 			catch (PermissionException e2) {
@@ -1109,6 +1111,9 @@ private static final String SERVICE_NAME="Turnitin";
 				currentItem.setLastError(e.getMessage());
 				dao.update(currentItem);
 				continue;
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 				
 			String userEid = currentItem.getUserId();
