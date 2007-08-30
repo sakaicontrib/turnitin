@@ -1045,7 +1045,11 @@ private static final String SERVICE_NAME="Turnitin";
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					//this is a to be expected error
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					if (t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful")) {
+						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					} else {
+						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					}
 					currentItem.setLastError("createAssignment: " + t.getMessage());
 				}
 				
