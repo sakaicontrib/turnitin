@@ -1086,6 +1086,7 @@ private static final String SERVICE_NAME="Turnitin";
 				} else if (fileName.length() > 199) {
 					fileName = fileName.substring(0, 199);
 				}
+				log.debug("fileName is :" + fileName);
 				fileName = fileName.replace(' ', '_');
 			}
 			catch (PermissionException e2) {
