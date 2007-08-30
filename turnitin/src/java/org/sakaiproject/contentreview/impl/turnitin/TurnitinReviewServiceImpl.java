@@ -1090,6 +1090,7 @@ private static final String SERVICE_NAME="Turnitin";
 				log.debug("fileName is :" + fileName);
 				fileName = URLDecoder.decode(fileName, "UTF-8");
 				fileName = fileName.replace(' ', '_');
+				log.debug("fileName is :" + fileName);
 			}
 			catch (PermissionException e2) {
 				log.debug("Submission failed due to permission error: " + e2.getMessage());
