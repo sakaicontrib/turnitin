@@ -1094,22 +1094,22 @@ private static final String SERVICE_NAME="Turnitin";
 			}
 			catch (PermissionException e2) {
 				log.debug("Submission failed due to permission error: " + e2.getMessage());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError(e2.getMessage());
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+				currentItem.setLastError("Permission exception: " + e2.getMessage());
 				dao.update(currentItem);
 				continue;
 			} 
 			catch (IdUnusedException e4) {
 				log.debug("Submission failed due to content ID error: " + e4.getMessage());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError(e4.getMessage());
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+				currentItem.setLastError("IdUnusedException: " + e4.getMessage());
 				dao.update(currentItem);
 				continue;
 			}
 			catch (TypeException e) {
 				log.debug("Submission failed due to content Type error: " + e.getMessage());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError(e.getMessage());
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+				currentItem.setLastError("Type Exception: " + e.getMessage());
 				dao.update(currentItem);
 				continue;
 			} catch (UnsupportedEncodingException e) {
@@ -1547,14 +1547,14 @@ private static final String SERVICE_NAME="Turnitin";
 					log.error("Update failed due to Parsing error: " + e1.getMessage());
 					log.debug(e1.toString());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError(e1.getMessage());
+					currentItem.setLastError("Parse error: " +e1.getMessage());
 					dao.update(currentItem);
 					//we may as well go on as the document may be in the part of the file that was parsed
 					continue;
 				} catch (IOException e2) {
 					log.warn("Update failed due to IO error: " + e2.getMessage());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError(e2.getMessage());
+					currentItem.setLastError("IO error " + e2.getMessage());
 					dao.update(currentItem);
 					continue;
 				} catch (ParserConfigurationException pce) {
