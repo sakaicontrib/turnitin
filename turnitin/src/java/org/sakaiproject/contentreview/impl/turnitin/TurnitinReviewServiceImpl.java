@@ -1076,7 +1076,16 @@ private static final String SERVICE_NAME="Turnitin";
 			ResourceProperties resourceProperties = null;
 			String fileName = null;
 			try {
-				resource = contentHostingService.getResource(currentItem.getContentId());
+				try {
+					resource = contentHostingService.getResource(currentItem.getContentId());
+					
+				} catch (IdUnusedException e4) {
+					log.warn("IdUnusedException: no resource with id " + currentItem.getContentId());
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					currentItem.setLastError("IdUnusedException: resource with this id doesn't exist" );
+					dao.update(currentItem);
+					continue;
+				}
 				resourceProperties = resource.getProperties();
 				fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
 				
@@ -1099,13 +1108,6 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 				continue;
 			} 
-			catch (IdUnusedException e4) {
-				log.debug("Submission failed due to content ID error: " + e4.getMessage());
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError("IdUnusedException: " + e4.getMessage());
-				dao.update(currentItem);
-				continue;
-			}
 			catch (TypeException e) {
 				log.debug("Submission failed due to content Type error: " + e.getMessage());
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
