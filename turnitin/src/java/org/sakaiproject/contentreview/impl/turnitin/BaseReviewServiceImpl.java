@@ -150,19 +150,14 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		 * not be the best way to do this - perhaps use contentId as the primary
 		 * key for now id is the primary key and so the database won't complain
 		 * if we put in repeats necessitating the check
+		 * 
+		 * 
 		 */
 
 		List existingItems = dao
 				.findByExample(new ContentReviewItem(contentId));
 		if (existingItems.size() > 0) {
-			if (this.allowResubmission()) {
-				log.debug("Content: " + contentId + " is already queued, assuming resubmission");
-				for (int i =0; i < existingItems.size(); i++) {
-					dao.delete(existingItems.get(i));
-				}
-			} else {
 				throw new QueueException("Content " + contentId + " is already queued, not re-queued");
-			}
 		}
 
 		dao.save(new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
