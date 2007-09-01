@@ -94,7 +94,7 @@ private static final String SERVICE_NAME="Turnitin";
 	
 	private Long maxRetry = null;
 	
-	private int tiiMaxfileSize = 10995116;
+	private static int TII_MAX_FILE_SIZE = 10995116;
 
 	// Proxy if set
 	private Proxy proxy = null; 
@@ -296,7 +296,7 @@ private static final String SERVICE_NAME="Turnitin";
 		
 		//TODO: if file is too big reject here 10.48576 MB
 
-		if (resource.getContentLength() > tiiMaxfileSize) {
+		if (resource.getContentLength() > TII_MAX_FILE_SIZE) {
 			log.debug("File is too big: " + resource.getContentLength());
 			return false;
 		}
@@ -1080,6 +1080,7 @@ private static final String SERVICE_NAME="Turnitin";
 					resource = contentHostingService.getResource(currentItem.getContentId());
 					
 				} catch (IdUnusedException e4) {
+					//ToDo we should probably remove these from the Queue
 					log.warn("IdUnusedException: no resource with id " + currentItem.getContentId());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 					currentItem.setLastError("IdUnusedException: resource with this id doesn't exist" );
