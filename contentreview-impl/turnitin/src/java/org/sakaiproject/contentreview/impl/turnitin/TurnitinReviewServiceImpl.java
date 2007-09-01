@@ -94,7 +94,7 @@ private static final String SERVICE_NAME="Turnitin";
 	
 	private Long maxRetry = null;
 	
-	private static int TII_MAX_FILE_SIZE = 10995116;
+	private int TII_MAX_FILE_SIZE = 10995116;
 
 	// Proxy if set
 	private Proxy proxy = null; 
@@ -214,7 +214,7 @@ private static final String SERVICE_NAME="Turnitin";
 		
 		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
 		
-		tiiMaxfileSize = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
+		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
 		
 		// Set the keystore name and password, which must contain the public certificate of the Turnitin API site 
 		if (serverConfigurationService.getString("turnitin.keystore_name", null) != null ) {
