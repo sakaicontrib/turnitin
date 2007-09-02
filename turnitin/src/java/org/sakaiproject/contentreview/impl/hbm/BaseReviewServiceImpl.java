@@ -19,7 +19,7 @@
  *
  **********************************************************************************/
 
-package org.sakaiproject.contentreview.impl.turnitin;
+package org.sakaiproject.contentreview.impl.hbm;
 
 import java.io.BufferedReader;
 import java.io.IOException;

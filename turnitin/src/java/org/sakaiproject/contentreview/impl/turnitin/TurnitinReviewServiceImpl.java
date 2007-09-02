@@ -40,6 +40,7 @@ import org.sakaiproject.contentreview.dao.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.QueueException;
 import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
+import org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.EntityManager;
