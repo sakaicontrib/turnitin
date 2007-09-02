@@ -2,9 +2,10 @@
 <classpath>
 	<classpathentry kind="src" path="dao/src/java"/>
 	<classpathentry kind="src" path="turnitin/src/java"/>
+	<classpathentry kind="src" path="hbm/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.1/commons-logging-1.1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/generic-dao/generic-dao/0.9/generic-dao-0.9.jar"/>
+	<classpathentry kind="var" path="M2_REPO/generic-dao/generic-dao/0.91/generic-dao-0.91.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/content-review-api"/>
 	<classpathentry kind="var" path="M2_REPO/org/springframework/spring/2.0.6/spring-2.0.6.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/site-api"/>
