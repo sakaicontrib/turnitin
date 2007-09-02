@@ -48,7 +48,7 @@
     <dependency>
       <groupId>generic-dao</groupId>
       <artifactId>generic-dao</artifactId>
-      <version>0.9</version>
+      <version>0.91</version>
 <!--url: http://source.edtech.vt.edu/maven/ -->
     </dependency>
 <!--  Xerces XML parser -->
