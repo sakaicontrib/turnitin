@@ -49,15 +49,7 @@
       <groupId>generic-dao</groupId>
       <artifactId>generic-dao</artifactId>
       <version>0.91</version>
-<!--url: http://source.edtech.vt.edu/maven/ -->
     </dependency>
-<!--  Xerces XML parser -->
-<!-- <dependency>
-			<groupId>xerces</groupId>
-			<artifactId>xercesImpl</artifactId>
-			<version>2.6.2</version>
-			<url>http://source.edtech.vt.edu/maven/</url>
-        </dependency> -->
 <!-- Spring and Hibernate dependencies. -->
     <dependency>
       <groupId>${sakai.spring.groupId}</groupId>
@@ -79,6 +71,11 @@
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-entity-api</artifactId>
+      <version>${sakai.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sakaiproject</groupId>
+      <artifactId>sakai-authz-api</artifactId>
       <version>${sakai.version}</version>
     </dependency>
     <dependency>
