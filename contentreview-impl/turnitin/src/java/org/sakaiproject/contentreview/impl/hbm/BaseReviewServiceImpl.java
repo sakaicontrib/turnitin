@@ -60,6 +60,7 @@ import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.contentreview.service.ContentReviewService;
+import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.ServerOverloadException;
@@ -111,6 +112,11 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 	public void setUserDirectoryService(
 			UserDirectoryService userDirectoryService) {
 		this.userDirectoryService = userDirectoryService;
+	}
+	
+	private ContentReviewSiteAdvisor siteAdvisor;
+	public void setSiteAdvisor(ContentReviewSiteAdvisor crsa) {
+		this.siteAdvisor = crsa;
 	}
 	
 	public void queueContent(String userId, String siteId, String taskId, String contentId)
@@ -275,8 +281,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 	
 
 	public boolean isSiteAcceptable(Site s) {
-		// TODO: Allow for visibility in course but not project sites
-		return true;
+		return siteAdvisor.siteCanUseReviewService(s);
 	}
 	
 
