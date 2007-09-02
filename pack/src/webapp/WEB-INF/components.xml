@@ -30,6 +30,22 @@
 		<property name="sakaiPersonManager"
 			ref="org.sakaiproject.api.common.edu.person.SakaiPersonManager" />
 		<property name="preferSystemProfileEmail"><value>true</value></property>
+		<property name="siteAdvisor" ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"/>
 	</bean>
 
+	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.defaultSiteAdvisor">
+	</bean>
+	
+	<!--  Uncomment this to use a site property to define which sites use c-r -->
+	<!-- 
+	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.SitePropertyAdvisor">
+		<property name="siteProperty"><value>useContentReviewService</value></property>
+	</bean>
+ 	-->
+ 	<!-- uncomment this bean to make cr available to only sites of the type course -->
+ 	<!--
+ 	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.SiteCourseTypeAdvisor">
+	</bean>
+ 	-->
+ 	
 </beans>
