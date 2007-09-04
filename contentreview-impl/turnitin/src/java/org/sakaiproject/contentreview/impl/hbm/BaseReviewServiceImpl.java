@@ -141,15 +141,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		log.debug("Adding content: " + contentId + " from site " + siteId
 				+ " and user: " + userId + " for task: " + taskId + " to submission queue");
 
-		/*
-		 *  Does this item match the criteria for a valid item?
-		 */
-		/* comment this out for now
-		if (! this.isAcceptableContent(contentId)) {
-			throw new QueueException("Content " + contentId + " is not acceptable");
-		}
-		*/
-		
+	
 		
 		/*
 		 * first check that this content has not been submitted before this may
