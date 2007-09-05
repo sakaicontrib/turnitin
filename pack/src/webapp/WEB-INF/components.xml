@@ -48,4 +48,51 @@
 	</bean>
  	-->
  	
+ 	
+ 	<!-- QueuProcessing jobs -->
+ 	<!-- Content review Queue Process -->
+<bean id="TiiContentReviewQueue" class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewQueue">
+            <property name="contentReviewService">
+				<ref bean="org.sakaiproject.contentreview.service.ContentReviewService"/>
+			</property>
+	 </bean>
+
+   <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewQueue"
+      class="org.sakaiproject.component.app.scheduler.jobs.SpringJobBeanWrapper"
+      singleton="true" init-method="init">
+      <property name="beanId">
+         <value>TiiContentReviewQueue</value>
+      </property>
+      <property name="jobName">
+         <value>Process Content Review Queue</value>
+      </property>
+      <property name="schedulerManager">
+         <ref bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
+      </property>
+   </bean>
+
+<bean id="TiiContentReviewReports" class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewReports">
+            <property name="contentReviewService">
+				<ref bean="org.sakaiproject.contentreview.service.ContentReviewService"/>
+			</property>
+	 </bean>
+
+   <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewReports"
+      class="org.sakaiproject.component.app.scheduler.jobs.SpringJobBeanWrapper"
+      singleton="true" init-method="init">
+      <property name="beanId">
+         <value>TiiContentReviewReports</value>
+      </property>
+      <property name="jobName">
+         <value>Process Content Review Reports</value>
+      </property>
+      <property name="schedulerManager">
+         <ref bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
+      </property>
+   </bean>
+   
+   
+   
+ 	
+ 	
 </beans>

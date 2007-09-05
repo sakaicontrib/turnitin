@@ -35,7 +35,8 @@ limitations under the License.
     <module>dao</module>
     <module>hbm</module>
   <module>pack</module>
-  <!--  <module>tool</module>-->
+   <module>tool</module>
     <module>turnitin</module>
+    <module>scheduler-jobs</module>
   </modules>
 </project>
