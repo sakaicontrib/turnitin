@@ -51,6 +51,11 @@
                         <artifactId>sakai-contentreview-dao-impl</artifactId>
                         <version>${sakai.version}</version>
                 </dependency>
+                 <dependency>
+                        <groupId>org.sakaiproject</groupId>
+                        <artifactId>sakai-turnitin-shared-scheduler</artifactId>
+                        <version>${sakai.version}</version>
+                </dependency>
   </dependencies>
   <build>
     <resources/>

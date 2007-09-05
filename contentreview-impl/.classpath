@@ -3,6 +3,7 @@
 	<classpathentry kind="src" path="dao/src/java"/>
 	<classpathentry kind="src" path="turnitin/src/java"/>
 	<classpathentry kind="src" path="hbm/src"/>
+	<classpathentry kind="src" path="scheduler-jobs/src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.1/commons-logging-1.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/generic-dao/generic-dao/0.91/generic-dao-0.91.jar"/>
@@ -19,5 +20,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/assignment-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/authz-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/jobscheduler"/>
+	<classpathentry kind="var" path="M2_REPO/quartz/quartz/1.5.2/quartz-1.5.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
