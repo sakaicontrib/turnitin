@@ -495,7 +495,7 @@ private static final String SERVICE_NAME="Turnitin";
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.info("HTTPS Connection made to Turnitin");
+			log.debug("HTTPS Connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
 		
@@ -686,7 +686,7 @@ private static final String SERVICE_NAME="Turnitin";
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.info("HTTPS connection made to Turnitin");
+			log.debug("HTTPS connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
 		
@@ -852,7 +852,7 @@ private static final String SERVICE_NAME="Turnitin";
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.info("Connection made to Turnitin");
+			log.debug("Connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
 		
@@ -944,7 +944,7 @@ private static final String SERVICE_NAME="Turnitin";
 		log.debug("Total list is now " +  notSubmittedItems.size());
 		Iterator notSubmittedIterator = notSubmittedItems.iterator();
 		ContentReviewItem currentItem;
-
+		log.info("Processing Content review queue: " + notSubmittedItems.size() + " in queue");
 		while (notSubmittedIterator.hasNext()) {
 			currentItem = (ContentReviewItem) notSubmittedIterator.next();
 			
@@ -1188,7 +1188,7 @@ private static final String SERVICE_NAME="Turnitin";
 				// set up the connection to use multipart/form-data
 				connection.setRequestProperty("Content-Type","multipart/form-data; boundary=" + boundary);
 
-				log.info("HTTPS connection made to Turnitin");
+				log.debug("HTTPS connection made to Turnitin");
 
 				outStream = connection.getOutputStream();
 
@@ -1369,7 +1369,7 @@ private static final String SERVICE_NAME="Turnitin";
 
 	public void checkForReports() {
 		
-		log.info("Checking for updated reports from Turnitin");
+		log.debug("Checking for updated reports from Turnitin");
 		
 		// get the list of all items that are waiting for reports
 		List awaitingReport = dao.findByProperties(ContentReviewItem.class,
@@ -1464,7 +1464,7 @@ private static final String SERVICE_NAME="Turnitin";
 					connection.setDoOutput(true);
 					connection.setDoInput(true);
 
-					log.info("HTTPS connection made to Turnitin");
+					log.debug("HTTPS connection made to Turnitin");
 
 					OutputStream out = connection.getOutputStream();
 
