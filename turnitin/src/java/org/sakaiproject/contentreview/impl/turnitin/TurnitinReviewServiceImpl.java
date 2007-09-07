@@ -1083,9 +1083,7 @@ private static final String SERVICE_NAME="Turnitin";
 				} catch (IdUnusedException e4) {
 					//ToDo we should probably remove these from the Queue
 					log.warn("IdUnusedException: no resource with id " + currentItem.getContentId());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError("IdUnusedException: resource with this id doesn't exist" );
-					dao.update(currentItem);
+					dao.delete(currentItem);
 					continue;
 				}
 				resourceProperties = resource.getProperties();
