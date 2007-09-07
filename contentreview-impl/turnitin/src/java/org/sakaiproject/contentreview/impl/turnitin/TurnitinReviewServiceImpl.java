@@ -1098,6 +1098,10 @@ private static final String SERVICE_NAME="Turnitin";
 				}
 				log.debug("fileName is :" + fileName);
 				fileName = URLDecoder.decode(fileName, "UTF-8");
+				//in rare cases it seems filenames can be double encoded
+				if (fileName.indexOf("%20")> 0 )
+					fileName = URLDecoder.decode(fileName, "UTF-8");
+				
 				fileName = fileName.replace(' ', '_');
 				log.debug("fileName is :" + fileName);
 			}
