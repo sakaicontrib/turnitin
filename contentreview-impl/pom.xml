@@ -38,5 +38,6 @@ limitations under the License.
    <module>tool</module>
     <module>turnitin</module>
     <module>scheduler-jobs</module>
+    <module>content-review-shared-deploy</module>
   </modules>
 </project>
