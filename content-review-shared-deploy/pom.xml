@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>content-review-impl</artifactId>
+    <groupId>org.sakaiproject</groupId>
+    <version>M2</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <description>Shared Deployment Descriptor for Scheduler</description>
+  <name>sakai-contentreview-shared-deploy</name>
+  <groupId>org.sakaiproject</groupId>
+  <artifactId>sakai-contentreview-shared-deploy</artifactId>
+  <organization>
+    <name>University of Michigan</name>
+    <url>http://sakaiproject.org/</url>
+  </organization>
+  <inceptionYear>2003</inceptionYear>
+  <packaging>pom</packaging>
+  <properties>
+    <deploy.target>shared</deploy.target>
+  </properties>
+  <dependencies>
+      <dependency>
+      <groupId>generic-dao</groupId>
+      <artifactId>generic-dao</artifactId>
+      <version>0.91</version>
+		<scope>compile</scope>
+    </dependency>
+  </dependencies>
+</project>

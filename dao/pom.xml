@@ -49,7 +49,6 @@
       <groupId>generic-dao</groupId>
       <artifactId>generic-dao</artifactId>
       <version>0.91</version>
-<!--url: http://source.edtech.vt.edu/maven/ -->
     </dependency>
 <!-- Spring and Hibernate dependencies. -->
     <dependency>
