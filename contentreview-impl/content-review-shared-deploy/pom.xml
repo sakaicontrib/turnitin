@@ -21,11 +21,10 @@
     <deploy.target>shared</deploy.target>
   </properties>
   <dependencies>
-      <dependency>
-      <groupId>generic-dao</groupId>
+    <dependency>
+      <groupId>org.sakaiproject</groupId>
       <artifactId>generic-dao</artifactId>
       <version>${sakai.generic-dao.version}</version>
-		<scope>compile</scope>
     </dependency>
   </dependencies>
 </project>
