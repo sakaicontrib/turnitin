@@ -16,7 +16,7 @@ public class ContentReviewQueue implements Job {
 	public void execute(JobExecutionContext arg0) throws JobExecutionException {
 		// TODO Auto-generated method stub
 		contentReviewService.processQueue();
-		contentReviewService.checkForReports();
+		
 	}
 
 }
