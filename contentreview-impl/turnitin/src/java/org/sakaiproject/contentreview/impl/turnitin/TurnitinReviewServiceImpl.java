@@ -1012,7 +1012,7 @@ private static final String SERVICE_NAME="Turnitin";
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setLastError("Class creation error: " + t.getMessage());
-					if (t.getMessage().equals("Class creation call to Turnitin API failed") || t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful"))
+					if (t.getMessage().equals("Class creation call to Turnitin API failed") || t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful") || t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful"))
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					else	
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
