@@ -1315,7 +1315,7 @@ private static final String SERVICE_NAME="Turnitin";
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 				 
 				if (rMessage.equals("User password does not match user email") 
-							|| rCode.equals("1001") || rMessage.equals("")) {
+							|| rCode.equals("1001") || rMessage.equals("") || rCode.equals("413")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
