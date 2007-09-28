@@ -208,20 +208,16 @@ private static final String SERVICE_NAME="Turnitin";
 		// assignid = defaultAssignId + siteId
 		defaultAssignId = serverConfigurationService.getString("turnitin.defaultAssignId");;
 		
-		defaultClassPassword = serverConfigurationService.getString("turnitin.defaultClassPassword");;
+		defaultClassPassword = serverConfigurationService.getString("turnitin.defaultClassPassword","changeit");;
 		
 		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
-		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId");
+		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId","admin");
 		
 		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
 		
 		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
 		
-		// Set the keystore name and password, which must contain the public certificate of the Turnitin API site 
-		if (serverConfigurationService.getString("turnitin.keystore_name", null) != null ) {
-			System.setProperty("javax.net.ssl.trustStore", serverConfigurationService.getString("turnitin.keystore_name"));
-			System.setProperty("javax.net.ssl.trustStorePassword", serverConfigurationService.getString("turnitin.keystore_password"));
-		}
+
 	}
 	
 	
