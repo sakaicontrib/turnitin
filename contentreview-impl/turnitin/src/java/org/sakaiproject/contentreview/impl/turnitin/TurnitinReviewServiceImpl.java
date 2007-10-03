@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.assignment.api.Assignment;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
@@ -163,6 +164,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		this.userDirectoryService = userDirectoryService;
 	}
 
+	private SecurityService securityService;
+	public void setSecurityService(SecurityService ss) {
+		securityService = ss;
+	}
+	
+	
 	/**
 	 * Place any code that should run when this class is initialized by spring
 	 * here
@@ -341,6 +348,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("Report not available: " + item.getStatus());
 			throw new ReportException("Report not available: " + item.getStatus());
 		}
+		
+		
+		//Should we generate a report as the default instructor or for this user?
+		boolean isInstructor = false;
+		if (securityService.unlock(userDirectoryService.getCurrentUser(), "asn.grade", "/site/" + item.getSiteId()))
+			isInstructor = true;
+		
 
 		// report is available - generate the URL to display
 
@@ -349,26 +363,31 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String fcmd = "1";
 		String encrypt = "0";
 		String diagnostic = "0";
-		String uem = defaultInstructorEmail;
-		String ufn = defaultInstructorFName;
-		String uln = defaultInstructorLName;
-		String utp = "2";
-
-		// is it worthwhile using this?
-		String uid = defaultInstructorId;
 		String cid = item.getSiteId();
 		String assignid = defaultAssignId + item.getSiteId();
+		
+		String uem;
+		String ufn;
+		String uln;
+		String utp;
+		String uid;
+		
+		if (isInstructor) {
+			uem = defaultInstructorEmail;
+			ufn = defaultInstructorFName;
+			uln = defaultInstructorLName;
+			utp = "2";
+			uid = defaultInstructorId;
+		} else {
+			User user = userDirectoryService.getCurrentUser();
+			uem = user.getEmail();
+			ufn = user.getFirstName();
+			uln = user.getLastName();
+			uid = item.getUserId();
+			utp = "1";
 
-		/*User user = userDirectoryService.getUser(item.getUserId());
-	String uem = user.getEmail();
-	String ufn = user.getFirstName();
-	String uln = user.getLastName();
-	String utp = "1";
-
-	// is it worthwhile using this?
-	String uid = item.getUserId();
-	String cid = item.getSiteId();*/
-
+		}
+		
 		String gmtime = getGMTime();
 
 		// note that these vars must be ordered alphabetically according to

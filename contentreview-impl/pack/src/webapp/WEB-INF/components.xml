@@ -31,6 +31,7 @@
 			ref="org.sakaiproject.api.common.edu.person.SakaiPersonManager" />
 		<property name="preferSystemProfileEmail"><value>true</value></property>
 		<property name="siteAdvisor" ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"/>
+		<property name="securityService" ref="org.sakaiproject.authz.api.SecurityService" />
 	</bean>
 
 	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.defaultSiteAdvisor">
