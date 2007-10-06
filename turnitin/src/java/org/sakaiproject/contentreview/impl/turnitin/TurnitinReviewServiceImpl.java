@@ -653,6 +653,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
 		String upw = defaultInstructorPassword;
+		String s_view_report = "1";
 
 		String cid = siteId;
 		String uid = defaultInstructorId;
@@ -677,7 +678,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-		fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+		fcmd + fid + gmtime + s_view_report + said + uem + ufn + uid + uln + upw + utp + secretKey;
 
 		String md5;
 		try{
@@ -744,6 +745,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write("&gmtime=".getBytes("UTF-8"));
 			outStream.write(gmtime.getBytes("UTF-8"));
 
+			outStream.write("&s_view_report=".getBytes("UTF-8"));
+			outStream.write(s_view_report.getBytes("UTF-8"));
+			
 			outStream.write("&said=".getBytes("UTF-8"));
 			outStream.write(said.getBytes("UTF-8"));
 

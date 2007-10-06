@@ -5,7 +5,7 @@
 	<classpathentry kind="src" path="hbm/src"/>
 	<classpathentry kind="src" path="scheduler-jobs/src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.1/commons-logging-1.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/sakaiproject/generic-dao/0.9.1/generic-dao-0.9.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/content-review-api"/>
 	<classpathentry kind="var" path="M2_REPO/org/springframework/spring/2.0.6/spring-2.0.6.jar"/>
