@@ -56,6 +56,9 @@
             <property name="contentReviewService">
 				<ref bean="org.sakaiproject.contentreview.service.ContentReviewService"/>
 			</property>
+			<property name="sessionManager">
+				<ref bean="org.sakaiproject.tool.api.SessionManager"/>
+			</property>
 	 </bean>
 
    <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewQueue"
