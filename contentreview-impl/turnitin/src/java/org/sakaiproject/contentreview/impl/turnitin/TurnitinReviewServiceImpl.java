@@ -678,7 +678,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-		fcmd + fid + gmtime + s_view_report + said + uem + ufn + uid + uln + upw + utp + secretKey;
+		fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
 
 		String md5;
 		try{
