@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.assignment.api.Assignment;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
@@ -138,6 +139,11 @@ private static final String SERVICE_NAME="Turnitin";
 		this.sakaiPersonManager = s;
 	}
 	
+	
+	private SecurityService securityService;
+	public void setSecurityService(SecurityService ss) {
+		securityService = ss;
+	}
 	
 	//Should the service prefer the system profile email address for users if set?
 	private boolean preferSystemProfileEmail;
@@ -346,7 +352,11 @@ private static final String SERVICE_NAME="Turnitin";
 	}
 
 	// report is available - generate the URL to display
-
+	//Should we generate a report as the default instructor or for this user?
+	boolean isInstructor = false;
+	if (securityService.unlock(userDirectoryService.getCurrentUser(), "asn.grade", "/site/" + item.getSiteId()))
+		isInstructor = true;
+	
 	String oid = item.getExternalId();
 	String fid = "6";
 	String fcmd = "1";
@@ -362,15 +372,22 @@ private static final String SERVICE_NAME="Turnitin";
 	String cid = item.getSiteId();
 	String assignid = defaultAssignId + item.getSiteId();
 	
-	/*User user = userDirectoryService.getUser(item.getUserId());
-	String uem = user.getEmail();
-	String ufn = user.getFirstName();
-	String uln = user.getLastName();
-	String utp = "1";
+	if (isInstructor) {
+		uem = defaultInstructorEmail;
+		ufn = defaultInstructorFName;
+		uln = defaultInstructorLName;
+		utp = "2";
+		uid = defaultInstructorId;
+	} else {
+		User user = userDirectoryService.getCurrentUser();
+		uem = user.getEmail();
+		ufn = user.getFirstName();
+		uln = user.getLastName();
+		uid = item.getUserId();
+		utp = "1";
 
-	// is it worthwhile using this?
-	String uid = item.getUserId();
-	String cid = item.getSiteId();*/
+	}
+	
 	
 	String gmtime = getGMTime();
 
@@ -465,6 +482,7 @@ private static final String SERVICE_NAME="Turnitin";
 		String upw = defaultInstructorPassword;
 		String cid = siteId;
 		String uid = defaultInstructorId;
+		String s_view_report = "1";
 		
 		String gmtime = this.getGMTime();
 		    	
@@ -530,6 +548,9 @@ private static final String SERVICE_NAME="Turnitin";
 			
 			outStream.write("&said=".getBytes("UTF-8"));
 			outStream.write(said.getBytes("UTF-8"));
+			
+			outStream.write("&s_view_report=".getBytes("UTF-8"));
+			outStream.write(s_view_report.getBytes("UTF-8"));
 			
 			outStream.write("&uem=".getBytes("UTF-8"));
 			outStream.write(uem.getBytes("UTF-8"));
@@ -1097,10 +1118,32 @@ private static final String SERVICE_NAME="Turnitin";
 					fileName = fileName.substring(0, 199);
 				}
 				log.debug("fileName is :" + fileName);
-				fileName = URLDecoder.decode(fileName, "UTF-8");
-				//in rare cases it seems filenames can be double encoded
-				if (fileName.indexOf("%20")> 0 )
+				try {
 					fileName = URLDecoder.decode(fileName, "UTF-8");
+				}
+				catch (IllegalArgumentException eae) {
+					log.warn("Unable to decode fileName: " + fileName);
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					currentItem.setLastError("FileName decode exception: " + fileName);
+					dao.update(currentItem);
+					continue;
+				}
+
+				//in rare cases it seems filenames can be double encoded
+				if (fileName.indexOf("%20")> 0 ) {
+					try {
+						fileName = URLDecoder.decode(fileName, "UTF-8");
+					}
+					catch (IllegalArgumentException eae) {
+						log.warn("Unable to decode fileName: " + fileName);
+						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+						currentItem.setLastError("FileName decode exception: " + fileName);
+						dao.update(currentItem);
+						continue;
+					}
+
+				}
+
 				
 				fileName = fileName.replace(' ', '_');
 				log.debug("fileName is :" + fileName);
