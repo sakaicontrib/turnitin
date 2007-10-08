@@ -5,6 +5,8 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.sakaiproject.contentreview.service.ContentReviewService;
+import org.sakaiproject.tool.api.Session;
+import org.sakaiproject.tool.api.SessionManager;
 
 public class ContentReviewQueue implements Job {
 
@@ -13,8 +15,16 @@ public class ContentReviewQueue implements Job {
 		contentReviewService = sd;
 	}
 	
+	private SessionManager sessionManager;
+	public void setSessionManager(SessionManager s) {
+		this.sessionManager = s;
+	}
+	
 	public void execute(JobExecutionContext arg0) throws JobExecutionException {
 		// TODO Auto-generated method stub
+		Session sakaiSession = sessionManager.getCurrentSession();
+		sakaiSession.setUserId("admin");
+		sakaiSession.setUserEid("admin");
 		contentReviewService.processQueue();
 		
 	}
