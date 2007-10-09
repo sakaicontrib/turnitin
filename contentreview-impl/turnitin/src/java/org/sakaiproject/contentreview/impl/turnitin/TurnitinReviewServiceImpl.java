@@ -1768,7 +1768,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				try {
 					ContentReviewItem c = new ContentReviewItem();
 					c.setSiteId(result.getString(1));
-					c.setTaskId(result.getString(1));
+					c.setTaskId(result.getString(2));
 					return c;
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
