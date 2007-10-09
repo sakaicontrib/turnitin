@@ -93,7 +93,6 @@
       <artifactId>sakai-content-api</artifactId>
       <version>${sakai.version}</version>
     </dependency>
-    <dependen
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-component-api</artifactId>
