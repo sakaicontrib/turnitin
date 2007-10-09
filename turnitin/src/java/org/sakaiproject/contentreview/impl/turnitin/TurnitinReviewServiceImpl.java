@@ -13,6 +13,8 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -43,6 +45,8 @@ import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
+import org.sakaiproject.db.api.SqlReader;
+import org.sakaiproject.db.api.SqlService;
 import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.EntityProducer;
@@ -169,6 +173,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		securityService = ss;
 	}
 	
+	private SqlService sqlService;
+	public void setSqlService(SqlService sql) {
+		sqlService = sql;
+	}
 	
 	/**
 	 * Place any code that should run when this class is initialized by spring
@@ -223,7 +231,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
 
 		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
-
+		
+		if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
+			doAssignments();
 
 	}
 
@@ -1746,4 +1756,222 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return false;
 	}
 
+	
+	//Methods for updating all assignments that exist
+	private void doAssignments() {
+		log.info("About to update all turnitin assignments");
+		String statement = "Select siteid,taskid from CONTENTREVIEW_ITEM group by siteid,taskid";
+		Object[] fields = new Object[0];
+		List objects = sqlService.dbRead(statement, fields, new SqlReader(){
+			public Object readSqlResultRecord(ResultSet result)
+			{
+				try {
+					ContentReviewItem c = new ContentReviewItem();
+					c.setSiteId(result.getString(1));
+					c.setTaskId(result.getString(1));
+					return c;
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return null;
+				}
+
+			}
+		});
+		
+		for (int i = 0; i < objects.size(); i ++) {
+			ContentReviewItem cri = (ContentReviewItem) objects.get(i);
+			try {
+				updateAssignment(cri.getSiteId(),cri.getTaskId());
+			} catch (SubmissionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+	}
+	
+	private void updateAssignment(String siteId, String taskId) throws SubmissionException {
+		log.info("updateAssignment(" + siteId +" , " + taskId + ")");
+		//get the assignment reference
+		String taskTitle = getAssignmentTitle(taskId);
+		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
+
+		String diagnostic = "0"; //0 = off; 1 = on
+
+		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
+		dform.applyPattern("yyyyMMdd");
+		Calendar cal = Calendar.getInstance();
+		//set this to yesterday so we avoid timezine probelms etc
+		cal.add(Calendar.DAY_OF_MONTH, -1);
+		String dtstart = dform.format(cal.getTime());
+
+
+		//set the due dates for the assignments to be in 5 month's time
+		//turnitin automatically sets each class end date to 6 months after it is created
+		//the assignment end date must be on or before the class end date
+
+		//TODO use the 'secret' function to change this to longer
+		cal.add(Calendar.MONTH, 5);
+		String dtdue = dform.format(cal.getTime());
+
+		String encrypt = "0";					//encryption flag
+		String fcmd = "3";						//new assignment
+		String fid = "4";						//function id
+		String uem = defaultInstructorEmail;
+		String ufn = defaultInstructorFName;
+		String uln = defaultInstructorLName;
+		String utp = "2"; 					//user type 2 = instructor
+		String upw = defaultInstructorPassword;
+		String s_view_report = "1";
+
+		String cid = siteId;
+		String uid = defaultInstructorId;
+		String assignid = taskId;
+		String assign = taskTitle;
+		String ctl = siteId;
+
+		String gmtime = getGMTime();
+		String assignEnc = assign;
+		try {
+			if (assign.contains("&")) {
+				//log.debug("replacing & in assingment title");
+				assign = assign.replace('&', 'n');
+
+			}
+			assignEnc = assign;
+			log.debug("Assign title is " + assignEnc);
+
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+		fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+
+		String md5;
+		try{
+			md5 = this.getMD5(md5_str);
+		} catch (Throwable t) {
+			log.warn("MD5 error creating assignment on turnitin");
+			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
+		}
+
+		HttpsURLConnection connection;
+
+		try {
+			URL hostURL = new URL(apiURL);
+			if (proxy == null) {
+				connection = (HttpsURLConnection) hostURL.openConnection();
+			} else {
+				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
+			}
+
+			connection.setRequestMethod("GET");
+			connection.setDoOutput(true);
+			connection.setDoInput(true);
+
+			log.debug("HTTPS connection made to Turnitin");
+
+			OutputStream outStream = connection.getOutputStream();
+
+			outStream.write("aid=".getBytes("UTF-8"));
+			outStream.write(aid.getBytes("UTF-8"));
+
+			outStream.write("&assign=".getBytes("UTF-8"));
+			outStream.write(assignEnc.getBytes("UTF-8"));
+
+			outStream.write("&assignid=".getBytes("UTF-8"));
+			outStream.write(assignid.getBytes("UTF-8"));
+
+			outStream.write("&cid=".getBytes("UTF-8"));
+			outStream.write(cid.getBytes("UTF-8"));
+
+			outStream.write("&uid=".getBytes("UTF-8"));
+			outStream.write(uid.getBytes("UTF-8"));
+
+			outStream.write("&ctl=".getBytes("UTF-8"));
+			outStream.write(ctl.getBytes("UTF-8"));	
+
+			outStream.write("&diagnostic=".getBytes("UTF-8"));
+			outStream.write(diagnostic.getBytes("UTF-8"));
+
+			outStream.write("&dtdue=".getBytes("UTF-8"));
+			outStream.write(dtdue.getBytes("UTF-8"));
+
+			outStream.write("&dtstart=".getBytes("UTF-8"));
+			outStream.write(dtstart.getBytes("UTF-8"));
+
+			outStream.write("&encrypt=".getBytes("UTF-8"));
+			outStream.write(encrypt.getBytes("UTF-8"));
+
+			outStream.write("&fcmd=".getBytes("UTF-8"));
+			outStream.write(fcmd.getBytes("UTF-8"));
+
+			outStream.write("&fid=".getBytes("UTF-8"));
+			outStream.write(fid.getBytes("UTF-8"));
+
+			outStream.write("&gmtime=".getBytes("UTF-8"));
+			outStream.write(gmtime.getBytes("UTF-8"));
+
+			outStream.write("&s_view_report=".getBytes("UTF-8"));
+			outStream.write(s_view_report.getBytes("UTF-8"));
+			
+			outStream.write("&said=".getBytes("UTF-8"));
+			outStream.write(said.getBytes("UTF-8"));
+
+			outStream.write("&uem=".getBytes("UTF-8"));
+			outStream.write(uem.getBytes("UTF-8"));
+
+			outStream.write("&ufn=".getBytes("UTF-8"));
+			outStream.write(ufn.getBytes("UTF-8"));
+
+			outStream.write("&uln=".getBytes("UTF-8"));
+			outStream.write(uln.getBytes("UTF-8"));
+
+			outStream.write("&upw=".getBytes("UTF-8"));
+			outStream.write(upw.getBytes("UTF-8"));
+
+			outStream.write("&utp=".getBytes("UTF-8"));
+			outStream.write(utp.getBytes("UTF-8"));
+
+			outStream.write("&md5=".getBytes("UTF-8"));
+			outStream.write(md5.getBytes("UTF-8"));
+
+			outStream.close();
+		}
+		catch (Throwable t) {
+			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
+		}
+
+		BufferedReader in;
+		try {
+			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		} catch (Throwable t) {
+			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
+		}
+
+		Document document = null;
+		try {	
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+			document = parser.parse(new org.xml.sax.InputSource(in));
+		}
+		catch (ParserConfigurationException pce){
+			log.error("parser configuration error: " + pce.getMessage());
+		} catch (Throwable t) {
+			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+		}		
+
+		Element root = document.getDocumentElement();
+		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
+		if ((rcode > 0 && rcode < 100) || rcode == 419) {
+			log.debug("Create Assignment successful");						
+		} else {
+			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+		}
+	}
+	
 }

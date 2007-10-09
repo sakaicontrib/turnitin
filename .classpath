@@ -22,5 +22,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/authz-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/jobscheduler"/>
 	<classpathentry kind="var" path="M2_REPO/quartz/quartz/1.5.2/quartz-1.5.2.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/db-api"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

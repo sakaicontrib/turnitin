@@ -32,6 +32,7 @@
 		<property name="preferSystemProfileEmail"><value>true</value></property>
 		<property name="siteAdvisor" ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"/>
 		<property name="securityService" ref="org.sakaiproject.authz.api.SecurityService" />
+		<property name="sqlService" ref="org.sakaiproject.db.api.SqlService"/>
 	</bean>
 
 	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.defaultSiteAdvisor">
