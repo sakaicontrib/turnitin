@@ -43,7 +43,7 @@ import org.sakaiproject.contentreview.dao.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.QueueException;
 import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
-import org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl;
+import org.sakaiproject.contentreview.impl.turnitin.BaseReviewServiceImpl;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.db.api.SqlReader;
 import org.sakaiproject.db.api.SqlService;
