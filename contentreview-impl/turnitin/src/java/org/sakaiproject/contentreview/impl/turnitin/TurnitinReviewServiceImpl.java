@@ -13,6 +13,8 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -41,7 +43,10 @@ import org.sakaiproject.contentreview.dao.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.QueueException;
 import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
+import org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
+import org.sakaiproject.db.api.SqlReader;
+import org.sakaiproject.db.api.SqlService;
 import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.EntityProducer;
@@ -63,13 +68,13 @@ import org.xml.sax.SAXException;
 
 public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
-	
+
 	private static final Log log = LogFactory
 	.getLog(TurnitinReviewServiceImpl.class);
 
-	
-private static final String SERVICE_NAME="Turnitin";
-	
+
+	private static final String SERVICE_NAME="Turnitin";
+
 	private String aid = null;
 
 	private String said = null;
@@ -77,50 +82,50 @@ private static final String SERVICE_NAME="Turnitin";
 	private String secretKey = null;
 
 	private String apiURL = "https://www.turnitin.com/api.asp?";
-	
+
 	private String proxyHost = null;
-	
+
 	private String proxyPort = null;
-	
+
 	private String defaultAssignmentName = null;
-	
+
 
 	private String defaultInstructorEmail = null;
-	
+
 	private String defaultInstructorFName = null;
-	
+
 	private String defaultInstructorLName = null;
-	
+
 	private String defaultInstructorPassword = null;
-	
+
 	private Long maxRetry = null;
-	
-	private int tiiMaxfileSize = 10995116;
+
+	private int TII_MAX_FILE_SIZE = 10995116;
 
 	// Proxy if set
 	private Proxy proxy = null; 
-	
+
 	//note that the assignment id actually has to be unique globally so use this as a prefix
 	// eg. assignid = defaultAssignId + siteId
 	private String defaultAssignId = null;
-	
+
 	private String defaultClassPassword = null;
-	
+
 	//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
 	private String defaultInstructorId = null;
-	
+
 	/**
 	 *  Setters
 	 */
-	
+
 	private ServerConfigurationService serverConfigurationService; 
-	
+
 	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
 		this.serverConfigurationService = serverConfigurationService;
 	}
-	
+
 	private EntityManager entityManager;
-	
+
 	public void setEntityManager(EntityManager en){
 		this.entityManager = en;
 	}
@@ -131,41 +136,46 @@ private static final String SERVICE_NAME="Turnitin";
 			ContentHostingService contentHostingService) {
 		this.contentHostingService = contentHostingService;
 	}
-	
+
 
 	private SakaiPersonManager sakaiPersonManager;
-	
+
 	public void setSakaiPersonManager(SakaiPersonManager s) {
 		this.sakaiPersonManager = s;
 	}
-	
-	
-	private SecurityService securityService;
-	public void setSecurityService(SecurityService ss) {
-		securityService = ss;
-	}
-	
+
+
 	//Should the service prefer the system profile email address for users if set?
 	private boolean preferSystemProfileEmail;
-	
+
 	public void setPreferSystemProfileEmail(boolean b) {
 		preferSystemProfileEmail = b;
 	}
-	
+
 	private ContentReviewDao dao;
 
 	public void setDao(ContentReviewDao dao) {
 		super.setDao(dao);
 		this.dao = dao;
 	}
-	
-	
+
+
 	private UserDirectoryService userDirectoryService;
 
 	public void setUserDirectoryService(
 			UserDirectoryService userDirectoryService) {
 		super.setUserDirectoryService(userDirectoryService);
 		this.userDirectoryService = userDirectoryService;
+	}
+
+	private SecurityService securityService;
+	public void setSecurityService(SecurityService ss) {
+		securityService = ss;
+	}
+	
+	private SqlService sqlService;
+	public void setSqlService(SqlService sql) {
+		sqlService = sql;
 	}
 	
 	/**
@@ -176,11 +186,11 @@ private static final String SERVICE_NAME="Turnitin";
 	public void init() {
 
 		log.info("init()");
-		
+
 		proxyHost = serverConfigurationService.getString("turnitin.proxyHost"); 
-		
+
 		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
-		
+
 		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
 			try {
 				SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
@@ -190,7 +200,7 @@ private static final String SERVICE_NAME="Turnitin";
 				log.debug("Invalid proxy port specified: " + proxyPort);
 			}
 		}
-		
+
 		aid = serverConfigurationService.getString("turnitin.aid");
 
 		said = serverConfigurationService.getString("turnitin.said");
@@ -202,45 +212,43 @@ private static final String SERVICE_NAME="Turnitin";
 		defaultAssignmentName = serverConfigurationService.getString("turnitin.defaultAssignmentName");
 
 		defaultInstructorEmail = serverConfigurationService.getString("turnitin.defaultInstructorEmail");
-		
+
 		defaultInstructorFName = serverConfigurationService.getString("turnitin.defaultInstructorFName");;
-		
+
 		defaultInstructorLName = serverConfigurationService.getString("turnitin.defaultInstructorLName");;
-		
+
 		defaultInstructorPassword = serverConfigurationService.getString("turnitin.defaultInstructorPassword");;
 
 		//note that the assignment id actually has to be unique globally so use this as a prefix
 		// assignid = defaultAssignId + siteId
 		defaultAssignId = serverConfigurationService.getString("turnitin.defaultAssignId");;
-		
-		defaultClassPassword = serverConfigurationService.getString("turnitin.defaultClassPassword");;
-		
+
+		defaultClassPassword = serverConfigurationService.getString("turnitin.defaultClassPassword","changeit");;
+
 		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
-		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId");
-		
+		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId","admin");
+
 		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
+
+		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
 		
-		tiiMaxfileSize = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
-		
-		// Set the keystore name and password, which must contain the public certificate of the Turnitin API site 
-		if (serverConfigurationService.getString("turnitin.keystore_name", null) != null ) {
-			System.setProperty("javax.net.ssl.trustStore", serverConfigurationService.getString("turnitin.keystore_name"));
-			System.setProperty("javax.net.ssl.trustStorePassword", serverConfigurationService.getString("turnitin.keystore_password"));
-		}
+		if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
+			doAssignments();
+
 	}
-	
-	
+
+
 	public String getServiceName() {
 		return this.SERVICE_NAME;
 	}
-	
-	
-	
+
+
+
 	public String getIconUrlforScore(Long score) {
-		
-		String urlBase = "/sakai-content-review-tool/images/score_";
+
+		String urlBase = "/sakai-contentreview-tool/images/score_";
 		String suffix = ".gif";
-		
+
 		if (score.equals(new Long(0))) {
 			return urlBase + "blue" + suffix;
 		} else if (score.compareTo(new Long(25)) < 0 ) {
@@ -252,10 +260,10 @@ private static final String SERVICE_NAME="Turnitin";
 		} else {
 			return urlBase + "red" + suffix;
 		}
-		
+
 	}
-	
-	
+
+
 	public boolean isAcceptableContent(ContentResource resource) {
 		//for now we accept all content
 		// TODO: Check against content types accepted by Turnitin
@@ -267,48 +275,48 @@ private static final String SERVICE_NAME="Turnitin";
 		 * application/msword
 		 * application/postscript
 		 */
-		
+
 		String mime = resource.getContentType();
 		log.debug("Got a content type of " + mime);
-		
+
 		Boolean fileTypeOk = false;
 		if (!(mime.equals("text/plain") || mime.equals("text/html") || mime.equals("application/msword") || 
 				mime.equals("application/postscript") || mime.equals("application/pdf") || mime.equals("text/rtf")) ) {
 			fileTypeOk =  false;
 			log.debug("FileType does not match know mime");
 		}
-		
+
 		//as mime's can be tricky check the extensions
 		if (!fileTypeOk) {
 			ResourceProperties resourceProperties = resource.getProperties();
 			String fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
 			if (fileName.indexOf(".")>0) {
-			
+
 				String extension = fileName.substring(fileName.lastIndexOf("."));
 				log.debug("file has an extension of " + extension);
 				if (extension.equals(".doc") || extension.equals(".wpd") || extension.equals(".eps") 
 						||  extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") || extension.equals(".pdf") || extension.equals(".docx"))
 					fileTypeOk = true;
-			
+
 			} else {
 				//we don't know what this is so lets submit it anyway
 				fileTypeOk = true;
 			}
 		}
-		
+
 		if (!fileTypeOk) {
 			return false;
 		}
-		
+
 		//TODO: if file is too big reject here 10.48576 MB
 
-		if (resource.getContentLength() > tiiMaxfileSize) {
+		if (resource.getContentLength() > TII_MAX_FILE_SIZE) {
 			log.debug("File is too big: " + resource.getContentLength());
 			return false;
 		}
 		return true;
 	}
-	
+
 	private boolean isAcceptableContent(String contentId) {
 		try {
 			ContentResource cr = contentHostingService.getResource(contentId);
@@ -321,175 +329,175 @@ private static final String SERVICE_NAME="Turnitin";
 			e.printStackTrace();
 		}
 		return false;
-		
+
 	}
-	
-	
+
+
 	public String getReviewReport(String contentId)
 	throws QueueException, ReportException {
 
-	// first retrieve the record from the database to get the externalId of
-	// the content
-	log.debug("Getting report for content: " + contentId);
+		// first retrieve the record from the database to get the externalId of
+		// the content
+		log.debug("Getting report for content: " + contentId);
 
-	List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
-	if (matchingItems.size() == 0) {
-		log.debug("Content " + contentId + " has not been queued previously");
-		throw new QueueException("Content " + contentId + " has not been queued previously");
+		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		if (matchingItems.size() == 0) {
+			log.debug("Content " + contentId + " has not been queued previously");
+			throw new QueueException("Content " + contentId + " has not been queued previously");
+		}
+
+		if (matchingItems.size() > 1)
+			log.debug("More than one matching item found - using first item found");
+
+		// check that the report is available
+		// TODO if the database record does not show report available check with
+		// turnitin (maybe)
+
+		ContentReviewItem item = (ContentReviewItem) matchingItems.iterator().next();
+		if (item.getStatus().compareTo(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE) != 0) {
+			log.debug("Report not available: " + item.getStatus());
+			throw new ReportException("Report not available: " + item.getStatus());
+		}
+		
+		
+		//Should we generate a report as the default instructor or for this user?
+		boolean isInstructor = false;
+		if (securityService.unlock(userDirectoryService.getCurrentUser(), "asn.grade", "/site/" + item.getSiteId()))
+			isInstructor = true;
+		
+
+		// report is available - generate the URL to display
+
+		String oid = item.getExternalId();
+		String fid = "6";
+		String fcmd = "1";
+		String encrypt = "0";
+		String diagnostic = "0";
+		String cid = item.getSiteId();
+		String assignid = defaultAssignId + item.getSiteId();
+		
+		String uem;
+		String ufn;
+		String uln;
+		String utp;
+		String uid;
+		
+		if (isInstructor) {
+			uem = defaultInstructorEmail;
+			ufn = defaultInstructorFName;
+			uln = defaultInstructorLName;
+			utp = "2";
+			uid = defaultInstructorId;
+		} else {
+			User user = userDirectoryService.getCurrentUser();
+			uem = user.getEmail();
+			ufn = user.getFirstName();
+			uln = user.getLastName();
+			uid = item.getUserId();
+			utp = "1";
+
+		}
+		
+		String gmtime = getGMTime();
+
+		// note that these vars must be ordered alphabetically according to
+		// their names with secretKey last
+		String md5_str = aid + assignid + cid + diagnostic + encrypt + fcmd + fid + gmtime + oid
+		+ said + uem + ufn + uid + uln + utp + secretKey;
+
+		String md5;
+		try {
+			md5 = getMD5(md5_str);
+		} catch (Throwable t) {
+			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
+		}
+
+		String reportURL = apiURL;
+
+		reportURL += "fid=";
+		reportURL += fid;
+
+		reportURL += "&fcmd=";
+		reportURL += fcmd;
+
+		reportURL += "&assignid=";
+		reportURL += assignid;
+
+		reportURL += "&uid=";
+		reportURL += uid;
+
+		reportURL += "&cid=";
+		reportURL += cid;
+
+		reportURL += "&encrypt=";
+		reportURL += encrypt;
+
+		reportURL += "&aid=";
+		reportURL += aid;
+
+		reportURL += "&said=";
+		reportURL += said;
+
+		reportURL += "&diagnostic=";
+		reportURL += diagnostic;
+
+		reportURL += "&oid=";
+		reportURL += oid;
+
+		reportURL += "&uem=";
+		reportURL += uem;
+
+		reportURL += "&ufn=";
+		reportURL += ufn;
+
+		reportURL += "&uln=";
+		reportURL += uln;
+
+		reportURL += "&utp=";
+		reportURL += utp;
+
+		reportURL += "&gmtime=";
+		reportURL += gmtime;
+
+		reportURL += "&md5=";
+		reportURL += md5;
+
+		return reportURL;
 	}
-
-	if (matchingItems.size() > 1)
-		log.debug("More than one matching item found - using first item found");
-
-	// check that the report is available
-	// TODO if the database record does not show report available check with
-	// turnitin (maybe)
-
-	ContentReviewItem item = (ContentReviewItem) matchingItems.iterator().next();
-	if (item.getStatus().compareTo(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE) != 0) {
-		log.debug("Report not available: " + item.getStatus());
-		throw new ReportException("Report not available: " + item.getStatus());
-	}
-
-	// report is available - generate the URL to display
-	//Should we generate a report as the default instructor or for this user?
-	boolean isInstructor = false;
-	if (securityService.unlock(userDirectoryService.getCurrentUser(), "asn.grade", "/site/" + item.getSiteId()))
-		isInstructor = true;
-	
-	String oid = item.getExternalId();
-	String fid = "6";
-	String fcmd = "1";
-	String encrypt = "0";
-	String diagnostic = "0";
-	String uem = defaultInstructorEmail;
-	String ufn = defaultInstructorFName;
-	String uln = defaultInstructorLName;
-	String utp = "2";
-
-	// is it worthwhile using this?
-	String uid = defaultInstructorId;
-	String cid = item.getSiteId();
-	String assignid = defaultAssignId + item.getSiteId();
-	
-	if (isInstructor) {
-		uem = defaultInstructorEmail;
-		ufn = defaultInstructorFName;
-		uln = defaultInstructorLName;
-		utp = "2";
-		uid = defaultInstructorId;
-	} else {
-		User user = userDirectoryService.getCurrentUser();
-		uem = user.getEmail();
-		ufn = user.getFirstName();
-		uln = user.getLastName();
-		uid = item.getUserId();
-		utp = "1";
-
-	}
-	
-	
-	String gmtime = getGMTime();
-
-	// note that these vars must be ordered alphabetically according to
-	// their names with secretKey last
-	String md5_str = aid + assignid + cid + diagnostic + encrypt + fcmd + fid + gmtime + oid
-			+ said + uem + ufn + uid + uln + utp + secretKey;
-
-	String md5;
-	try {
-		md5 = getMD5(md5_str);
-	} catch (Throwable t) {
-		throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
-	}
-
-	String reportURL = apiURL;
-
-	reportURL += "fid=";
-	reportURL += fid;
-
-	reportURL += "&fcmd=";
-	reportURL += fcmd;
-	
-	reportURL += "&assignid=";
-	reportURL += assignid;
-	
-	reportURL += "&uid=";
-	reportURL += uid;
-
-	reportURL += "&cid=";
-	reportURL += cid;
-	
-	reportURL += "&encrypt=";
-	reportURL += encrypt;
-
-	reportURL += "&aid=";
-	reportURL += aid;
-
-	reportURL += "&said=";
-	reportURL += said;
-
-	reportURL += "&diagnostic=";
-	reportURL += diagnostic;
-
-	reportURL += "&oid=";
-	reportURL += oid;
-
-	reportURL += "&uem=";
-	reportURL += uem;
-
-	reportURL += "&ufn=";
-	reportURL += ufn;
-
-	reportURL += "&uln=";
-	reportURL += uln;
-
-	reportURL += "&utp=";
-	reportURL += utp;
-
-	reportURL += "&gmtime=";
-	reportURL += gmtime;
-
-	reportURL += "&md5=";
-	reportURL += md5;
-
-	return reportURL;
-}
 
 	/**
 	 * private methods
 	 */
 	private String encodeParam(String name, String value, String boundary) {
 		return "--" + boundary + "\r\nContent-Disposition: form-data; name=\""
-				+ name + "\"\r\n\r\n" + value + "\r\n";
+		+ name + "\"\r\n\r\n" + value + "\r\n";
 	}
-	
+
 
 	private void createClass(String siteId) throws SubmissionException {
-    	
+
 		log.debug("Creating class for site: " + siteId);
-		
-    	String cpw = defaultClassPassword;
-    	String ctl = siteId;
-    	String diagnostic = "0";
-    	String encrypt = "0";	
-    	String fcmd = "2";
-    	String fid = "2";
-    	String uem = defaultInstructorEmail;
+
+		String cpw = defaultClassPassword;
+		String ctl = siteId;
+		String diagnostic = "0";
+		String encrypt = "0";	
+		String fcmd = "2";
+		String fid = "2";
+		String uem = defaultInstructorEmail;
 		String ufn = defaultInstructorFName;
 		String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
 		String upw = defaultInstructorPassword;
 		String cid = siteId;
 		String uid = defaultInstructorId;
-		String s_view_report = "1";
-		
+
 		String gmtime = this.getGMTime();
-		    	
-    	// MD5 of function 2 - Create a class under a given account (instructor only)
+
+		// MD5 of function 2 - Create a class under a given account (instructor only)
 		String md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
-						 gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-		
+		gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
@@ -497,9 +505,9 @@ private static final String SERVICE_NAME="Turnitin";
 			log.warn("MD5 error creating class on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Turnitin API call", t);
 		}
-		
+
 		HttpsURLConnection connection;
-		
+
 		try {
 			URL hostURL = new URL(apiURL);
 			if (proxy == null) {
@@ -512,71 +520,68 @@ private static final String SERVICE_NAME="Turnitin";
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.info("HTTPS Connection made to Turnitin");
+			log.debug("HTTPS Connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
-		
+
 			outStream.write("uid=".getBytes("UTF-8"));
 			outStream.write(uid.getBytes("UTF-8"));
-			
+
 			outStream.write("&cid=".getBytes("UTF-8"));
 			outStream.write(cid.getBytes("UTF-8"));
-			
+
 			outStream.write("&aid=".getBytes("UTF-8"));
 			outStream.write(aid.getBytes("UTF-8"));			
-	
+
 			outStream.write("&cpw=".getBytes("UTF-8"));
 			outStream.write(cpw.getBytes("UTF-8"));
-	
+
 			outStream.write("&ctl=".getBytes("UTF-8"));
 			outStream.write(ctl.getBytes("UTF-8"));
-	
+
 			outStream.write("&diagnostic=".getBytes("UTF-8"));
 			outStream.write(diagnostic.getBytes("UTF-8"));
-			
+
 			outStream.write("&encrypt=".getBytes("UTF-8"));
 			outStream.write(encrypt.getBytes("UTF-8"));
-	
+
 			outStream.write("&fcmd=".getBytes("UTF-8"));
 			outStream.write(fcmd.getBytes("UTF-8"));
-			
+
 			outStream.write("&fid=".getBytes("UTF-8"));
 			outStream.write(fid.getBytes("UTF-8"));
-			
+
 			outStream.write("&gmtime=".getBytes("UTF-8"));
 			outStream.write(gmtime.getBytes("UTF-8"));
-			
+
 			outStream.write("&said=".getBytes("UTF-8"));
 			outStream.write(said.getBytes("UTF-8"));
-			
-			outStream.write("&s_view_report=".getBytes("UTF-8"));
-			outStream.write(s_view_report.getBytes("UTF-8"));
-			
+
 			outStream.write("&uem=".getBytes("UTF-8"));
 			outStream.write(uem.getBytes("UTF-8"));
-			
+
 			outStream.write("&ufn=".getBytes("UTF-8"));
 			outStream.write(ufn.getBytes("UTF-8"));
-			
+
 			outStream.write("&uln=".getBytes("UTF-8"));
 			outStream.write(uln.getBytes("UTF-8"));
-			
+
 			outStream.write("&upw=".getBytes("UTF-8"));
 			outStream.write(upw.getBytes("UTF-8"));
-			
+
 			outStream.write("&utp=".getBytes("UTF-8"));
 			outStream.write(utp.getBytes("UTF-8"));
-			
+
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
-			
+
 			outStream.close();
 		}
 		catch (Throwable t) {
 			throw new SubmissionException("Class creation call to Turnitin API failed", t);
 		}
-		
-		
+
+
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -590,27 +595,27 @@ private static final String SERVICE_NAME="Turnitin";
 			document = parser.parse(new org.xml.sax.InputSource(in));
 		}
 		catch (ParserConfigurationException pce){
-				log.error("parser configuration error: " + pce.getMessage());
+			log.error("parser configuration error: " + pce.getMessage());
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
-	
-		
+
+
 		Element root = document.getDocumentElement();
 		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("20") == 0 || 
-			((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("21") == 0 ) {
+				((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("21") == 0 ) {
 			log.debug("Create Class successful");						
 		} else {
 			throw new SubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
 		}
-    }
-		
+	}
+
 	private String getAssignmentTitle(String taskId){
 		try {
 			Reference ref = entityManager.newReference(taskId);
 			log.debug("got ref " + ref + " of type: " + ref.getType());
 			EntityProducer ep = ref.getEntityProducer();
-		
+
 			Entity ent = ep.getEntity(ref);
 			log.debug("got entity " + ent);
 			if (ent instanceof Assignment) {
@@ -618,38 +623,38 @@ private static final String SERVICE_NAME="Turnitin";
 				log.debug("Got assignemment with title " + as.getTitle());
 				return URLDecoder.decode(as.getTitle(),"UTF-8");
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return taskId;
-		
+
 	}
-	
+
 	private void createAssignment(String siteId, String taskId) throws SubmissionException {
-		
+
 		//get the assignment reference
 		String taskTitle = getAssignmentTitle(taskId);
 		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
-    	
-    	String diagnostic = "0"; //0 = off; 1 = on
-		
+
+		String diagnostic = "0"; //0 = off; 1 = on
+
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
 		dform.applyPattern("yyyyMMdd");
 		Calendar cal = Calendar.getInstance();
 		//set this to yesterday so we avoid timezine probelms etc
 		cal.add(Calendar.DAY_OF_MONTH, -1);
 		String dtstart = dform.format(cal.getTime());
-		
-		
+
+
 		//set the due dates for the assignments to be in 5 month's time
 		//turnitin automatically sets each class end date to 6 months after it is created
 		//the assignment end date must be on or before the class end date
-		
+
 		//TODO use the 'secret' function to change this to longer
 		cal.add(Calendar.MONTH, 5);
 		String dtdue = dform.format(cal.getTime());
-		
+
 		String encrypt = "0";					//encryption flag
 		String fcmd = "2";						//new assignment
 		String fid = "4";						//function id
@@ -658,32 +663,33 @@ private static final String SERVICE_NAME="Turnitin";
 		String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
 		String upw = defaultInstructorPassword;
-		
+		String s_view_report = "1";
+
 		String cid = siteId;
 		String uid = defaultInstructorId;
 		String assignid = taskId;
 		String assign = taskTitle;
 		String ctl = siteId;
-		
+
 		String gmtime = getGMTime();
 		String assignEnc = assign;
 		try {
 			if (assign.contains("&")) {
 				//log.debug("replacing & in assingment title");
 				assign = assign.replace('&', 'n');
-				
+
 			}
 			assignEnc = assign;
 			log.debug("Assign title is " + assignEnc);
-			
+
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-							fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-		
+		fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
@@ -691,9 +697,9 @@ private static final String SERVICE_NAME="Turnitin";
 			log.warn("MD5 error creating assignment on turnitin");
 			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
 		}
-		
+
 		HttpsURLConnection connection;
-		
+
 		try {
 			URL hostURL = new URL(apiURL);
 			if (proxy == null) {
@@ -706,83 +712,86 @@ private static final String SERVICE_NAME="Turnitin";
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.info("HTTPS connection made to Turnitin");
+			log.debug("HTTPS connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
-		
-    		outStream.write("aid=".getBytes("UTF-8"));
+
+			outStream.write("aid=".getBytes("UTF-8"));
 			outStream.write(aid.getBytes("UTF-8"));
-			
+
 			outStream.write("&assign=".getBytes("UTF-8"));
 			outStream.write(assignEnc.getBytes("UTF-8"));
-			
+
 			outStream.write("&assignid=".getBytes("UTF-8"));
 			outStream.write(assignid.getBytes("UTF-8"));
-			
+
 			outStream.write("&cid=".getBytes("UTF-8"));
 			outStream.write(cid.getBytes("UTF-8"));
-			
+
 			outStream.write("&uid=".getBytes("UTF-8"));
 			outStream.write(uid.getBytes("UTF-8"));
-			
+
 			outStream.write("&ctl=".getBytes("UTF-8"));
 			outStream.write(ctl.getBytes("UTF-8"));	
-			
+
 			outStream.write("&diagnostic=".getBytes("UTF-8"));
 			outStream.write(diagnostic.getBytes("UTF-8"));
-			
+
 			outStream.write("&dtdue=".getBytes("UTF-8"));
 			outStream.write(dtdue.getBytes("UTF-8"));
-			
+
 			outStream.write("&dtstart=".getBytes("UTF-8"));
 			outStream.write(dtstart.getBytes("UTF-8"));
-			
+
 			outStream.write("&encrypt=".getBytes("UTF-8"));
 			outStream.write(encrypt.getBytes("UTF-8"));
-			
+
 			outStream.write("&fcmd=".getBytes("UTF-8"));
 			outStream.write(fcmd.getBytes("UTF-8"));
-			
+
 			outStream.write("&fid=".getBytes("UTF-8"));
 			outStream.write(fid.getBytes("UTF-8"));
-			
+
 			outStream.write("&gmtime=".getBytes("UTF-8"));
 			outStream.write(gmtime.getBytes("UTF-8"));
+
+			outStream.write("&s_view_report=".getBytes("UTF-8"));
+			outStream.write(s_view_report.getBytes("UTF-8"));
 			
 			outStream.write("&said=".getBytes("UTF-8"));
 			outStream.write(said.getBytes("UTF-8"));
-			
+
 			outStream.write("&uem=".getBytes("UTF-8"));
 			outStream.write(uem.getBytes("UTF-8"));
-			
+
 			outStream.write("&ufn=".getBytes("UTF-8"));
 			outStream.write(ufn.getBytes("UTF-8"));
-			
+
 			outStream.write("&uln=".getBytes("UTF-8"));
 			outStream.write(uln.getBytes("UTF-8"));
-			
+
 			outStream.write("&upw=".getBytes("UTF-8"));
 			outStream.write(upw.getBytes("UTF-8"));
-			
+
 			outStream.write("&utp=".getBytes("UTF-8"));
 			outStream.write(utp.getBytes("UTF-8"));
-			
+
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
-				
+
 			outStream.close();
 		}
 		catch (Throwable t) {
 			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
 		}
-		
+
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
-		
+
 		Document document = null;
 		try {	
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -790,11 +799,11 @@ private static final String SERVICE_NAME="Turnitin";
 			document = parser.parse(new org.xml.sax.InputSource(in));
 		}
 		catch (ParserConfigurationException pce){
-				log.error("parser configuration error: " + pce.getMessage());
+			log.error("parser configuration error: " + pce.getMessage());
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}		
-		
+
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
 		if ((rcode > 0 && rcode < 100) || rcode == 419) {
@@ -803,53 +812,53 @@ private static final String SERVICE_NAME="Turnitin";
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
-    }
-		
+	}
+
 	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException {
-		
-    	String ctl = siteId; 			//class title
-    	String fid = "3";
+
+		String ctl = siteId; 			//class title
+		String fid = "3";
 		String fcmd = "2";
 		String encrypt = "0";
 		String diagnostic = "0";
 		String tem = defaultInstructorEmail;
-		
+
 		User user;
 		try {
 			user = userDirectoryService.getUser(userId);
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot get user information", t);
 		}
-		
+
 		log.debug("Enrolling user " + user.getEid() + "(" + userId + ")  in class " + siteId);
-		
+
 		/* not using this as we may be getting email from profile
 		String uem = user.getEmail();
 		if (uem == null) {
 			throw new SubmissionException ("User has no email address");
 		}
-		*/
-		
+		 */
+
 		String ufn = user.getFirstName();
 		if (ufn == null) {
 			throw new SubmissionException ("User has no first name");
 		}
-		
+
 		String uln = user.getLastName();
 		if (uln == null) {
 			throw new SubmissionException ("User has no last name");
 		}
-		
+
 		String utp = "1";
-		
+
 		String uid = userId;
 		String cid = siteId;
-				
+
 		String gmtime = this.getGMTime();
-		
+
 		String md5_str = aid + cid + ctl + diagnostic + encrypt + fcmd + fid + gmtime + said + tem + uem +
-		 				 ufn + uid + uln + utp + secretKey;
-		
+		ufn + uid + uln + utp + secretKey;
+
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
@@ -857,9 +866,9 @@ private static final String SERVICE_NAME="Turnitin";
 			log.warn("MD5 error enrolling student on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Class Enrollment Turnitin API call", t);
 		}
-		
+
 		HttpsURLConnection connection;
-		
+
 		try {
 			URL hostURL = new URL(apiURL);
 			if (proxy == null) {
@@ -872,71 +881,71 @@ private static final String SERVICE_NAME="Turnitin";
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
-			log.info("Connection made to Turnitin");
+			log.debug("Connection made to Turnitin");
 
 			OutputStream outStream = connection.getOutputStream();
-		
+
 			outStream.write("fid=".getBytes("UTF-8"));
 			outStream.write(fid.getBytes("UTF-8"));
-			
+
 			outStream.write("&fcmd=".getBytes("UTF-8"));
 			outStream.write(fcmd.getBytes("UTF-8"));
-			
+
 			outStream.write("&cid=".getBytes("UTF-8"));
 			outStream.write(cid.getBytes("UTF-8"));
-			
+
 			outStream.write("&tem=".getBytes());
 			outStream.write(tem.getBytes("UTF-8"));
-			
+
 			outStream.write("&ctl=".getBytes());
 			outStream.write(ctl.getBytes("UTF-8"));
-			
+
 			outStream.write("&encrypt=".getBytes());
 			outStream.write(encrypt.getBytes("UTF-8"));
-			
+
 			outStream.write("&aid=".getBytes("UTF-8"));
 			outStream.write(aid.getBytes("UTF-8"));
-			
+
 			outStream.write("&said=".getBytes("UTF-8"));
 			outStream.write(said.getBytes("UTF-8"));
-			
+
 			outStream.write("&diagnostic=".getBytes("UTF-8"));
 			outStream.write(diagnostic.getBytes("UTF-8"));
-			
+
 			outStream.write("&uem=".getBytes("UTF-8"));
 			outStream.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
-			
+
 			outStream.write("&ufn=".getBytes("UTF-8"));
 			outStream.write(ufn.getBytes("UTF-8"));
-			
+
 			outStream.write("&uln=".getBytes("UTF-8"));
 			outStream.write(uln.getBytes("UTF-8"));
-			
+
 			outStream.write("&utp=".getBytes("UTF-8"));
 			outStream.write(utp.getBytes("UTF-8"));
-			
+
 			outStream.write("&gmtime=".getBytes("UTF-8"));
 			outStream.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
-			
+
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
-			
+
 			outStream.write("&uid=".getBytes("UTF-8"));
 			outStream.write(uid.getBytes("UTF-8"));
-			
+
 			outStream.close();
 		}
 		catch (Throwable t) {
 			throw new SubmissionException("Student Enrollment call to Turnitin failed", t);
 		}
-		
+
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
-		
+
 		Document document = null;
 		try {	
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -944,12 +953,12 @@ private static final String SERVICE_NAME="Turnitin";
 			document = parser.parse(new org.xml.sax.InputSource(in));
 		}
 		catch (ParserConfigurationException pce){
-				log.error("parser configuration error: " + pce.getMessage());
+			log.error("parser configuration error: " + pce.getMessage());
 		} catch (Throwable t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 	}
-	
+
 	public void processQueue() {
 		log.debug("Processing submission queue");
 
@@ -960,16 +969,16 @@ private static final String SERVICE_NAME="Turnitin";
 		List notSubmittedItems = dao.findByExample(searchItem);
 		searchItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 		notSubmittedItems.addAll(dao.findByExample(searchItem));
-		
+
 		log.debug("Total list is now " +  notSubmittedItems.size());
 		Iterator notSubmittedIterator = notSubmittedItems.iterator();
 		ContentReviewItem currentItem;
-
+		log.info("Processing Content review queue: " + notSubmittedItems.size() + " in queue");
 		while (notSubmittedIterator.hasNext()) {
 			currentItem = (ContentReviewItem) notSubmittedIterator.next();
-			
+
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
-			
+
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(new Long(0));
 				dao.update(currentItem);
@@ -984,7 +993,7 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 			}
 			User user;
-			
+
 			try {
 				user = userDirectoryService.getUser(currentItem.getUserId());
 			} catch (UserNotDefinedException e1) {
@@ -994,7 +1003,7 @@ private static final String SERVICE_NAME="Turnitin";
 				continue;
 			}
 
-			
+
 			String uem = getEmail(user);
 			if (uem == null ){
 				log.debug("User: " + user.getEid() + " has no valid email");
@@ -1003,7 +1012,7 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			String ufn = user.getFirstName().trim();
 			if (ufn == null || ufn.equals("")) {
 				log.debug("Submission attempt unsuccessful - User has no first name");
@@ -1012,7 +1021,7 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			String uln = user.getLastName().trim();
 			if (uln == null || uln.equals("")) {
 				log.debug("Submission attempt unsuccessful - User has no last name");
@@ -1021,18 +1030,18 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			try {				
 				createClass(currentItem.getSiteId());
 			} catch (Throwable t) {
 				log.debug ("Submission attempt unsuccessful: Could not create class", t);
-				
+
 				if (t.getClass() == IOException.class) {
 					currentItem.setLastError("Class creation error: " + t.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setLastError("Class creation error: " + t.getMessage());
-					if (t.getMessage().equals("Class creation call to Turnitin API failed") || t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful"))
+					if (t.getMessage().equals("Class creation call to Turnitin API failed") || t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful") || t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful"))
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					else	
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
@@ -1040,12 +1049,12 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			try {
 				enrollInClass(currentItem.getUserId(), uem, currentItem.getSiteId());
 			} catch (Throwable t) {
 				log.debug ("Submission attempt unsuccessful: Could not enroll user in class", t);
-				
+
 				if (t.getClass() == IOException.class) {
 					currentItem.setLastError("Enrolment error: " + t.getMessage() );
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
@@ -1056,12 +1065,12 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			try {
 				createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
 			} catch (Throwable t) {
 				log.debug ("Submission attempt unsuccessful: Could not create assignment");
-				
+
 				if (t.getClass() == IOException.class) {
 					currentItem.setLastError("Assign creation error: " + t.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
@@ -1074,24 +1083,24 @@ private static final String SERVICE_NAME="Turnitin";
 					}
 					currentItem.setLastError("createAssignment: " + t.getMessage());
 				}
-				
+
 				dao.update(currentItem);
 				continue;
 			}
-			
-			
+
+
 			//get all the info for the api call
 			//we do this before connecting so that if there is a problem we can jump out - saves time
 			//these errors should probably be caught when a student is enrolled in a class
 			//but we check again here to be sure
-			
-			
-			
+
+
+
 			String diagnostic = "0";
 			String encrypt = "0";
 			String fcmd = "2";
 			String fid = "5";
-			
+
 			//to get the name of the initial submited file we need the title
 			ContentResource resource = null;
 			ResourceProperties resourceProperties = null;
@@ -1099,17 +1108,15 @@ private static final String SERVICE_NAME="Turnitin";
 			try {
 				try {
 					resource = contentHostingService.getResource(currentItem.getContentId());
-					
+
 				} catch (IdUnusedException e4) {
+					//ToDo we should probably remove these from the Queue
 					log.warn("IdUnusedException: no resource with id " + currentItem.getContentId());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError("IdUnusedException: resource with this id doesn't exist" );
-					dao.update(currentItem);
+					dao.delete(currentItem);
 					continue;
 				}
 				resourceProperties = resource.getProperties();
 				fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
-				
 				log.debug("origional filename is: " + fileName);
 				if (fileName == null) {
 					//use the id 
@@ -1120,7 +1127,7 @@ private static final String SERVICE_NAME="Turnitin";
 				log.debug("fileName is :" + fileName);
 				try {
 					fileName = URLDecoder.decode(fileName, "UTF-8");
-				}
+				} 
 				catch (IllegalArgumentException eae) {
 					log.warn("Unable to decode fileName: " + fileName);
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
@@ -1128,7 +1135,6 @@ private static final String SERVICE_NAME="Turnitin";
 					dao.update(currentItem);
 					continue;
 				}
-
 				//in rare cases it seems filenames can be double encoded
 				if (fileName.indexOf("%20")> 0 ) {
 					try {
@@ -1143,8 +1149,8 @@ private static final String SERVICE_NAME="Turnitin";
 					}
 
 				}
-
 				
+
 				fileName = fileName.replace(' ', '_');
 				log.debug("fileName is :" + fileName);
 			}
@@ -1165,7 +1171,7 @@ private static final String SERVICE_NAME="Turnitin";
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-				
+
 			String userEid = currentItem.getUserId();
 			try {
 				userEid = userDirectoryService.getUserEid(currentItem.getUserId());
@@ -1173,7 +1179,7 @@ private static final String SERVICE_NAME="Turnitin";
 			catch (UserNotDefinedException unde) {
 				//nothing realy to do?
 			}
-			
+
 			String ptl =  userEid  + ":" + fileName;
 			String ptype = "2";
 
@@ -1191,9 +1197,9 @@ private static final String SERVICE_NAME="Turnitin";
 			String gmtime = this.getGMTime();
 
 			String md5_str = aid + assign + assignid + cid + ctl
-						+ diagnostic + encrypt + fcmd + fid + gmtime + ptl
-						+ ptype + said + tem + uem + ufn + uid + uln + utp
-						+ secretKey;
+			+ diagnostic + encrypt + fcmd + fid + gmtime + ptl
+			+ ptype + said + tem + uem + ufn + uid + uln + utp
+			+ secretKey;
 
 			String md5;
 			try{
@@ -1205,14 +1211,14 @@ private static final String SERVICE_NAME="Turnitin";
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			String boundary = "";
 			OutputStream outStream = null;
-			
+
 			HttpsURLConnection connection;
-			
+
 			try {
-				
+
 				URL hostURL = new URL(apiURL);
 				if (proxy == null) {
 					connection = (HttpsURLConnection) hostURL.openConnection();
@@ -1227,13 +1233,13 @@ private static final String SERVICE_NAME="Turnitin";
 				Random rand = new Random();
 				//make up a boundary that should be unique
 				boundary = Long.toString(rand.nextLong(), 26)
-					+ Long.toString(rand.nextLong(), 26)
-					+ Long.toString(rand.nextLong(), 26);
-			
+				+ Long.toString(rand.nextLong(), 26)
+				+ Long.toString(rand.nextLong(), 26);
+
 				// set up the connection to use multipart/form-data
 				connection.setRequestProperty("Content-Type","multipart/form-data; boundary=" + boundary);
 
-				log.info("HTTPS connection made to Turnitin");
+				log.debug("HTTPS connection made to Turnitin");
 
 				outStream = connection.getOutputStream();
 
@@ -1260,13 +1266,13 @@ private static final String SERVICE_NAME="Turnitin";
 				outStream.write(encodeParam("md5", md5, boundary).getBytes());
 
 				// put in the actual file
-				
+
 				outStream.write(("--" + boundary
-								+ "\r\nContent-Disposition: form-data; name=\"pdata\"; filename=\""
-								+ currentItem.getContentId() + "\"\r\n"
-								+ "Content-Type: " + resource.getContentType()
-								+ "\r\ncontent-transfer-encoding: binary" + "\r\n\r\n")
-								.getBytes());
+						+ "\r\nContent-Disposition: form-data; name=\"pdata\"; filename=\""
+						+ currentItem.getContentId() + "\"\r\n"
+						+ "Content-Type: " + resource.getContentType()
+						+ "\r\ncontent-transfer-encoding: binary" + "\r\n\r\n")
+						.getBytes());
 
 				outStream.write(resource.getContent());
 				outStream.write("\r\n".getBytes("UTF-8"));
@@ -1306,37 +1312,37 @@ private static final String SERVICE_NAME="Turnitin";
 				document = parser.parse(new org.xml.sax.InputSource(in));
 			}
 			catch (ParserConfigurationException pce){
-					log.error("parser configuration error: " + pce.getMessage());
+				log.error("parser configuration error: " + pce.getMessage());
 			}
 			catch (SAXException se) {
 				log.error("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				dao.update(currentItem);
 				continue;
-			
+
 			} catch (IOException e) {
 				log.warn("Unable to determine Submission status due to response IO error: " + e.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				dao.update(currentItem);
 				continue;
 			}
-			
-			
+
+
 			Element root = document.getDocumentElement();
-			
+
 			String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
 			String rCode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData();
-			
+
 			if (rCode == null)
 				rCode = "";
 			else
 				rCode = rCode.trim();
-			
+
 			if (rMessage == null)
 				rMessage = rCode;
 			else 
 				rMessage = rMessage.trim();
-			
+
 			if (rCode.compareTo("51") == 0) {
 				String externalId = ((CharacterData) (root.getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
 				if (externalId != null && externalId.length() >0 ) {
@@ -1353,12 +1359,12 @@ private static final String SERVICE_NAME="Turnitin";
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					dao.update(currentItem);
 				}
-				
+
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
-				 
+
 				if (rMessage.equals("User password does not match user email") 
-							|| rCode.equals("1001") || rMessage.equals("")) {
+						|| rCode.equals("1001") || rMessage.equals("") || rCode.equals("413")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
@@ -1413,23 +1419,23 @@ private static final String SERVICE_NAME="Turnitin";
 	}
 
 	public void checkForReports() {
-		
-		log.info("Checking for updated reports from Turnitin");
-		
+
+		log.debug("Checking for updated reports from Turnitin");
+
 		// get the list of all items that are waiting for reports
 		List awaitingReport = dao.findByProperties(ContentReviewItem.class,
 				new String[] { "status" },
 				new Object[] { ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE});
-		
+
 		awaitingReport.addAll(dao.findByProperties(ContentReviewItem.class,
-													new String[] { "status" },
-													new Object[] { ContentReviewItem.REPORT_ERROR_RETRY_CODE}));
-		
+				new String[] { "status" },
+				new Object[] { ContentReviewItem.REPORT_ERROR_RETRY_CODE}));
+
 		Iterator listIterator = awaitingReport.iterator();
 		HashMap reportTable = new HashMap();
 
 		log.debug("There are " + awaitingReport.size() + " submissions awaiting reports");
-		
+
 		ContentReviewItem currentItem;
 		while (listIterator.hasNext()) {
 			currentItem = (ContentReviewItem) listIterator.next();
@@ -1446,16 +1452,16 @@ private static final String SERVICE_NAME="Turnitin";
 				currentItem.setRetryCount(new Long(l));
 				dao.update(currentItem);
 			}
-			
+
 			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
 				currentItem.setStatus(new Long(4));
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			if (!reportTable.containsKey(currentItem.getExternalId())) {
 				// get the list from turnitin and see if the review is available
-				
+
 				log.debug("Attempting to update hashtable with reports for site " + currentItem.getSiteId());
 
 				String diagnostic = "0";
@@ -1478,11 +1484,11 @@ private static final String SERVICE_NAME="Turnitin";
 				String ctl = currentItem.getSiteId();
 
 				String gmtime = this.getGMTime();
-				
+
 				String md5_str = aid + assign + assignid + cid + ctl
-							+ diagnostic + encrypt + fcmd + fid + gmtime + said
-							+ tem + uem + ufn + uid + uln + utp + secretKey;
-					
+				+ diagnostic + encrypt + fcmd + fid + gmtime + said
+				+ tem + uem + ufn + uid + uln + utp + secretKey;
+
 				String md5;
 				try{
 					md5 = this.getMD5(md5_str);
@@ -1496,7 +1502,7 @@ private static final String SERVICE_NAME="Turnitin";
 				}
 
 				HttpsURLConnection connection;
-				
+
 				try {
 					URL hostURL = new URL(apiURL);
 					if (proxy == null) {
@@ -1509,64 +1515,64 @@ private static final String SERVICE_NAME="Turnitin";
 					connection.setDoOutput(true);
 					connection.setDoInput(true);
 
-					log.info("HTTPS connection made to Turnitin");
+					log.debug("HTTPS connection made to Turnitin");
 
 					OutputStream out = connection.getOutputStream();
 
 					out.write("fid=".getBytes("UTF-8"));
 					out.write(fid.getBytes("UTF-8"));
-					
+
 					out.write("&fcmd=".getBytes("UTF-8"));
 					out.write(fcmd.getBytes("UTF-8"));
-					
+
 					out.write("&uid=".getBytes("UTF-8"));
 					out.write(uid.getBytes("UTF-8"));
-					
+
 					out.write("&tem=".getBytes("UTF-8"));
 					out.write(tem.getBytes("UTF-8"));
-					
+
 					out.write("&assign=".getBytes("UTF-8"));
 					out.write(assign.getBytes("UTF-8"));
-					
+
 					out.write("&assignid=".getBytes("UTF-8"));
 					out.write(assignid.getBytes("UTF-8"));
-					
+
 					out.write("&cid=".getBytes("UTF-8"));
 					out.write(cid.getBytes("UTF-8"));
-					
+
 					out.write("&ctl=".getBytes("UTF-8"));
 					out.write(ctl.getBytes("UTF-8"));
-					
+
 					out.write("&encrypt=".getBytes());
 					out.write(encrypt.getBytes("UTF-8"));
-					
+
 					out.write("&aid=".getBytes("UTF-8"));
 					out.write(aid.getBytes("UTF-8"));
-					
+
 					out.write("&said=".getBytes("UTF-8"));
 					out.write(said.getBytes("UTF-8"));
-					
+
 					out.write("&diagnostic=".getBytes("UTF-8"));
 					out.write(diagnostic.getBytes("UTF-8"));
-					
+
 					out.write("&uem=".getBytes("UTF-8"));
 					out.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
-					
+
 					out.write("&ufn=".getBytes("UTF-8"));
 					out.write(ufn.getBytes("UTF-8"));
-					
+
 					out.write("&uln=".getBytes("UTF-8"));
 					out.write(uln.getBytes("UTF-8"));
-					
+
 					out.write("&utp=".getBytes("UTF-8"));
 					out.write(utp.getBytes("UTF-8"));
-					
+
 					out.write("&gmtime=".getBytes("UTF-8"));
 					out.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
-					
+
 					out.write("&md5=".getBytes("UTF-8"));
 					out.write(md5.getBytes("UTF-8"));
-					
+
 					out.close();
 				} catch (IOException e) {
 					log.debug("Update failed due to IO error: " + e.getMessage());
@@ -1575,7 +1581,7 @@ private static final String SERVICE_NAME="Turnitin";
 					dao.update(currentItem);
 					break;
 				}
-				
+
 				BufferedReader in;
 				try{
 					in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -1591,7 +1597,7 @@ private static final String SERVICE_NAME="Turnitin";
 					DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 					DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
 					document= parser.parse(new InputSource(in));
-					
+
 				} catch (SAXException e1) {
 					log.error("Update failed due to Parsing error: " + e1.getMessage());
 					log.debug(e1.toString());
@@ -1609,12 +1615,12 @@ private static final String SERVICE_NAME="Turnitin";
 				} catch (ParserConfigurationException pce) {
 					log.error("Parse configuration error: " + pce.getMessage());
 				}
-				
-				 
+
+
 				Element root = document.getDocumentElement();
 				if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
 					log.debug("Report list returned successfully");
-					
+
 					NodeList objects = root.getElementsByTagName("object");
 					String objectId;
 					String similarityScore;
@@ -1629,7 +1635,7 @@ private static final String SERVICE_NAME="Turnitin";
 						} else {
 							reportTable.put(objectId, new Integer(-1));
 						}
-						
+
 						log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
 					}
 				} else {
@@ -1638,7 +1644,7 @@ private static final String SERVICE_NAME="Turnitin";
 
 				}
 			}
-			
+
 			int reportVal;
 			// check if the report value is now there (there may have been a
 			// failure to get the list above)
@@ -1649,7 +1655,7 @@ private static final String SERVICE_NAME="Turnitin";
 				if (reportVal != -1) {
 					currentItem.setReviewScore(reportVal);
 					currentItem
-							.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
+					.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
 					currentItem.setDateReportReceived(new Date());
 					dao.update(currentItem);
 					log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
@@ -1657,7 +1663,7 @@ private static final String SERVICE_NAME="Turnitin";
 			}
 		}
 	}
-	
+
 	// returns null if no valid email exists
 	private String getEmail(User user) {
 		String uem = null;
@@ -1692,8 +1698,8 @@ private static final String SERVICE_NAME="Turnitin";
 					log.debug("Got system profile email of " + uem2);
 					if (uem == null || uem.equals("") || !isValidEmail(uem))
 						uem = user.getEmail().trim();
-						if (uem == null || uem.equals("") || !isValidEmail(uem))
-							uem = null;
+					if (uem == null || uem.equals("") || !isValidEmail(uem))
+						uem = null;
 				} else {
 					uem =  uem2;
 				}
@@ -1703,51 +1709,269 @@ private static final String SERVICE_NAME="Turnitin";
 					uem = null;
 			}
 		}
-			
+
 		return uem;
 	}
-	
+
 	private String readerToString(BufferedReader in) {
-		
-        String inputLine;
-        String retval = "";
-        try {
-        	while ((inputLine = in.readLine()) != null) 
-            retval.concat(inputLine);
-        }
-        catch (Exception e) {
-        	e.printStackTrace();
-        }
-        return retval;
-		
+
+		String inputLine;
+		String retval = "";
+		try {
+			while ((inputLine = in.readLine()) != null) 
+				retval.concat(inputLine);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		return retval;
+
 	}
-	
+
 	/**
 	 * Is this a valid email the service will recognize
 	 * @param email
 	 * @return
 	 */
 	private boolean isValidEmail(String email) {
-		
+
 		// TODO: Use a generic Sakai utility class (when a suitable one exists)
-		
+
 		if (email == null || email.equals(""))
 			return false;
-		
+
 		email = email.trim();
 		//must contain @
 		if (email.indexOf("@") == -1)
 			return false;
-		
+
 		//an email can't contain spaces
 		if (email.indexOf(" ") > 0)
 			return false;
-		
+
 		//"^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*$" 
 		if (email.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*$")) 
 			return true;
-	
+
 		return false;
+	}
+
+	
+	//Methods for updating all assignments that exist
+	private void doAssignments() {
+		log.info("About to update all turnitin assignments");
+		String statement = "Select siteid,taskid from CONTENTREVIEW_ITEM group by siteid,taskid";
+		Object[] fields = new Object[0];
+		List objects = sqlService.dbRead(statement, fields, new SqlReader(){
+			public Object readSqlResultRecord(ResultSet result)
+			{
+				try {
+					ContentReviewItem c = new ContentReviewItem();
+					c.setSiteId(result.getString(1));
+					c.setTaskId(result.getString(2));
+					return c;
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return null;
+				}
+
+			}
+		});
+		
+		for (int i = 0; i < objects.size(); i ++) {
+			ContentReviewItem cri = (ContentReviewItem) objects.get(i);
+			try {
+				updateAssignment(cri.getSiteId(),cri.getTaskId());
+			} catch (SubmissionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+	}
+	
+	private void updateAssignment(String siteId, String taskId) throws SubmissionException {
+		log.info("updateAssignment(" + siteId +" , " + taskId + ")");
+		//get the assignment reference
+		String taskTitle = getAssignmentTitle(taskId);
+		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
+
+		String diagnostic = "0"; //0 = off; 1 = on
+
+		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
+		dform.applyPattern("yyyyMMdd");
+		Calendar cal = Calendar.getInstance();
+		//set this to yesterday so we avoid timezine probelms etc
+		cal.add(Calendar.DAY_OF_MONTH, -1);
+		String dtstart = dform.format(cal.getTime());
+
+
+		//set the due dates for the assignments to be in 5 month's time
+		//turnitin automatically sets each class end date to 6 months after it is created
+		//the assignment end date must be on or before the class end date
+
+		//TODO use the 'secret' function to change this to longer
+		cal.add(Calendar.MONTH, 5);
+		String dtdue = dform.format(cal.getTime());
+
+		String encrypt = "0";					//encryption flag
+		String fcmd = "3";						//new assignment
+		String fid = "4";						//function id
+		String uem = defaultInstructorEmail;
+		String ufn = defaultInstructorFName;
+		String uln = defaultInstructorLName;
+		String utp = "2"; 					//user type 2 = instructor
+		String upw = defaultInstructorPassword;
+		String s_view_report = "1";
+
+		String cid = siteId;
+		String uid = defaultInstructorId;
+		String assignid = taskId;
+		String assign = taskTitle;
+		String ctl = siteId;
+
+		String gmtime = getGMTime();
+		String assignEnc = assign;
+		try {
+			if (assign.contains("&")) {
+				//log.debug("replacing & in assingment title");
+				assign = assign.replace('&', 'n');
+
+			}
+			assignEnc = assign;
+			log.debug("Assign title is " + assignEnc);
+
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+		fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+
+		String md5;
+		try{
+			md5 = this.getMD5(md5_str);
+		} catch (Throwable t) {
+			log.warn("MD5 error creating assignment on turnitin");
+			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
+		}
+
+		HttpsURLConnection connection;
+
+		try {
+			URL hostURL = new URL(apiURL);
+			if (proxy == null) {
+				connection = (HttpsURLConnection) hostURL.openConnection();
+			} else {
+				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
+			}
+
+			connection.setRequestMethod("GET");
+			connection.setDoOutput(true);
+			connection.setDoInput(true);
+
+			log.debug("HTTPS connection made to Turnitin");
+
+			OutputStream outStream = connection.getOutputStream();
+
+			outStream.write("aid=".getBytes("UTF-8"));
+			outStream.write(aid.getBytes("UTF-8"));
+
+			outStream.write("&assign=".getBytes("UTF-8"));
+			outStream.write(assignEnc.getBytes("UTF-8"));
+
+			outStream.write("&assignid=".getBytes("UTF-8"));
+			outStream.write(assignid.getBytes("UTF-8"));
+
+			outStream.write("&cid=".getBytes("UTF-8"));
+			outStream.write(cid.getBytes("UTF-8"));
+
+			outStream.write("&uid=".getBytes("UTF-8"));
+			outStream.write(uid.getBytes("UTF-8"));
+
+			outStream.write("&ctl=".getBytes("UTF-8"));
+			outStream.write(ctl.getBytes("UTF-8"));	
+
+			outStream.write("&diagnostic=".getBytes("UTF-8"));
+			outStream.write(diagnostic.getBytes("UTF-8"));
+
+			outStream.write("&dtdue=".getBytes("UTF-8"));
+			outStream.write(dtdue.getBytes("UTF-8"));
+
+			outStream.write("&dtstart=".getBytes("UTF-8"));
+			outStream.write(dtstart.getBytes("UTF-8"));
+
+			outStream.write("&encrypt=".getBytes("UTF-8"));
+			outStream.write(encrypt.getBytes("UTF-8"));
+
+			outStream.write("&fcmd=".getBytes("UTF-8"));
+			outStream.write(fcmd.getBytes("UTF-8"));
+
+			outStream.write("&fid=".getBytes("UTF-8"));
+			outStream.write(fid.getBytes("UTF-8"));
+
+			outStream.write("&gmtime=".getBytes("UTF-8"));
+			outStream.write(gmtime.getBytes("UTF-8"));
+
+			outStream.write("&s_view_report=".getBytes("UTF-8"));
+			outStream.write(s_view_report.getBytes("UTF-8"));
+			
+			outStream.write("&said=".getBytes("UTF-8"));
+			outStream.write(said.getBytes("UTF-8"));
+
+			outStream.write("&uem=".getBytes("UTF-8"));
+			outStream.write(uem.getBytes("UTF-8"));
+
+			outStream.write("&ufn=".getBytes("UTF-8"));
+			outStream.write(ufn.getBytes("UTF-8"));
+
+			outStream.write("&uln=".getBytes("UTF-8"));
+			outStream.write(uln.getBytes("UTF-8"));
+
+			outStream.write("&upw=".getBytes("UTF-8"));
+			outStream.write(upw.getBytes("UTF-8"));
+
+			outStream.write("&utp=".getBytes("UTF-8"));
+			outStream.write(utp.getBytes("UTF-8"));
+
+			outStream.write("&md5=".getBytes("UTF-8"));
+			outStream.write(md5.getBytes("UTF-8"));
+
+			outStream.close();
+		}
+		catch (Throwable t) {
+			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
+		}
+
+		BufferedReader in;
+		try {
+			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		} catch (Throwable t) {
+			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
+		}
+
+		Document document = null;
+		try {	
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+			document = parser.parse(new org.xml.sax.InputSource(in));
+		}
+		catch (ParserConfigurationException pce){
+			log.error("parser configuration error: " + pce.getMessage());
+		} catch (Throwable t) {
+			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+		}		
+
+		Element root = document.getDocumentElement();
+		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
+		if ((rcode > 0 && rcode < 100) || rcode == 419) {
+			log.debug("Create Assignment successful");						
+		} else {
+			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+		}
 	}
 	
 }
