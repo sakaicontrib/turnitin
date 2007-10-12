@@ -246,7 +246,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	public String getIconUrlforScore(Long score) {
 
-		String urlBase = "/sakai-contentreview-tool/images/score_";
+		String urlBase = "/sakai-content-review-tool/images/score_";
 		String suffix = ".gif";
 
 		if (score.equals(new Long(0))) {
