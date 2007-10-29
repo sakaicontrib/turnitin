@@ -1127,28 +1127,25 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.debug("fileName is :" + fileName);
 				try {
 					fileName = URLDecoder.decode(fileName, "UTF-8");
+					//in rare cases it seems filenames can be double encoded
+					if (fileName.indexOf("%20")> 0 ) {
+						try {
+							fileName = URLDecoder.decode(fileName, "UTF-8");
+						}
+						catch (IllegalArgumentException eae) {
+							log.warn("Unable to decode fileName: " + fileName);
+							currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+							currentItem.setLastError("FileName decode exception: " + fileName);
+							dao.update(currentItem);
+							continue;
+						}
+
+					}
 				} 
 				catch (IllegalArgumentException eae) {
 					log.warn("Unable to decode fileName: " + fileName);
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError("FileName decode exception: " + fileName);
-					dao.update(currentItem);
-					continue;
 				}
-				//in rare cases it seems filenames can be double encoded
-				if (fileName.indexOf("%20")> 0 ) {
-					try {
-						fileName = URLDecoder.decode(fileName, "UTF-8");
-					}
-					catch (IllegalArgumentException eae) {
-						log.warn("Unable to decode fileName: " + fileName);
-						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-						currentItem.setLastError("FileName decode exception: " + fileName);
-						dao.update(currentItem);
-						continue;
-					}
 
-				}
 				
 
 				fileName = fileName.replace(' ', '_');
