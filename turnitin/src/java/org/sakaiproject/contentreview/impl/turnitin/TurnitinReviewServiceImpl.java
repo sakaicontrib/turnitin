@@ -1287,7 +1287,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			catch (ServerOverloadException e3) {
 				log.warn("Submission failed due to server error: " + e3.toString());
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError("Submission Error:" + (e3.toString());
+				currentItem.setLastError("Submission Error:" + e3.toString());
 				dao.update(currentItem);
 				continue;
 			}
