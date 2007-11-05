@@ -1572,7 +1572,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 					out.close();
 				} catch (IOException e) {
-					log.debug("Update failed due to IO error: " + e.getMessage());
+					log.debug("Update failed due to IO error: " + e.toString());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e.getMessage());
 					dao.update(currentItem);
@@ -1583,7 +1583,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				try{
 					in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 				} catch (IOException e) {
-					log.debug("Update failed due to IO error: " + e.getMessage());
+					log.debug("Update failed due to IO error: " + e.toString());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e.getMessage());
 					dao.update(currentItem);
