@@ -1280,14 +1280,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} catch (IOException e1) {
 				log.debug("Submission failed due to IO error: " + e1.getMessage());
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError(e1.toString());
+				currentItem.setLastError("Submission Error:" + e1.toString());
 				dao.update(currentItem);
 				continue;
 			} 
 			catch (ServerOverloadException e3) {
 				log.debug("Submission failed due to server error: " + e3.getMessage());
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError(e3.toString());
+				currentItem.setLastError("Submission Error:" + (e3.toString());
 				dao.update(currentItem);
 				continue;
 			}
