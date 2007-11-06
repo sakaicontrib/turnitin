@@ -1296,7 +1296,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			try {
 				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			} catch (IOException e1) {
-				log.debug("Unable to determine Submission status due to response IO error: " + e1.getMessage() + ". Assume unsuccessful");
+				log.warn("Unable to determine Submission status due to response IO error: " + e1.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.getMessage());
 				dao.update(currentItem);
