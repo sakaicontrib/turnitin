@@ -978,9 +978,21 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			currentItem = (ContentReviewItem) notSubmittedIterator.next();
 
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
-
+			// has the item reached its next retry time?
+			if (currentItem.getNextRetryTime() == null)
+				currentItem.setNextRetryTime(new Date());
+			
+			if (currentItem.getNextRetryTime().after(new Date())) {
+				//we haven't reached the next retry time
+				log.info("next retry time not yet reached for item: " + currentItem.getId());
+				dao.update(currentItem);
+				continue;
+			}
+			
+			
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(new Long(0));
+				currentItem.setNextRetryTime(this.getNextRetryTime(0));
 				dao.update(currentItem);
 			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
@@ -990,6 +1002,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				long l = currentItem.getRetryCount().longValue();
 				l++;
 				currentItem.setRetryCount(new Long(l));
+				currentItem.setNextRetryTime(this.getNextRetryTime(new Long(l)));
 				dao.update(currentItem);
 			}
 			User user;
@@ -1438,9 +1451,21 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		ContentReviewItem currentItem;
 		while (listIterator.hasNext()) {
 			currentItem = (ContentReviewItem) listIterator.next();
-
+			
+			// has the item reached its next retry time?
+			if (currentItem.getNextRetryTime() == null)
+				currentItem.setNextRetryTime(new Date());
+			
+			if (currentItem.getNextRetryTime().after(new Date())) {
+				//we haven't reached the next retry time
+				log.info("next retry time not yet reached for item: " + currentItem.getId());
+				dao.update(currentItem);
+				continue;
+			}
+			
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(new Long(0));
+				currentItem.setNextRetryTime(this.getNextRetryTime(0));
 			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
 				dao.update(currentItem);
@@ -1449,6 +1474,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				long l = currentItem.getRetryCount().longValue();
 				l++;
 				currentItem.setRetryCount(new Long(l));
+				currentItem.setNextRetryTime(this.getNextRetryTime(new Long(l)));
 				dao.update(currentItem);
 			}
 
@@ -1971,6 +1997,35 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
+	}
+	
+	/**
+	 * find the next time this item should be tried
+	 * @param retryCount
+	 * @return
+	 */
+	private Date getNextRetryTime(long retryCount) {
+		int offset =5;
+		
+		if (retryCount > 9 && retryCount < 20) {
+			
+			offset = 10;
+			
+		} else if (retryCount > 19 && retryCount < 30) {
+			offset = 20;
+		} else if (retryCount > 29 && retryCount < 40) {
+			offset = 40;
+		} else if (retryCount > 39 && retryCount < 50) {
+			offset = 80;
+		} else if (retryCount > 49 && retryCount < 60) {
+			offset = 160;
+		} else if (retryCount > 59) {
+			offset = 220;
+		}
+		
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.MINUTE, offset);
+		return cal.getTime();
 	}
 	
 }

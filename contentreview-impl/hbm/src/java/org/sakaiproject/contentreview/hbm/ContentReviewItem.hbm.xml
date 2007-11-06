@@ -24,6 +24,7 @@
 		<property name="reviewScore" type="java.lang.Integer" not-null="false" />
 		<property name="lastError" type="text" not-null="false" />
         <property name="retryCount" type="long" not-null="false" />
+        <property name="nextRetryTime" type="java.util.Date" not-null="false"/>
 		
 	</class>
 </hibernate-mapping>

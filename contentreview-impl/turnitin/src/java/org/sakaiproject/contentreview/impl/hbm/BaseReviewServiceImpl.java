@@ -157,9 +157,10 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		if (existingItems.size() > 0) {
 				throw new QueueException("Content " + contentId + " is already queued, not re-queued");
 		}
-
-		dao.save(new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
-				ContentReviewItem.NOT_SUBMITTED_CODE));
+		ContentReviewItem item = new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
+				ContentReviewItem.NOT_SUBMITTED_CODE);
+		item.setNextRetryTime(new Date());
+		dao.save(item);
 	}
 	
 	public int getReviewScore(String contentId)
