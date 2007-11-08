@@ -1,0 +1,1 @@
+alter table CONTENTREVIEW_ITEM add column nextRetryTime date;
