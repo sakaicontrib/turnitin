@@ -300,6 +300,16 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		return null;
 	}
 
+	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	public String getServiceName() {
 		// TODO Auto-generated method stub
 		return null;
@@ -314,6 +324,8 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		// TODO Auto-generated method stub
 		
 	}
+
+
 	
 
 }

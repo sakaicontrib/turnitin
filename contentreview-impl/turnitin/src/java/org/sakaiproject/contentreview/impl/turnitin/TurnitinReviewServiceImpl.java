@@ -331,15 +331,119 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return false;
 
 	}
+	
+	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
+		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		if (matchingItems.size() == 0) {
+			log.debug("Content " + contentId + " has not been queued previously");
+			throw new QueueException("Content " + contentId + " has not been queued previously");
+		}
 
+		if (matchingItems.size() > 1)
+			log.debug("More than one matching item found - using first item found");
 
-	public String getReviewReport(String contentId)
-	throws QueueException, ReportException {
+		// check that the report is available
+		// TODO if the database record does not show report available check with
+		// turnitin (maybe)
 
-		// first retrieve the record from the database to get the externalId of
-		// the content
-		log.debug("Getting report for content: " + contentId);
+		ContentReviewItem item = (ContentReviewItem) matchingItems.iterator().next();
+		if (item.getStatus().compareTo(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE) != 0) {
+			log.debug("Report not available: " + item.getStatus());
+			throw new ReportException("Report not available: " + item.getStatus());
+		}
+		
 
+		// report is available - generate the URL to display
+
+		String oid = item.getExternalId();
+		String fid = "6";
+		String fcmd = "1";
+		String encrypt = "0";
+		String diagnostic = "0";
+		String cid = item.getSiteId();
+		String assignid = defaultAssignId + item.getSiteId();
+		
+		String uem;
+		String ufn;
+		String uln;
+		String utp;
+		String uid;
+		
+
+		uem = defaultInstructorEmail;
+		ufn = defaultInstructorFName;
+		uln = defaultInstructorLName;
+		utp = "2";
+		uid = defaultInstructorId;
+
+		String gmtime = getGMTime();
+
+		// note that these vars must be ordered alphabetically according to
+		// their names with secretKey last
+		String md5_str = aid + assignid + cid + diagnostic + encrypt + fcmd + fid + gmtime + oid
+		+ said + uem + ufn + uid + uln + utp + secretKey;
+
+		String md5;
+		try {
+			md5 = getMD5(md5_str);
+		} catch (Throwable t) {
+			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
+		}
+
+		String reportURL = apiURL;
+
+		reportURL += "fid=";
+		reportURL += fid;
+
+		reportURL += "&fcmd=";
+		reportURL += fcmd;
+
+		reportURL += "&assignid=";
+		reportURL += assignid;
+
+		reportURL += "&uid=";
+		reportURL += uid;
+
+		reportURL += "&cid=";
+		reportURL += cid;
+
+		reportURL += "&encrypt=";
+		reportURL += encrypt;
+
+		reportURL += "&aid=";
+		reportURL += aid;
+
+		reportURL += "&said=";
+		reportURL += said;
+
+		reportURL += "&diagnostic=";
+		reportURL += diagnostic;
+
+		reportURL += "&oid=";
+		reportURL += oid;
+
+		reportURL += "&uem=";
+		reportURL += uem;
+
+		reportURL += "&ufn=";
+		reportURL += ufn;
+
+		reportURL += "&uln=";
+		reportURL += uln;
+
+		reportURL += "&utp=";
+		reportURL += utp;
+
+		reportURL += "&gmtime=";
+		reportURL += gmtime;
+
+		reportURL += "&md5=";
+		reportURL += md5;
+
+		return reportURL;
+	}
+
+	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
 		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
 		if (matchingItems.size() == 0) {
 			log.debug("Content " + contentId + " has not been queued previously");
@@ -360,12 +464,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		
 		
-		//Should we generate a report as the default instructor or for this user?
-		boolean isInstructor = false;
-		if (securityService.unlock(userDirectoryService.getCurrentUser(), "asn.grade", "/site/" + item.getSiteId()))
-			isInstructor = true;
-		
-
 		// report is available - generate the URL to display
 
 		String oid = item.getExternalId();
@@ -382,21 +480,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp;
 		String uid;
 		
-		if (isInstructor) {
-			uem = defaultInstructorEmail;
-			ufn = defaultInstructorFName;
-			uln = defaultInstructorLName;
-			utp = "2";
-			uid = defaultInstructorId;
-		} else {
-			User user = userDirectoryService.getCurrentUser();
-			uem = user.getEmail();
-			ufn = user.getFirstName();
-			uln = user.getLastName();
-			uid = item.getUserId();
-			utp = "1";
+		
+		User user = userDirectoryService.getCurrentUser();
+		uem = user.getEmail();
+		ufn = user.getFirstName();
+		uln = user.getLastName();
+		uid = item.getUserId();
+		utp = "1";
 
-		}
+
 		
 		String gmtime = getGMTime();
 
@@ -463,6 +555,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		reportURL += md5;
 
 		return reportURL;
+		}
+
+	public String getReviewReport(String contentId)
+	throws QueueException, ReportException {
+
+		// first retrieve the record from the database to get the externalId of
+		// the content
+		log.warn("Deprecated Methog getReviewReport(String contentId) called");
+		return this.getReviewReportInstructor(contentId);
 	}
 
 	/**
