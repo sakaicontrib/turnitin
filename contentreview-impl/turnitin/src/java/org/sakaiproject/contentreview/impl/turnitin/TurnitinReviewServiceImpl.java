@@ -1479,7 +1479,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				if (rMessage.equals("User password does not match user email") 
 						|| rCode.equals("1001") || rMessage.equals("") || rCode.equals("413")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				} else {
+				} else if (rCode.equals("423")) {
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
+				
+				}else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
 				currentItem.setLastError("Submission Error: " + rMessage + "(" + rCode + ")");
