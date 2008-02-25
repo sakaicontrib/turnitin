@@ -1482,6 +1482,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				} else if (rCode.equals("423")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				
+				} else if (rCode.equals("301")) {
+					//this took a long time
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					Calendar cal = Calendar.getInstance();
+					cal.set(Calendar.HOUR_OF_DAY, 22);
+					currentItem.setNextRetryTime(cal.getTime());
+					
 				}else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
