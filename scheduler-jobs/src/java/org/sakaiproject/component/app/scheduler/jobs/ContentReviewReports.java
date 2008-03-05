@@ -3,6 +3,7 @@ package org.sakaiproject.component.app.scheduler.jobs;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.StatefulJob;
 
 import org.sakaiproject.contentreview.service.ContentReviewService;
 
