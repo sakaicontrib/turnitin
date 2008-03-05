@@ -1059,24 +1059,45 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 	}
-
-	public void processQueue() {
-		log.debug("Processing submission queue");
-
+	
+	/**
+	 *  the item this queue proccess is dealing with
+	 */
+	private ContentReviewItem currentItem;
+	/**
+	 * Get the next item that needs to be submitted
+	 *
+	 */
+	private void getNextItemInSubmissionQueue() {
+		currentItem = null;
+		
 		ContentReviewItem searchItem = new ContentReviewItem();
 		searchItem.setContentId(null);
 		searchItem.setStatus(ContentReviewItem.NOT_SUBMITTED_CODE);
 
 		List notSubmittedItems = dao.findByExample(searchItem);
+		if (notSubmittedItems.size() > 0) {
+			currentItem = (ContentReviewItem)notSubmittedItems.get(0);
+			return;
+		}
+		
 		searchItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-		notSubmittedItems.addAll(dao.findByExample(searchItem));
+		notSubmittedItems = dao.findByExample(searchItem);
+		if (notSubmittedItems.size() > 0) {
+			currentItem = (ContentReviewItem)notSubmittedItems.get(0);
+			return;
+		}
 
-		log.debug("Total list is now " +  notSubmittedItems.size());
-		Iterator notSubmittedIterator = notSubmittedItems.iterator();
-		ContentReviewItem currentItem;
-		log.info("Processing Content review queue: " + notSubmittedItems.size() + " in queue");
-		while (notSubmittedIterator.hasNext()) {
-			currentItem = (ContentReviewItem) notSubmittedIterator.next();
+
+		
+	}
+
+	public void processQueue() {
+		log.debug("Processing submission queue");
+
+		getNextItemInSubmissionQueue();
+		while (currentItem != null) {
+			
 
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
 			// has the item reached its next retry time?
@@ -1494,7 +1515,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 				currentItem.setLastError("Submission Error: " + rMessage + "(" + rCode + ")");
 				dao.update(currentItem);
+		
 			}
+			getNextItemInSubmissionQueue();
 		}
 
 		log.debug("Submission queue processed");
