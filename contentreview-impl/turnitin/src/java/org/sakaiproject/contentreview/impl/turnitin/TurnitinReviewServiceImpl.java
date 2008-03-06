@@ -1575,8 +1575,22 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	public void checkForReports() {
+		if (serverConfigurationService.getBoolean("turnitin.getReportsBulk", true))
+			checkForReportsBulk();
+		else 
+			checkForReportsIndividual();
+		
+	}
+	
+	
+	
+	
+	/*
+	 * Fetch reports on a class by class basis
+	 */
+	private void checkForReportsBulk() {
 
-		log.debug("Checking for updated reports from Turnitin");
+		log.debug("Checking for updated reports from Turnitin in bulk mode");
 
 		// get the list of all items that are waiting for reports
 		List awaitingReport = dao.findByProperties(ContentReviewItem.class,
@@ -1833,6 +1847,269 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 	}
 
+	private void checkForReportsIndividual() {
+		log.debug("Checking for updated reports from Turnitin in individual mode");
+
+		// get the list of all items that are waiting for reports
+		List awaitingReport = dao.findByProperties(ContentReviewItem.class,
+				new String[] { "status" },
+				new Object[] { ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE});
+
+		awaitingReport.addAll(dao.findByProperties(ContentReviewItem.class,
+				new String[] { "status" },
+				new Object[] { ContentReviewItem.REPORT_ERROR_RETRY_CODE}));
+
+		Iterator listIterator = awaitingReport.iterator();
+		HashMap reportTable = new HashMap();
+
+		log.debug("There are " + awaitingReport.size() + " submissions awaiting reports");
+
+		ContentReviewItem currentItem;
+		while (listIterator.hasNext()) {
+			currentItem = (ContentReviewItem) listIterator.next();
+			
+			// has the item reached its next retry time?
+			if (currentItem.getNextRetryTime() == null)
+				currentItem.setNextRetryTime(new Date());
+			
+			if (currentItem.getNextRetryTime().after(new Date())) {
+				//we haven't reached the next retry time
+				log.info("next retry time not yet reached for item: " + currentItem.getId());
+				dao.update(currentItem);
+				continue;
+			}
+			
+			if (currentItem.getRetryCount() == null ) {
+				currentItem.setRetryCount(new Long(0));
+				currentItem.setNextRetryTime(this.getNextRetryTime(0));
+			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
+				dao.update(currentItem);
+				continue;
+			} else {
+				long l = currentItem.getRetryCount().longValue();
+				l++;
+				currentItem.setRetryCount(new Long(l));
+				currentItem.setNextRetryTime(this.getNextRetryTime(new Long(l)));
+				dao.update(currentItem);
+			}
+
+			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
+				currentItem.setStatus(new Long(4));
+				dao.update(currentItem);
+				continue;
+			}
+
+			
+				// get the list from turnitin and see if the review is available
+		
+
+				String diagnostic = "0";
+				String encrypt = "0";
+				String fcmd = "2";
+				String fid = "10";
+
+				String tem = defaultInstructorEmail;
+
+				String uem = defaultInstructorEmail;
+				String ufn = defaultInstructorFName;
+				String uln = defaultInstructorLName;
+				String utp = "2";
+
+				String uid = defaultInstructorId;
+				String cid = currentItem.getSiteId();
+				String assignid = currentItem.getTaskId();
+
+				String assign = currentItem.getTaskId();
+				String ctl = currentItem.getSiteId();
+
+				String gmtime = this.getGMTime();
+				String oid = currentItem.getExternalId();
+
+				String md5_str = aid + assign + assignid + cid + ctl
+				+ diagnostic + encrypt + fcmd + fid + gmtime + oid + said
+				+ tem + uem + ufn + uid + uln + utp + secretKey;
+
+				String md5;
+				try{
+					md5 = this.getMD5(md5_str);
+				} catch (NoSuchAlgorithmException e) {
+					log.debug("Update failed due to MD5 generation error");
+					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
+					currentItem.setLastError("MD5 generation error");
+					dao.update(currentItem);
+					listIterator.remove();
+					break;
+				}
+
+				HttpsURLConnection connection;
+
+				try {
+					URL hostURL = new URL(apiURL);
+					if (proxy == null) {
+						connection = (HttpsURLConnection) hostURL.openConnection();
+					} else {
+						connection = (HttpsURLConnection) hostURL.openConnection(proxy);
+					}
+
+					connection.setRequestMethod("GET");
+					connection.setDoOutput(true);
+					connection.setDoInput(true);
+
+					log.debug("HTTPS connection made to Turnitin");
+
+					OutputStream out = connection.getOutputStream();
+
+					out.write("fid=".getBytes("UTF-8"));
+					out.write(fid.getBytes("UTF-8"));
+
+					out.write("&fcmd=".getBytes("UTF-8"));
+					out.write(fcmd.getBytes("UTF-8"));
+
+					out.write("&uid=".getBytes("UTF-8"));
+					out.write(uid.getBytes("UTF-8"));
+
+					out.write("&tem=".getBytes("UTF-8"));
+					out.write(tem.getBytes("UTF-8"));
+
+					out.write("&assign=".getBytes("UTF-8"));
+					out.write(assign.getBytes("UTF-8"));
+
+					out.write("&assignid=".getBytes("UTF-8"));
+					out.write(assignid.getBytes("UTF-8"));
+
+					out.write("&cid=".getBytes("UTF-8"));
+					out.write(cid.getBytes("UTF-8"));
+
+					out.write("&ctl=".getBytes("UTF-8"));
+					out.write(ctl.getBytes("UTF-8"));
+
+					out.write("&encrypt=".getBytes());
+					out.write(encrypt.getBytes("UTF-8"));
+
+					out.write("&aid=".getBytes("UTF-8"));
+					out.write(aid.getBytes("UTF-8"));
+					
+					out.write("&oid=".getBytes("UTF-8"));
+					out.write(oid.getBytes("UTF-8"));
+
+					out.write("&said=".getBytes("UTF-8"));
+					out.write(said.getBytes("UTF-8"));
+
+					out.write("&diagnostic=".getBytes("UTF-8"));
+					out.write(diagnostic.getBytes("UTF-8"));
+
+					out.write("&uem=".getBytes("UTF-8"));
+					out.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
+
+					out.write("&ufn=".getBytes("UTF-8"));
+					out.write(ufn.getBytes("UTF-8"));
+
+					out.write("&uln=".getBytes("UTF-8"));
+					out.write(uln.getBytes("UTF-8"));
+
+					out.write("&utp=".getBytes("UTF-8"));
+					out.write(utp.getBytes("UTF-8"));
+
+					out.write("&gmtime=".getBytes("UTF-8"));
+					out.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
+
+					out.write("&md5=".getBytes("UTF-8"));
+					out.write(md5.getBytes("UTF-8"));
+
+					out.close();
+				} catch (IOException e) {
+					log.debug("Update failed due to IO error: " + e.toString());
+					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+					currentItem.setLastError(e.getMessage());
+					dao.update(currentItem);
+					break;
+				}
+
+				BufferedReader in;
+				try{
+					in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				} catch (IOException e) {
+					log.debug("Update failed due to IO error: " + e.toString());
+					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+					currentItem.setLastError(e.getMessage());
+					dao.update(currentItem);
+					break;
+				}
+				Document document = null;
+				try{
+					DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+					DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+					document= parser.parse(new InputSource(in));
+
+				} catch (SAXException e1) {
+					log.error("Update failed due to Parsing error: " + e1.getMessage());
+					log.debug(e1.toString());
+					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+					currentItem.setLastError("Parse error: " +e1.getMessage());
+					dao.update(currentItem);
+					//we may as well go on as the document may be in the part of the file that was parsed
+					continue;
+				} catch (IOException e2) {
+					log.warn("Update failed due to IO error: " + e2.getMessage());
+					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+					currentItem.setLastError("IO error " + e2.getMessage());
+					dao.update(currentItem);
+					continue;
+				} catch (ParserConfigurationException pce) {
+					log.error("Parse configuration error: " + pce.getMessage());
+				}
+
+
+				Element root = document.getDocumentElement();
+				if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
+					log.debug("Report list returned successfully");
+
+					NodeList objects = root.getElementsByTagName("object");
+					String objectId;
+					String similarityScore;
+					String overlap = "";
+					log.debug(objects.getLength() + " objects in the returned list");
+					for (int i=0; i<objects.getLength(); i++) {
+						similarityScore = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("similarityScore").item(0).getFirstChild())).getData().trim();
+						objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
+						if (similarityScore.compareTo("-1") != 0) {
+							overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
+							reportTable.put(objectId, new Integer(overlap));
+						} else {
+							reportTable.put(objectId, new Integer(-1));
+						}
+
+						log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
+					}
+				} else {
+					log.debug("Report list request not successful");
+					log.debug(document.toString());
+
+				}
+
+
+			int reportVal;
+			// check if the report value is now there (there may have been a
+			// failure to get the list above)
+			if (reportTable.containsKey(currentItem.getExternalId())) {
+				reportVal = ((Integer) (reportTable.get(currentItem
+						.getExternalId()))).intValue();
+				log.debug("reportVal for " + currentItem.getExternalId() + ": " + reportVal);
+				if (reportVal != -1) {
+					currentItem.setReviewScore(reportVal);
+					currentItem
+					.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
+					currentItem.setDateReportReceived(new Date());
+					dao.update(currentItem);
+					log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
+				}
+			}
+		}
+		
+	}
+	
+	
 	// returns null if no valid email exists
 	private String getEmail(User user) {
 		String uem = null;
