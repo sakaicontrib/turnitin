@@ -1060,16 +1060,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 	}
 	
-	/**
-	 *  the item this queue proccess is dealing with
-	 */
-	private ContentReviewItem currentItem;
-	/**
+	/*
 	 * Get the next item that needs to be submitted
 	 *
 	 */
-	private void getNextItemInSubmissionQueue() {
-		currentItem = null;
+
+	 private ContentReviewItem getNextItemInSubmissionQueue() {
+		 
 		
 		ContentReviewItem searchItem = new ContentReviewItem();
 		searchItem.setContentId(null);
@@ -1077,41 +1074,53 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		List notSubmittedItems = dao.findByExample(searchItem);
 		if (notSubmittedItems.size() > 0) {
-			currentItem = (ContentReviewItem)notSubmittedItems.get(0);
-			return;
+			return  (ContentReviewItem)notSubmittedItems.get(0);
+			
 		}
 		
 		searchItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 		notSubmittedItems = dao.findByExample(searchItem);
-		if (notSubmittedItems.size() > 0) {
-			currentItem = (ContentReviewItem)notSubmittedItems.get(0);
-			return;
+		
+		//we need the next one whose retry time has not been reached
+		for  (int i =0; i < notSubmittedItems.size(); i++ ) {
+			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(i);
+			if (hasReachedRetryTime(item))
+				return item;
+			
 		}
 
 
-		
+		return null;
 	}
 
+	private boolean hasReachedRetryTime(ContentReviewItem item) {
+		
+		// has the item reached its next retry time?
+		if (item.getNextRetryTime() == null)
+			item.setNextRetryTime(new Date());
+		
+		if (item.getNextRetryTime().after(new Date())) {
+			//we haven't reached the next retry time
+			log.info("next retry time not yet reached for item: " + item.getId());
+			dao.update(item);
+			return false;
+		}
+		
+		return true;
+		
+	}
+	
+	
 	public void processQueue() {
 		log.debug("Processing submission queue");
 
-		getNextItemInSubmissionQueue();
-		while (currentItem != null) {
+		
+		for (ContentReviewItem currentItem = getNextItemInSubmissionQueue(); currentItem != null; currentItem = getNextItemInSubmissionQueue()) {
 			
 
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
-			// has the item reached its next retry time?
-			if (currentItem.getNextRetryTime() == null)
-				currentItem.setNextRetryTime(new Date());
-			
-			if (currentItem.getNextRetryTime().after(new Date())) {
-				//we haven't reached the next retry time
-				log.info("next retry time not yet reached for item: " + currentItem.getId());
-				dao.update(currentItem);
-				continue;
-			}
-			
-			
+
+
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(new Long(0));
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
@@ -1127,6 +1136,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setNextRetryTime(this.getNextRetryTime(new Long(l)));
 				dao.update(currentItem);
 			}
+			
 			User user;
 
 			try {
@@ -1520,7 +1530,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			getNextItemInSubmissionQueue();
 		}
 
-		log.debug("Submission queue processed");
+		
 	}
 
 	private String getGMTime() {
