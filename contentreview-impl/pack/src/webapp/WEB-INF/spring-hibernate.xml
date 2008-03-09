@@ -13,6 +13,7 @@
 		<property name="persistentClasses">
 			<list>
 				<value>org.sakaiproject.contentreview.model.ContentReviewItem</value>
+				<value>org.sakaiproject.contentreview.model.ContentReviewLock</value>
 			</list>
 		</property>
 	</bean>
@@ -20,6 +21,7 @@
 	<!-- This wraps our DAO so that the transactions are managed -->
 	<bean id="org.sakaiproject.contentreview.dao.ContentReviewDao"
 			class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+			<property name="proxyTargetClass" value="true" />
 		<property name="transactionManager" 
 			ref="org.sakaiproject.springframework.orm.hibernate.GlobalTransactionManager" />
 		<property name="target" 

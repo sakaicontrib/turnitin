@@ -40,6 +40,7 @@ import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.contentreview.dao.ContentReviewDao;
+import org.sakaiproject.contentreview.dao.impl.ContentReviewDaoImpl;
 import org.sakaiproject.contentreview.exception.QueueException;
 import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
@@ -88,7 +89,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String proxyPort = null;
 
 	private String defaultAssignmentName = null;
-
+	final static long LOCK_PERIOD = 12000000;
 
 	private String defaultInstructorEmail = null;
 
@@ -152,9 +153,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		preferSystemProfileEmail = b;
 	}
 
-	private ContentReviewDao dao;
+	private ContentReviewDaoImpl dao;
 
-	public void setDao(ContentReviewDao dao) {
+	public void setDao(ContentReviewDaoImpl dao) {
 		super.setDao(dao);
 		this.dao = dao;
 	}
@@ -1073,8 +1074,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		searchItem.setStatus(ContentReviewItem.NOT_SUBMITTED_CODE);
 
 		List notSubmittedItems = dao.findByExample(searchItem);
-		if (notSubmittedItems.size() > 0) {
-			return  (ContentReviewItem)notSubmittedItems.get(0);
+		for (int i =0; i < notSubmittedItems.size(); i++) {
+			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(0);
+			//can we get a lock
+			
+			if (dao.obtainLock("item." + new Long(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
+			return  item;
 			
 		}
 		
@@ -1084,7 +1089,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//we need the next one whose retry time has not been reached
 		for  (int i =0; i < notSubmittedItems.size(); i++ ) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(i);
-			if (hasReachedRetryTime(item))
+			if (hasReachedRetryTime(item) && dao.obtainLock("item." + new Long(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
 				return item;
 			
 		}
@@ -1110,6 +1115,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 	}
 	
+	private void releaseLock(ContentReviewItem currentItem) {
+		
+		dao.releaseLock("item." + new Long(currentItem.getId()).toString(), serverConfigurationService.getServerId());
+	}
 	
 	public void processQueue() {
 		log.debug("Processing submission queue");
@@ -1145,6 +1154,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.debug("Submission attempt unsuccessful - User not found: " + e1.getMessage());
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1155,6 +1165,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("no valid email");
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1164,6 +1175,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no first name");
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1173,6 +1185,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no last name");
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1192,6 +1205,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1208,6 +1222,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				}
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1230,6 +1245,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1282,6 +1298,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 							currentItem.setLastError("FileName decode exception: " + fileName);
 							dao.update(currentItem);
+							releaseLock(currentItem);
 							continue;
 						}
 
@@ -1301,6 +1318,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				currentItem.setLastError("Permission exception: " + e2.getMessage());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			} 
 			catch (TypeException e) {
@@ -1308,6 +1326,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				currentItem.setLastError("Type Exception: " + e.getMessage());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
@@ -1351,6 +1370,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("MD5 error");
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1427,6 +1447,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.toString());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			} 
 			catch (ServerOverloadException e3) {
@@ -1434,6 +1455,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e3.toString());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1445,6 +1467,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.getMessage());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1461,6 +1484,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.error("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 
 			} catch (IOException e) {
@@ -1468,6 +1492,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e.getMessage());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1527,6 +1552,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				dao.update(currentItem);
 		
 			}
+			//release the lock so the reports job can handle it
+			releaseLock(currentItem);
 			getNextItemInSubmissionQueue();
 		}
 
