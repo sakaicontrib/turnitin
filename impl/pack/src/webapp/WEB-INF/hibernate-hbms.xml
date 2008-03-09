@@ -12,6 +12,7 @@
 		<property name="mappingResources">
 			<list>
 				<value>org/sakaiproject/contentreview/hbm/ContentReviewItem.hbm.xml</value>
+				<value>org/sakaiproject/contentreview/hbm/ContentReviewLock.hbm.xml</value>
 			</list>
 		</property>
 	</bean>
