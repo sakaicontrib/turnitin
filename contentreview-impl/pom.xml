@@ -45,7 +45,6 @@
 		<module>impl/turnitin</module>
 		<module>impl/pack</module>
 		<module>tool</module>
-
 		<module>scheduler-jobs</module>
 		<module>content-review-shared-deploy</module>
 	</modules>
