@@ -40,10 +40,8 @@
 	</scm>
 	<packaging>pom</packaging>
 	<modules>
-		<module>impl/dao</module>
-		<module>impl/hbm</module>
-		<module>impl/turnitin</module>
-		<module>impl/pack</module>
+		<module>impl</module>
+		<module>pack</module>
 		<module>tool</module>
 		<module>scheduler-jobs</module>
 		<module>content-review-shared-deploy</module>

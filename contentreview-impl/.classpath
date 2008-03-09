@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="scheduler-jobs/src/java"/>
-	<classpathentry kind="src" path="impl/turnitin"/>
-	<classpathentry kind="src" path="impl/pack"/>
-	<classpathentry kind="src" path="impl/hbm"/>
-	<classpathentry kind="src" path="impl/dao"/>
+	<classpathentry kind="src" path="impl/src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/sakaiproject/generic-dao/0.9.1/generic-dao-0.9.1.jar"/>
