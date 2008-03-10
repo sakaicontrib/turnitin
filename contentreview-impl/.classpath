@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="scheduler-jobs/src/java"/>
+	<classpathentry kind="src" path="hbm/src/java"/>
 	<classpathentry kind="src" path="impl/src/test"/>
 	<classpathentry kind="src" path="impl/src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
