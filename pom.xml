@@ -41,6 +41,7 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>impl</module>
+		<module>hbm</module>
 		<module>pack</module>
 		<module>tool</module>
 		<module>scheduler-jobs</module>
