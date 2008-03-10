@@ -9,7 +9,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>sakai-contentreview-hbm</artifactId>
-  <groupId>org.sakaiproject</groupId>
+  <groupId>org.sakaiproject.contentreview</groupId>
   <name>sakai-contentreview-hbm</name>
   <organization>
     <name>Sakai Project</name>
