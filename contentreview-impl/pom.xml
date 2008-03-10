@@ -24,7 +24,7 @@
 		<version>M2</version>
 		<relativePath>../../master/pom.xml</relativePath>
 	</parent>
-	<groupId>org.sakaiproject</groupId>
+	<groupId>org.sakaiproject.contentreview</groupId>
 	<artifactId>content-review-impl</artifactId>
 	<name>Sakai Content Review API</name>
 	<scm>

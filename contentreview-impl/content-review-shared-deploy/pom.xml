@@ -3,13 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>content-review-impl</artifactId>
-    <groupId>org.sakaiproject</groupId>
+    <groupId>org.sakaiproject.contentreview</groupId>
     <version>M2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <description>Shared Deployment Descriptor for Scheduler</description>
   <name>sakai-contentreview-shared-deploy</name>
-  <groupId>org.sakaiproject</groupId>
+  <groupId>org.sakaiproject.contentreview</groupId>
   <artifactId>sakai-contentreview-shared-deploy</artifactId>
   <organization>
     <name>University of Michigan</name>
