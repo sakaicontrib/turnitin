@@ -6,13 +6,12 @@
 	<parent>
 		<artifactId>content-review-impl</artifactId>
 		<groupId>org.sakaiproject</groupId>
-		<version>SNAPSHOT</version><!--eval.version-->
+		<version>M2</version><!--eval.version-->
 	</parent>
 	<name>Sakai Content Review Impl</name>
 	<groupId>org.sakaiproject.contentreview</groupId>
 	<artifactId>sakai-contentreview-impl</artifactId>
-	<version>SNAPSHOT</version><!--eval.version-->
-	<organization>
+		<organization>
 		<name>Sakai Project</name>
 		<url>http://www.sakaiproject.org/</url>
 	</organization>
@@ -26,21 +25,21 @@
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-logic-api</artifactId>
-			<version>SNAPSHOT</version><!--eval.version-->
+			<version>${sakai.version}</version><!--eval.version-->
 			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-model-api</artifactId>
-			<version>SNAPSHOT</version><!--eval.version-->
+			<version>${sakai.version}</version><!--eval.version-->
 			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-service-api</artifactId>
-			<version>SNAPSHOT</version><!--eval.version-->
+			<version>${sakai.version}</version><!--eval.version-->
 			<scope>provided</scope>
 		</dependency>
 		<!-- generic DAO -->
