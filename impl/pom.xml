@@ -24,21 +24,21 @@
 
 		<!-- Content Review dependencies -->
 		<dependency>
-			<groupId>org.sakaiproject.contentreview</groupId>
+			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-logic-api</artifactId>
 			<version>SNAPSHOT</version><!--eval.version-->
 			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>org.sakaiproject.contentreview</groupId>
+			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-model-api</artifactId>
 			<version>SNAPSHOT</version><!--eval.version-->
 			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>org.sakaiproject.contentreview</groupId>
+			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-service-api</artifactId>
 			<version>SNAPSHOT</version><!--eval.version-->
 			<scope>provided</scope>
