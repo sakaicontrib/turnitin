@@ -192,6 +192,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
 
+		
+		
 		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
 			try {
 				SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
@@ -200,8 +202,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} catch (NumberFormatException e) {
 				log.debug("Invalid proxy port specified: " + proxyPort);
 			}
+		} else if (System.getProperty("http.proxyHost") != null && !System.getProperty("http.proxyHost").equals("")) {
+			try {
+				SocketAddress addr = new InetSocketAddress(System.getProperty("http.proxyHost"), new Integer(System.getProperty("http.proxyPort")).intValue());
+				proxy = new Proxy(Proxy.Type.HTTP, addr);
+				log.debug("Using proxy: " + System.getProperty("http.proxyHost") + " " + System.getProperty("http.proxyPort"));
+			} catch (NumberFormatException e) {
+				log.debug("Invalid proxy port specified: " + System.getProperty("http.proxyPort"));
+			}
 		}
-
+ 
 		aid = serverConfigurationService.getString("turnitin.aid");
 
 		said = serverConfigurationService.getString("turnitin.said");
