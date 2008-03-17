@@ -5,11 +5,11 @@
   <parent>
     <artifactId>content-review-impl</artifactId>
     <groupId>org.sakaiproject</groupId>
-    <version>SNAPSHOT</version>
+    <version>M2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>sakai-contentreview-hbm</artifactId>
-  <groupId>org.sakaiproject.contentreview</groupId>
+  <groupId>org.sakaiproject</groupId>
   <name>sakai-contentreview-hbm</name>
   <organization>
     <name>Sakai Project</name>
