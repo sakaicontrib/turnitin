@@ -63,7 +63,7 @@
 	 </bean>
 
    <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewQueue"
-      class="org.sakaiproject.component.app.scheduler.jobs.SpringJobBeanWrapper"
+      class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
       singleton="true" init-method="init">
       <property name="beanId">
          <value>TiiContentReviewQueue</value>
@@ -83,7 +83,7 @@
 	 </bean>
 
    <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewReports"
-      class="org.sakaiproject.component.app.scheduler.jobs.SpringJobBeanWrapper"
+      class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
       singleton="true" init-method="init">
       <property name="beanId">
          <value>TiiContentReviewReports</value>
