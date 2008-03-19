@@ -39,28 +39,9 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<dependency>
-			<groupId>org.sakaiproject</groupId>
-			<artifactId>sakai-contentreview-turnitin-impl</artifactId>
-			<version>${sakai.version}</version>
-						<exclusions>
-				<exclusion>
-					<groupId>org.sakaiproject</groupId>
-					<artifactId>sakai-contentreview-model-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.sakaiproject</groupId>
-					<artifactId>sakai-contentreview-hbm</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.sakaiproject</groupId>
-					<artifactId>generic-dao</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.sakaiproject</groupId>
-			<artifactId>sakai-contentreview-dao-impl</artifactId>
+	 	<dependency>
+			<groupId>org.sakaiproject.contentreview</groupId>
+			<artifactId>sakai-contentreview-impl</artifactId>
 			<version>${sakai.version}</version>
 						<exclusions>
 				<exclusion>
