@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<artifactId>content-review-impl</artifactId>
+		<artifactId>content-review-impl-base</artifactId>
 		<groupId>org.sakaiproject.contentreview</groupId>
 		<version>SNAPSHOT</version><!--eval.version-->
 	</parent>

@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<artifactId>content-review-impl</artifactId>
+		<artifactId>content-review-impl-base</artifactId>
 		<groupId>org.sakaiproject.contentreview</groupId>
 		<version>SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
