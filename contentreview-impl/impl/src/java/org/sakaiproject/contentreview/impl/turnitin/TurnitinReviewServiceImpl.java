@@ -1209,7 +1209,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setLastError("Class creation error: " + t.getMessage());
-					if (t.getMessage().equals("Class creation call to Turnitin API failed") || t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful") || t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful"))
+					if (t.getMessage().equals("Class creation call to Turnitin API failed") 
+							|| t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful") 
+							|| t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful")
+							|| t.getMessage().equals("Create Class not successful. Message: Turnitin is down for scheduled system maintenance. The service will be available again at 5:00PM PDT.. Code: 9999") )
+
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					else	
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
