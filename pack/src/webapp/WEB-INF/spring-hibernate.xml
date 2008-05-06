@@ -21,25 +21,17 @@
 	<!-- This wraps our DAO so that the transactions are managed -->
 	<bean id="org.sakaiproject.contentreview.dao.ContentReviewDao"
 			class="org.sakaiproject.genericdao.api.spring.CurrentClassLoaderTxProxyFactoryBean">
-		<property name="transactionManager"
-            ref="org.sakaiproject.entitybroker.DataSourceTransactionManager" />
+			<property name="proxyTargetClass" value="true" />
+		<property name="transactionManager" 
+			ref="org.sakaiproject.springframework.orm.hibernate.GlobalTransactionManager" />
 		<property name="target" 
 			ref="org.sakaiproject.contentreview.dao.impl.ContentReviewDaoTarget" />
 		<property name="transactionAttributes">
 			<props>
-				<prop key="find*">PROPAGATION_REQUIRED,readOnly</prop>
-                <prop key="get*">PROPAGATION_REQUIRED,readOnly</prop>
-                <prop key="can*">PROPAGATION_REQUIRED,readOnly</prop>
-                <prop key="check*">PROPAGATION_REQUIRED,readOnly</prop>
-                <prop key="count*">PROPAGATION_REQUIRED,readOnly</prop>
-                <prop key="*">PROPAGATION_REQUIRED</prop>
-                
+				<prop key="*">PROPAGATION_REQUIRED</prop>
 			</props>
 		</property>
 	</bean>
-
-   
-
 
 	<!-- create a data preloading bean that has transaction protection -->
 	<!--  nope we don't do this stuff
