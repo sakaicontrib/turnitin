@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 
-import org.sakaiproject.contentreview.dao.impl.ContentReviewDaoImpl;
+
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.contentreview.model.ContentReviewLock;
 import org.sakaiproject.contentreview.test.ContentReviewTestDataLoad;
@@ -36,7 +36,7 @@ public class ContentReviewDaoImplTest extends AbstractTransactionalSpringContext
 
  
 
-	protected ContentReviewDaoImpl contentReviewDao;
+	protected ContentReviewDao contentReviewDao;
 
    private ContentReviewTestDataLoad etdl;
 
@@ -55,7 +55,7 @@ public class ContentReviewDaoImplTest extends AbstractTransactionalSpringContext
    // run this before each test starts
    protected void onSetUpBeforeTransaction() throws Exception {
       // load the spring created dao class bean from the Spring Application Context
-      contentReviewDao = (ContentReviewDaoImpl) applicationContext.getBean("org.sakaiproject.contentreview.dao.ContentReviewDao");
+      contentReviewDao = (ContentReviewDao) applicationContext.getBean("org.sakaiproject.contentreview.dao.ContentReviewDao");
       if (contentReviewDao == null) {
          throw new NullPointerException("DAO could not be retrieved from spring context");
       }

@@ -40,7 +40,6 @@ import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.contentreview.dao.ContentReviewDao;
-import org.sakaiproject.contentreview.dao.impl.ContentReviewDaoImpl;
 import org.sakaiproject.contentreview.exception.QueueException;
 import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
@@ -153,9 +152,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		preferSystemProfileEmail = b;
 	}
 
-	private ContentReviewDaoImpl dao;
+	private ContentReviewDao dao;
 
-	public void setDao(ContentReviewDaoImpl dao) {
+	public void setDao(ContentReviewDao dao) {
 		super.setDao(dao);
 		this.dao = dao;
 	}

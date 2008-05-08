@@ -4,6 +4,7 @@
 
 <beans>
 
+
 	<!-- create a DAO bean, use the hibernate implementation -->
 	<bean id="org.sakaiproject.contentreview.dao.impl.ContentReviewDaoTarget"
 			class="org.sakaiproject.contentreview.dao.impl.ContentReviewDaoImpl"
@@ -19,9 +20,8 @@
 	</bean>
 
 	<!-- This wraps our DAO so that the transactions are managed -->
-	<bean id="org.sakaiproject.contentreview.dao.ContentReviewDao"
-			class="org.sakaiproject.genericdao.api.spring.CurrentClassLoaderTxProxyFactoryBean">
-			<property name="proxyTargetClass" value="true" />
+		<bean id="org.sakaiproject.contentreview.dao.ContentReviewDao"
+			class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
 		<property name="transactionManager" 
 			ref="org.sakaiproject.springframework.orm.hibernate.GlobalTransactionManager" />
 		<property name="target" 
@@ -32,7 +32,6 @@
 			</props>
 		</property>
 	</bean>
-
 	<!-- create a data preloading bean that has transaction protection -->
 	<!--  nope we don't do this stuff
 	<bean id="org.sakaiproject.contentreview.dao.PreloadData"
