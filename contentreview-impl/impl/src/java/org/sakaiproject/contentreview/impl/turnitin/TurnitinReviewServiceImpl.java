@@ -43,6 +43,7 @@ import org.sakaiproject.contentreview.dao.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.QueueException;
 import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
+import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.db.api.SqlReader;
@@ -742,7 +743,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	}
 
-	private void createAssignment(String siteId, String taskId) throws SubmissionException {
+	private void createAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
 
 		//get the assignment reference
 		String taskTitle = getAssignmentTitle(taskId);
@@ -900,7 +901,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 		} catch (Throwable t) {
-			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
+			throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
 		Document document = null;
@@ -912,7 +913,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
 		} catch (Throwable t) {
-			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}		
 
 		Element root = document.getDocumentElement();
@@ -921,7 +922,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("Create Assignment successful");						
 		} else {
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
-			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
 	}
 
@@ -1239,30 +1240,24 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			try {
-				createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
-			} catch (Throwable t) {
-				log.debug ("Submission attempt unsuccessful: Could not create assignment");
-
-				if (t.getClass() == IOException.class) {
-					currentItem.setLastError("Assign creation error: " + t.getMessage());
+	
+				try {
+					createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+				} catch (SubmissionException se) {
+					currentItem.setLastError("Assign creation error: " + se.getMessage());
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					dao.update(currentItem);
+					releaseLock(currentItem);
+					continue;
+				} catch (TransientSubmissionException tse) {
+					currentItem.setLastError("Assign creation error: " + tse.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				} else {
-					//this is a to be expected error
-					if (t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful")) {
-						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-					} else {
-						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					}
-					currentItem.setLastError("createAssignment: " + t.getMessage());
-				}
-
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
-			}
-
-
+					dao.update(currentItem);
+					releaseLock(currentItem);
+					continue;
+					
+				} 
+			
 			//get all the info for the api call
 			//we do this before connecting so that if there is a problem we can jump out - saves time
 			//these errors should probably be caught when a student is enrolled in a class
