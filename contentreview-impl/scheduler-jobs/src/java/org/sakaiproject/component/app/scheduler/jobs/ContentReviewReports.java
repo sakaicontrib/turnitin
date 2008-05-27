@@ -3,11 +3,11 @@ package org.sakaiproject.component.app.scheduler.jobs;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.StatefulJob;
+import org.quartz.Job;
 
 import org.sakaiproject.contentreview.service.ContentReviewService;
 
-public class ContentReviewReports implements StatefulJob {
+public class ContentReviewReports implements Job {
 
 	private ContentReviewService contentReviewService;
 	public void setContentReviewService(ContentReviewService sd){
