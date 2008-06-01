@@ -48,7 +48,7 @@
 
         <!-- Spring and Hibernate dependencies. -->
         <dependency>
-            <groupId>org.springfrmaework</groupId>
+            <groupId>org.springframework</groupId>
             <artifactId>spring</artifactId>
         </dependency>
 
