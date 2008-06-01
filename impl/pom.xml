@@ -6,12 +6,12 @@
 	<parent>
 		<artifactId>content-review-impl-base</artifactId>
 		<groupId>org.sakaiproject.contentreview</groupId>
-		<version>SNAPSHOT</version><!--eval.version-->
+		<version>0.1-SNAPSHOT</version>
 	</parent>
 	<name>Sakai Content Review Impl</name>
 	<groupId>org.sakaiproject.contentreview</groupId>
 	<artifactId>sakai-contentreview-impl</artifactId>
-	<version>SNAPSHOT</version><!--eval.version-->
+	<version>0.1-SNAPSHOT</version>
 	<organization>
 		<name>Sakai Project</name>
 		<url>http://www.sakaiproject.org/</url>
@@ -26,36 +26,28 @@
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-logic-api</artifactId>
-			<version>SNAPSHOT</version><!--eval.version-->
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-model-api</artifactId>
-			<version>SNAPSHOT</version><!--eval.version-->
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-contentreview-service-api</artifactId>
-			<version>SNAPSHOT</version><!--eval.version-->
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject.contentreview</groupId>
 			<artifactId>sakai-contentreview-hbm</artifactId>
-			<version>SNAPSHOT</version><!--eval.version-->
-			<scope>provided</scope>
 		</dependency>
 
 		<!-- generic DAO -->
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>generic-dao</artifactId>
-			<version>${sakai.generic-dao.version}</version>
-			<scope>provided</scope>
+			<version>0.9.8</version>
+			
 		</dependency>
 
 		<!-- Spring and Hibernate dependencies. -->
@@ -105,115 +97,83 @@
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-authz-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
-		</dependency>
+			</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-component-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
-		</dependency>
+			</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-component</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
+			
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-content-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
+			
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-email-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-entity-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-scheduler-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-site-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-tool-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-user-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-util-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-util</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-db-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-assignment-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-common-edu-person-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 				<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-common-manager-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.sakaiproject</groupId>
 			<artifactId>sakai-common-type-api</artifactId>
-			<version>${sakai.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<!-- Apache commons dependencies -->
 		<dependency>

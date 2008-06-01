@@ -26,9 +26,9 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sakaiproject.contentreview.dao.ContentReviewDao;
 import org.sakaiproject.contentreview.model.ContentReviewLock;
 import org.sakaiproject.genericdao.hibernate.HibernateCompleteGenericDao;
+import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 
 /**
  * Implementations of any specialized DAO methods from the specialized DAO 

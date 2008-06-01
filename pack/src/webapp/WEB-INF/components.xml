@@ -12,92 +12,109 @@
 	<import resource="spring-hibernate.xml" />
 
 	<!-- create a logic bean, give it the dao from above and some sakai services -->
-	<bean id="org.sakaiproject.contentreview.service.ContentReviewService"
-			class="org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl"
-			init-method="init">
-		<property name="dao" 
+	<bean
+		id="org.sakaiproject.contentreview.service.ContentReviewService"
+		class="org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl"
+		init-method="init">
+		<property name="dao"
 			ref="org.sakaiproject.contentreview.dao.ContentReviewDao" />
 		<property name="toolManager"
 			ref="org.sakaiproject.tool.api.ToolManager" />
 		<property name="userDirectoryService"
 			ref="org.sakaiproject.user.api.UserDirectoryService" />
 		<property name="contentHostingService"
-			ref="org.sakaiproject.content.api.ContentHostingService" />	
+			ref="org.sakaiproject.content.api.ContentHostingService" />
 		<property name="serverConfigurationService"
 			ref="org.sakaiproject.component.api.ServerConfigurationService" />
-		<property name="entityManager" 
-			ref="org.sakaiproject.entity.api.EntityManager" />	
+		<property name="entityManager"
+			ref="org.sakaiproject.entity.api.EntityManager" />
 		<property name="sakaiPersonManager"
 			ref="org.sakaiproject.api.common.edu.person.SakaiPersonManager" />
-		<property name="preferSystemProfileEmail"><value>true</value></property>
-		<property name="siteAdvisor" ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"/>
-		<property name="securityService" ref="org.sakaiproject.authz.api.SecurityService" />
-		<property name="sqlService" ref="org.sakaiproject.db.api.SqlService"/>
+		<property name="preferSystemProfileEmail">
+			<value>true</value>
+		</property>
+		<property name="siteAdvisor"
+			ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" />
+		<property name="securityService"
+			ref="org.sakaiproject.authz.api.SecurityService" />
+		<property name="sqlService"
+			ref="org.sakaiproject.db.api.SqlService" />
 	</bean>
 
-	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.defaultSiteAdvisor">
+	<bean
+		id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"
+		class="org.sakaiproject.contentreview.impl.adivisors.defaultSiteAdvisor">
 	</bean>
-	
+
 	<!--  Uncomment this to use a site property to define which sites use c-r -->
 	<!-- 
-	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.SitePropertyAdvisor">
+		<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.SitePropertyAdvisor">
 		<property name="siteProperty"><value>useContentReviewService</value></property>
+		</bean>
+	-->
+	<!-- uncomment this bean to make cr available to only sites of the type course -->
+	<!--
+		<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.SiteCourseTypeAdvisor">
+		</bean>
+	-->
+
+
+	<!-- QueuProcessing jobs -->
+	<!-- Content review Queue Process -->
+	
+	<bean id="TiiContentReviewQueue"
+		class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewQueue">
+		<property name="contentReviewService">
+			<ref
+				bean="org.sakaiproject.contentreview.service.ContentReviewService" />
+		</property>
+		<property name="sessionManager">
+			<ref bean="org.sakaiproject.tool.api.SessionManager" />
+		</property>
 	</bean>
- 	-->
- 	<!-- uncomment this bean to make cr available to only sites of the type course -->
- 	<!--
- 	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.SiteCourseTypeAdvisor">
+
+	<bean
+		id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewQueue"
+		class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
+		singleton="true" init-method="init">
+		<property name="beanId">
+			<value>TiiContentReviewQueue</value>
+		</property>
+		<property name="jobName">
+			<value>Process Content Review Queue</value>
+		</property>
+		<property name="schedulerManager">
+			<ref
+				bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
+		</property>
 	</bean>
- 	-->
- 	
- 	
- 	<!-- QueuProcessing jobs -->
- 	<!-- Content review Queue Process -->
-<bean id="TiiContentReviewQueue" class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewQueue">
-            <property name="contentReviewService">
-				<ref bean="org.sakaiproject.contentreview.service.ContentReviewService"/>
-			</property>
-			<property name="sessionManager">
-				<ref bean="org.sakaiproject.tool.api.SessionManager"/>
-			</property>
-	 </bean>
 
-   <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewQueue"
-      class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
-      singleton="true" init-method="init">
-      <property name="beanId">
-         <value>TiiContentReviewQueue</value>
-      </property>
-      <property name="jobName">
-         <value>Process Content Review Queue</value>
-      </property>
-      <property name="schedulerManager">
-         <ref bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
-      </property>
-   </bean>
+	<bean id="TiiContentReviewReports"
+		class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewReports">
+		<property name="contentReviewService">
+			<ref
+				bean="org.sakaiproject.contentreview.service.ContentReviewService" />
+		</property>
+	</bean>
 
-<bean id="TiiContentReviewReports" class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewReports">
-            <property name="contentReviewService">
-				<ref bean="org.sakaiproject.contentreview.service.ContentReviewService"/>
-			</property>
-	 </bean>
+	<bean
+		id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewReports"
+		class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
+		singleton="true" init-method="init">
+		<property name="beanId">
+			<value>TiiContentReviewReports</value>
+		</property>
+		<property name="jobName">
+			<value>Process Content Review Reports</value>
+		</property>
+		<property name="schedulerManager">
+			<ref
+				bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
+		</property>
+	</bean>
 
-   <bean id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewReports"
-      class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
-      singleton="true" init-method="init">
-      <property name="beanId">
-         <value>TiiContentReviewReports</value>
-      </property>
-      <property name="jobName">
-         <value>Process Content Review Reports</value>
-      </property>
-      <property name="schedulerManager">
-         <ref bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
-      </property>
-   </bean>
-   
-   
-   
- 	
- 	
+
+
+
+
 </beans>

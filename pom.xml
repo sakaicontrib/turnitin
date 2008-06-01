@@ -26,6 +26,7 @@
 	</parent>
 	<groupId>org.sakaiproject.contentreview</groupId>
 	<artifactId>content-review-impl-base</artifactId>
+	<version>0.1-SNAPSHOT</version>
 	<name>Sakai Content Review API</name>
 	<scm>
 		<connection>
@@ -45,6 +46,49 @@
 		<module>pack</module>
 		<module>tool</module>
 		<module>scheduler-jobs</module>
-		<module>content-review-shared-deploy</module>
+		
 	</modules>
+	    <!-- handles the management of all related dependencies -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.sakaiproject</groupId>
+                <artifactId>sakai-contentreview-service-api</artifactId>
+                <version>SNAPSHOT</version><!--emailtemplateservice.version-->
+                <scope>provided</scope>
+            </dependency>
+             <dependency>
+                <groupId>org.sakaiproject</groupId>
+                <artifactId>sakai-contentreview-model-api</artifactId>
+                <version>SNAPSHOT</version><!--emailtemplateservice.version-->
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.sakaiproject.contentreview</groupId>
+                <artifactId>sakai-contentreview-hbm</artifactId>
+                <version>0.1-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+			<dependency>
+                <groupId>org.sakaiproject.contentreview</groupId>
+                <artifactId>sakai-contentreview-impl</artifactId>
+                <version>0.1-SNAPSHOT</version><!--emailtemplateservice.version-->
+            </dependency>
+            <dependency>
+                <groupId>org.sakaiproject</groupId>
+                <artifactId>sakai-turnitin-shared-scheduler</artifactId>
+                <version>0.1-SNAPSHOT</version><!--emailtemplateservice.version-->
+            </dependency>
+			
+			<dependency>
+                <groupId>org.sakaiproject</groupId>
+                <artifactId>sakai-util</artifactId>
+                <version>2.5.0</version>
+            </dependency>
+			
+			
+        </dependencies>
+    </dependencyManagement>
+	
+	
 </project>

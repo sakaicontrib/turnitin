@@ -16,7 +16,8 @@ package org.sakaiproject.contentreview.test;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sakaiproject.contentreview.dao.ContentReviewDao;
+import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
+
 
 
 
