@@ -19,7 +19,7 @@ limitations under the License.
   <parent>
     <artifactId>content-review-impl-base</artifactId>
     <groupId>org.sakaiproject.contentreview</groupId>
-    <version>SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <name>sakai-contentreview-tool</name>
@@ -39,7 +39,6 @@ limitations under the License.
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-util</artifactId>
-      <version>${sakai.version}</version>
     </dependency>
   </dependencies>
   <build>

@@ -20,6 +20,7 @@ import java.util.Set;
 
 
 
+import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.contentreview.model.ContentReviewLock;
 import org.sakaiproject.contentreview.test.ContentReviewTestDataLoad;
