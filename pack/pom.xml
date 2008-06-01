@@ -1,45 +1,48 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<artifactId>content-review-impl-base</artifactId>
-		<groupId>org.sakaiproject.contentreview</groupId>
-		<version>0.1-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
-	<name>sakai-content-review-pack</name>
-	<groupId>org.sakaiproject</groupId>
-	<artifactId>sakai-content-review-pack</artifactId>
-	<organization>
-		<name>University of Cape Town</name>
-		<url>http://sakaiproject.org/</url>
-	</organization>
-	<inceptionYear>2003</inceptionYear>
-	<packaging>sakai-component</packaging>
-	<properties>
-		<deploy.target>components</deploy.target>
-	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>org.sakaiproject</groupId>
-			<artifactId>sakai-contentreview-logic-api</artifactId>
-		</dependency>
-	 	<dependency>
-			<groupId>org.sakaiproject.contentreview</groupId>
-			<artifactId>sakai-contentreview-impl</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.sakaiproject</groupId>
-			<artifactId>sakai-turnitin-shared-scheduler</artifactId>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.sakaiproject</groupId>
-			<artifactId>sakai-util</artifactId>
-		</dependency>
-	</dependencies>
-	
-	<build>
-		<resources />
-	</build>
+    <modelVersion>4.0.0</modelVersion>
+    <name>sakai-content-review-pack</name>
+    <groupId>org.sakaiproject</groupId>
+    <artifactId>sakai-content-review-pack</artifactId>
+    <organization>
+        <name>University of Cape Town</name>
+        <url>http://sakaiproject.org/</url>
+    </organization>
+    <inceptionYear>2003</inceptionYear>
+    <packaging>sakai-component</packaging>
+    <properties>
+        <deploy.target>components</deploy.target>
+    </properties>
+
+    <parent>
+        <artifactId>content-review-impl-base</artifactId>
+        <groupId>org.sakaiproject.contentreview</groupId>
+        <version>0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.sakaiproject.contentreview</groupId>
+            <artifactId>sakai-contentreview-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.sakaiproject</groupId>
+            <artifactId>sakai-turnitin-shared-scheduler</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.sakaiproject</groupId>
+            <artifactId>sakai-util</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build />
+
 </project>
