@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
     <name>Turnitin Scheduler Component</name>
-    <groupId>org.sakaiproject</groupId>
-    <artifactId>sakai-turnitin-shared-scheduler</artifactId>
+    <groupId>org.sakaiproject.contentreivew</groupId>
+    <artifactId>contentreview-scheduler</artifactId>
     <organization>
         <name>Sakai Project</name>
         <url>http://sakaiproject.org/</url>

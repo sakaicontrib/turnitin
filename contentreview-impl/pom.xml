@@ -54,8 +54,8 @@
                 <version>0.1-SNAPSHOT</version><!--turnitin.version-->
             </dependency>
             <dependency>
-                <groupId>org.sakaiproject</groupId>
-                <artifactId>sakai--shared-scheduler</artifactId>
+                <groupId>org.sakaiproject.contentreview</groupId>
+                <artifactId>contentreview-scheduler</artifactId>
                 <version>0.1-SNAPSHOT</version><!--turnitin.version-->
             </dependency>
             <dependency>

@@ -30,8 +30,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-turnitin-shared-scheduler</artifactId>
+            <groupId>org.sakaiproject.contentreview</groupId>
+            <artifactId>contentreview-scheduler</artifactId>
             <scope>runtime</scope>
         </dependency>
 
