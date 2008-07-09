@@ -1047,14 +1047,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			throw new SubmissionException("Student Enrollment call to Turnitin failed", t);
 		}
 
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
@@ -1066,7 +1066,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 	}
