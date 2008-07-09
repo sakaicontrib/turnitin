@@ -397,7 +397,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try {
 			md5 = getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
 		}
 
@@ -511,7 +511,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try {
 			md5 = getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
 		}
 
@@ -613,7 +613,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			log.warn("MD5 error creating class on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Turnitin API call", t);
 		}
@@ -689,7 +689,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			throw new SubmissionException("Class creation call to Turnitin API failed", t);
 		}
 
@@ -697,7 +697,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 		Document document = null;
@@ -708,7 +708,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 
@@ -805,7 +805,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			log.warn("MD5 error creating assignment on turnitin");
 			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
 		}
@@ -893,14 +893,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
 		}
 
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
@@ -912,7 +912,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}		
 
@@ -938,7 +938,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		User user;
 		try {
 			user = userDirectoryService.getUser(userId);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot get user information", t);
 		}
 
@@ -974,7 +974,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			log.warn("MD5 error enrolling student on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Class Enrollment Turnitin API call", t);
 		}
@@ -1201,7 +1201,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			try {				
 				createClass(currentItem.getSiteId());
-			} catch (Throwable t) {
+			} catch (Exception t) {
 				log.debug ("Submission attempt unsuccessful: Could not create class", t);
 
 				if (t.getClass() == IOException.class) {
@@ -1225,7 +1225,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			try {
 				enrollInClass(currentItem.getUserId(), uem, currentItem.getSiteId());
-			} catch (Throwable t) {
+			} catch (Exception t) {
 				log.debug ("Submission attempt unsuccessful: Could not enroll user in class", t);
 
 				if (t.getClass() == IOException.class) {
@@ -2334,7 +2334,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			log.warn("MD5 error creating assignment on turnitin");
 			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
 		}
@@ -2422,14 +2422,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
 		}
 
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
@@ -2441,7 +2441,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}		
 
