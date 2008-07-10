@@ -74,13 +74,13 @@
 
     <scm>
         <connection>
-            scm:svn:https://source.sakaiproject.org/contrib//trunk/contentreview-impl
+            scm:svn:https://source.sakaiproject.org/contrib/turnitin/trunk/contentreview-impl
         </connection>
         <developerConnection>
-            scm:svn:https://source.sakaiproject.org/contrib//trunk/contentreview-impl
+            scm:svn:https://source.sakaiproject.org/contrib/turnitin/trunk/contentreview-impl
         </developerConnection>
         <url>
-            https://source.sakaiproject.org/contrib//trunk/contentreview-impl
+            https://source.sakaiproject.org/contrib/turnitin/trunk/contentreview-impl
         </url>
     </scm>
 

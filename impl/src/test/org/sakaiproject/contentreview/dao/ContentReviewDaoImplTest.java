@@ -76,8 +76,16 @@ public class ContentReviewDaoImplTest extends AbstractTransactionalSpringContext
 	   //first test we have saved the item
 	   assertNotNull(contentReviewItemLockedExp.getId());
 	   
+	   ContentReviewItem newItem = new ContentReviewItem(USER,"site","task","content",new Date(), ContentReviewItem.NOT_SUBMITTED_CODE);
+	   contentReviewDao.save(newItem);
+	   
+	   //now this should have an id greater that is different from the one above
+	   assertNotSame(newItem.getId(), contentReviewItemLockedExp.getId());
+	   
 	   //can we get the lock?
-	   assertTrue(contentReviewDao.obtainLock(new Long(contentReviewItemLockedExp.getId()).toString(), ADMIN_USER, -1000));
+	   Long tId = new Long(contentReviewItemLockedExp.getId());
+	   String sId = tId.toString();
+	   assertTrue(contentReviewDao.obtainLock(sId, ADMIN_USER, -1000));
 
 	   
 	   //lock item

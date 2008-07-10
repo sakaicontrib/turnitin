@@ -66,6 +66,7 @@ public class ContentReviewDaoImpl
 	    */
 	   @SuppressWarnings("unchecked")
 	   public Boolean obtainLock(String lockId, String executerId, long timePeriod) {
+		   log.debug("getting lock for " + lockId + " for: " + executerId);
 	      if (executerId == null || 
 	            "".equals(executerId)) {
 	         throw new IllegalArgumentException("The executer Id must be set");
