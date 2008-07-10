@@ -494,7 +494,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 		User user = userDirectoryService.getCurrentUser();
 		uem = user.getEmail();
-		ufn = user.getFirstName();
+		ufn = getUserFirstName(user);
 		uln = user.getLastName();
 		uid = item.getUserId();
 		utp = "1";
@@ -951,7 +951,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		 */
 
-		String ufn = user.getFirstName();
+		String ufn = getUserFirstName(user);
 		if (ufn == null) {
 			throw new SubmissionException ("User has no first name");
 		}
@@ -1179,7 +1179,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			String ufn = user.getFirstName().trim();
+			String ufn = getUserFirstName(user);
 			if (ufn == null || ufn.equals("")) {
 				log.debug("Submission attempt unsuccessful - User has no first name");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
@@ -2483,5 +2483,27 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		cal.add(Calendar.MINUTE, offset);
 		return cal.getTime();
 	}
-	
+
+	/**
+	 * Gets a first name for a user or generates an initial from the eid
+	 * @param user a sakai user
+	 * @return the first name or at least an initial if possible, "X" if no fn can be made
+	 */
+	private String getUserFirstName(User user) {
+      String ufn = user.getFirstName().trim();
+      if (ufn == null || ufn.equals("")) {
+         boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", false);
+         if (genFN) {
+            String eid = user.getEid();
+            if (eid != null 
+                  && eid.length() > 0) {
+               ufn = eid.substring(0,1);        
+            } else {
+               ufn = "X";
+            }
+         }
+      }
+      return ufn;
+	}
+
 }
