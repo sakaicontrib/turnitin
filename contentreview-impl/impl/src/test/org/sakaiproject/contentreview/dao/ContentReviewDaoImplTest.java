@@ -72,6 +72,11 @@ public class ContentReviewDaoImplTest extends AbstractTransactionalSpringContext
    protected void onSetUpInTransaction() {
 	   contentReviewItemLockedExp = new ContentReviewItem(USER,"site","task","content",new Date(), ContentReviewItem.NOT_SUBMITTED_CODE);
 	   contentReviewDao.save(contentReviewItemLockedExp);
+	   
+	   //first test we have saved the item
+	   assertNotNull(contentReviewItemLockedExp.getId());
+	   
+	   //can we get the lock?
 	   assertTrue(contentReviewDao.obtainLock(new Long(contentReviewItemLockedExp.getId()).toString(), ADMIN_USER, -1000));
 
 	   

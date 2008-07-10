@@ -1,16 +1,6 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
-    <name>Turnitin Scheduler Component</name>
-    <groupId>org.sakaiproject.contentreivew</groupId>
-    <artifactId>contentreview-scheduler</artifactId>
-    <organization>
-        <name>Sakai Project</name>
-        <url>http://sakaiproject.org/</url>
-    </organization>
-    <inceptionYear>2003</inceptionYear>
-    <packaging>jar</packaging>
-
     <parent>
         <artifactId>content-review-impl-base</artifactId>
         <groupId>org.sakaiproject.contentreview</groupId>
@@ -18,8 +8,12 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <dependencies>
-        <dependency>
+    <name>Turnitin Scheduler Component</name>
+    <groupId>org.sakaiproject.contentreview</groupId>
+    <artifactId>contentreview-scheduler</artifactId>
+
+     <dependencies>
+       <dependency>
             <groupId>org.sakaiproject</groupId>
             <artifactId>sakai-contentreview-service-api</artifactId>
         </dependency>
