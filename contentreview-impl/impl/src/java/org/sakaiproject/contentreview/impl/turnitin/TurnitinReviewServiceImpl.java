@@ -39,10 +39,11 @@ import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
-import org.sakaiproject.contentreview.dao.ContentReviewDao;
+import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.QueueException;
 import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
+import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.db.api.SqlReader;
@@ -88,7 +89,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String proxyPort = null;
 
 	private String defaultAssignmentName = null;
-
+	final static long LOCK_PERIOD = 12000000;
 
 	private String defaultInstructorEmail = null;
 
@@ -191,6 +192,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
 
+		
+		
 		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
 			try {
 				SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
@@ -199,8 +202,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} catch (NumberFormatException e) {
 				log.debug("Invalid proxy port specified: " + proxyPort);
 			}
+		} else if (System.getProperty("http.proxyHost") != null && !System.getProperty("http.proxyHost").equals("")) {
+			try {
+				SocketAddress addr = new InetSocketAddress(System.getProperty("http.proxyHost"), new Integer(System.getProperty("http.proxyPort")).intValue());
+				proxy = new Proxy(Proxy.Type.HTTP, addr);
+				log.debug("Using proxy: " + System.getProperty("http.proxyHost") + " " + System.getProperty("http.proxyPort"));
+			} catch (NumberFormatException e) {
+				log.debug("Invalid proxy port specified: " + System.getProperty("http.proxyPort"));
+			}
 		}
-
+ 
 		aid = serverConfigurationService.getString("turnitin.aid");
 
 		said = serverConfigurationService.getString("turnitin.said");
@@ -386,7 +397,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try {
 			md5 = getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
 		}
 
@@ -483,7 +494,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 		User user = userDirectoryService.getCurrentUser();
 		uem = user.getEmail();
-		ufn = user.getFirstName();
+		ufn = getUserFirstName(user);
 		uln = user.getLastName();
 		uid = item.getUserId();
 		utp = "1";
@@ -500,7 +511,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try {
 			md5 = getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
 		}
 
@@ -602,7 +613,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			log.warn("MD5 error creating class on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Turnitin API call", t);
 		}
@@ -678,7 +689,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			throw new SubmissionException("Class creation call to Turnitin API failed", t);
 		}
 
@@ -686,7 +697,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 		Document document = null;
@@ -697,7 +708,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 
@@ -732,7 +743,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	}
 
-	private void createAssignment(String siteId, String taskId) throws SubmissionException {
+	private void createAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
 
 		//get the assignment reference
 		String taskTitle = getAssignmentTitle(taskId);
@@ -794,7 +805,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			log.warn("MD5 error creating assignment on turnitin");
 			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
 		}
@@ -882,15 +893,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
 		}
 
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Throwable t) {
-			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
+		} catch (Exception t) {
+			throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
 		Document document = null;
@@ -901,8 +912,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Throwable t) {
-			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+		} catch (Exception t) {
+			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}		
 
 		Element root = document.getDocumentElement();
@@ -911,7 +922,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("Create Assignment successful");						
 		} else {
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
-			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
 	}
 
@@ -927,7 +938,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		User user;
 		try {
 			user = userDirectoryService.getUser(userId);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot get user information", t);
 		}
 
@@ -940,7 +951,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		 */
 
-		String ufn = user.getFirstName();
+		String ufn = getUserFirstName(user);
 		if (ufn == null) {
 			throw new SubmissionException ("User has no first name");
 		}
@@ -963,7 +974,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			log.warn("MD5 error enrolling student on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Class Enrollment Turnitin API call", t);
 		}
@@ -1036,14 +1047,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			throw new SubmissionException("Student Enrollment call to Turnitin failed", t);
 		}
 
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
@@ -1055,7 +1066,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 	}
@@ -1073,8 +1084,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		searchItem.setStatus(ContentReviewItem.NOT_SUBMITTED_CODE);
 
 		List notSubmittedItems = dao.findByExample(searchItem);
-		if (notSubmittedItems.size() > 0) {
-			return  (ContentReviewItem)notSubmittedItems.get(0);
+		for (int i =0; i < notSubmittedItems.size(); i++) {
+			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(0);
+			//can we get a lock
+			
+			if (dao.obtainLock("item." + new Long(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
+			return  item;
 			
 		}
 		
@@ -1084,7 +1099,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//we need the next one whose retry time has not been reached
 		for  (int i =0; i < notSubmittedItems.size(); i++ ) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(i);
-			if (hasReachedRetryTime(item))
+			if (hasReachedRetryTime(item) && dao.obtainLock("item." + new Long(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
 				return item;
 			
 		}
@@ -1110,6 +1125,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 	}
 	
+	private void releaseLock(ContentReviewItem currentItem) {
+		
+		dao.releaseLock("item." + new Long(currentItem.getId()).toString(), serverConfigurationService.getServerId());
+	}
 	
 	public void processQueue() {
 		log.debug("Processing submission queue");
@@ -1145,6 +1164,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.debug("Submission attempt unsuccessful - User not found: " + e1.getMessage());
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1155,15 +1175,17 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("no valid email");
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
-			String ufn = user.getFirstName().trim();
+			String ufn = getUserFirstName(user);
 			if (ufn == null || ufn.equals("")) {
 				log.debug("Submission attempt unsuccessful - User has no first name");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no first name");
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1173,12 +1195,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no last name");
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
 			try {				
 				createClass(currentItem.getSiteId());
-			} catch (Throwable t) {
+			} catch (Exception t) {
 				log.debug ("Submission attempt unsuccessful: Could not create class", t);
 
 				if (t.getClass() == IOException.class) {
@@ -1186,18 +1209,23 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else {
 					currentItem.setLastError("Class creation error: " + t.getMessage());
-					if (t.getMessage().equals("Class creation call to Turnitin API failed") || t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful") || t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful"))
+					if (t.getMessage().equals("Class creation call to Turnitin API failed") 
+							|| t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful") 
+							|| t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful")
+							|| t.getMessage().equals("Create Class not successful. Message: Turnitin is down for scheduled system maintenance. The service will be available again at 5:00PM PDT.. Code: 9999") )
+
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					else	
 						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
 			try {
 				enrollInClass(currentItem.getUserId(), uem, currentItem.getSiteId());
-			} catch (Throwable t) {
+			} catch (Exception t) {
 				log.debug ("Submission attempt unsuccessful: Could not enroll user in class", t);
 
 				if (t.getClass() == IOException.class) {
@@ -1208,32 +1236,28 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				}
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
-			try {
-				createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
-			} catch (Throwable t) {
-				log.debug ("Submission attempt unsuccessful: Could not create assignment");
-
-				if (t.getClass() == IOException.class) {
-					currentItem.setLastError("Assign creation error: " + t.getMessage());
+	
+				try {
+					createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+				} catch (SubmissionException se) {
+					currentItem.setLastError("Assign creation error: " + se.getMessage());
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					dao.update(currentItem);
+					releaseLock(currentItem);
+					continue;
+				} catch (TransientSubmissionException tse) {
+					currentItem.setLastError("Assign creation error: " + tse.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				} else {
-					//this is a to be expected error
-					if (t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful")) {
-						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-					} else {
-						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					}
-					currentItem.setLastError("createAssignment: " + t.getMessage());
-				}
-
-				dao.update(currentItem);
-				continue;
-			}
-
-
+					dao.update(currentItem);
+					releaseLock(currentItem);
+					continue;
+					
+				} 
+			
 			//get all the info for the api call
 			//we do this before connecting so that if there is a problem we can jump out - saves time
 			//these errors should probably be caught when a student is enrolled in a class
@@ -1282,6 +1306,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 							currentItem.setLastError("FileName decode exception: " + fileName);
 							dao.update(currentItem);
+							releaseLock(currentItem);
 							continue;
 						}
 
@@ -1301,6 +1326,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				currentItem.setLastError("Permission exception: " + e2.getMessage());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			} 
 			catch (TypeException e) {
@@ -1308,6 +1334,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				currentItem.setLastError("Type Exception: " + e.getMessage());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
@@ -1351,6 +1378,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("MD5 error");
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1427,6 +1455,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.toString());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			} 
 			catch (ServerOverloadException e3) {
@@ -1434,6 +1463,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e3.toString());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1445,6 +1475,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.getMessage());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1461,6 +1492,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.error("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 
 			} catch (IOException e) {
@@ -1468,6 +1500,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e.getMessage());
 				dao.update(currentItem);
+				releaseLock(currentItem);
 				continue;
 			}
 
@@ -1527,6 +1560,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				dao.update(currentItem);
 		
 			}
+			//release the lock so the reports job can handle it
+			releaseLock(currentItem);
 			getNextItemInSubmissionQueue();
 		}
 
@@ -2299,7 +2334,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			log.warn("MD5 error creating assignment on turnitin");
 			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
 		}
@@ -2387,14 +2422,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Throwable t) {
+		catch (Exception t) {
 			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
 		}
 
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
@@ -2406,7 +2441,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Throwable t) {
+		} catch (Exception t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}		
 
@@ -2448,5 +2483,27 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		cal.add(Calendar.MINUTE, offset);
 		return cal.getTime();
 	}
-	
+
+	/**
+	 * Gets a first name for a user or generates an initial from the eid
+	 * @param user a sakai user
+	 * @return the first name or at least an initial if possible, "X" if no fn can be made
+	 */
+	private String getUserFirstName(User user) {
+      String ufn = user.getFirstName().trim();
+      if (ufn == null || ufn.equals("")) {
+         boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", false);
+         if (genFN) {
+            String eid = user.getEid();
+            if (eid != null 
+                  && eid.length() > 0) {
+               ufn = eid.substring(0,1);        
+            } else {
+               ufn = "X";
+            }
+         }
+      }
+      return ufn;
+	}
+
 }
