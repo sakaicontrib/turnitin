@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketAddress;
 import java.net.URL;
@@ -812,7 +814,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		HttpsURLConnection connection;
 
-		try {
+		try {		
 			URL hostURL = new URL(apiURL);
 			if (proxy == null) {
 				connection = (HttpsURLConnection) hostURL.openConnection();
@@ -820,7 +822,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
 			}
 
-			connection.setRequestMethod("GET");
+			
+				connection.setRequestMethod("GET");
+			
 			connection.setDoOutput(true);
 			connection.setDoInput(true);
 
@@ -892,17 +896,22 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write(md5.getBytes("UTF-8"));
 
 			outStream.close();
+		} catch (ProtocolException e) {
+			throw new TransientSubmissionException("Assignment creation: ProtocolException", e);
+		} catch (MalformedURLException e) {
+			throw new TransientSubmissionException("Assignment creation: MalformedURLException", e);
+		} catch (IOException e) {
+			throw new TransientSubmissionException("Assignment creation: IOException", e);
 		}
-		catch (Exception t) {
-			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
-		}
-
+		
 		BufferedReader in;
-		try {
-			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Exception t) {
-			throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
-		}
+		
+			try {
+				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			} catch (IOException e1) {
+				throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e1);
+			}
+		 
 
 		Document document = null;
 		try {	
@@ -912,9 +921,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Exception t) {
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
-		}		
+			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", pce);
+		} catch (SAXException e) {
+			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e);
+		} catch (IOException e) {
+			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e);
+		} 	
 
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
