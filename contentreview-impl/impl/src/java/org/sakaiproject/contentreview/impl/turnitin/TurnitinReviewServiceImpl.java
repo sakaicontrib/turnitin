@@ -930,8 +930,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
-		if ((rcode > 0 && rcode < 100) || rcode == 419 || rcode == 218) {
-			log.debug("Create Assignment successful");						
+		if ((rcode > 0 && rcode < 100) || rcode == 419) {
+			log.debug("Create Assignment successful");	
+			log.debug("tii returned " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		} else {
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
