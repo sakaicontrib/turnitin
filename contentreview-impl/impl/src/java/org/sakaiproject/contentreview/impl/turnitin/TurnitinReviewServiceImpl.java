@@ -1464,7 +1464,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				outStream.close();
 			} catch (IOException e1) {
 				log.warn("Submission failed due to IO error: " + e1.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.toString());
 				dao.update(currentItem);
 				releaseLock(currentItem);
@@ -1472,7 +1472,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} 
 			catch (ServerOverloadException e3) {
 				log.warn("Submission failed due to server error: " + e3.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e3.toString());
 				dao.update(currentItem);
 				releaseLock(currentItem);
@@ -1484,7 +1484,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			} catch (IOException e1) {
 				log.warn("Unable to determine Submission status due to response IO error: " + e1.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.getMessage());
 				dao.update(currentItem);
 				releaseLock(currentItem);
@@ -1502,14 +1502,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 			catch (SAXException se) {
 				log.error("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				dao.update(currentItem);
 				releaseLock(currentItem);
 				continue;
 
 			} catch (IOException e) {
 				log.warn("Unable to determine Submission status due to response IO error: " + e.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e.getMessage());
 				dao.update(currentItem);
 				releaseLock(currentItem);
