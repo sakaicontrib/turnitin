@@ -101,6 +101,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String defaultInstructorLName = null;
 
 	private String defaultInstructorPassword = null;
+	
+	private int sendNotifications = 0;
 
 	private Long maxRetry = null;
 
@@ -227,11 +229,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		defaultInstructorEmail = serverConfigurationService.getString("turnitin.defaultInstructorEmail");
 
-		defaultInstructorFName = serverConfigurationService.getString("turnitin.defaultInstructorFName");;
+		defaultInstructorFName = serverConfigurationService.getString("turnitin.defaultInstructorFName");
 
-		defaultInstructorLName = serverConfigurationService.getString("turnitin.defaultInstructorLName");;
+		defaultInstructorLName = serverConfigurationService.getString("turnitin.defaultInstructorLName");
 
-		defaultInstructorPassword = serverConfigurationService.getString("turnitin.defaultInstructorPassword");;
+		defaultInstructorPassword = serverConfigurationService.getString("turnitin.defaultInstructorPassword");
+		
+		if  (!serverConfigurationService.getBoolean("turnitin.sendnotifations", true)) 
+			sendNotifications = 1;
 
 		//note that the assignment id actually has to be unique globally so use this as a prefix
 		// assignid = defaultAssignId + siteId
@@ -984,7 +989,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String gmtime = this.getGMTime();
 
-		String md5_str = aid + cid + ctl + diagnostic + encrypt + fcmd + fid + gmtime + said + tem + uem +
+		String md5_str = aid + cid + ctl + diagnostic + sendNotifications +  encrypt + fcmd + fid + gmtime + said + tem + uem +
 		ufn + uid + uln + utp + secretKey;
 
 		String md5;
@@ -1040,6 +1045,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write("&diagnostic=".getBytes("UTF-8"));
 			outStream.write(diagnostic.getBytes("UTF-8"));
 
+			outStream.write("&dis=".getBytes("UTF-8"));
+			outStream.write(new Integer(sendNotifications).toString().getBytes("UTF-8"));
+						
 			outStream.write("&uem=".getBytes("UTF-8"));
 			outStream.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
 
@@ -1382,7 +1390,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String gmtime = this.getGMTime();
 
 			String md5_str = aid + assign + assignid + cid + ctl
-			+ diagnostic + encrypt + fcmd + fid + gmtime + ptl
+			+ diagnostic + sendNotifications + encrypt + fcmd + fid + gmtime + ptl
 			+ ptype + said + tem + uem + ufn + uid + uln + utp
 			+ secretKey;
 
@@ -1437,6 +1445,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				outStream.write(encodeParam("assign", assign, boundary).getBytes());
 				outStream.write(encodeParam("ctl", ctl, boundary).getBytes());
 				outStream.write(encodeParam("diagnostic", diagnostic, boundary).getBytes());
+				outStream.write(encodeParam("dis", new Integer(sendNotifications).toString(), boundary).getBytes());;
 				outStream.write(encodeParam("encrypt", encrypt, boundary).getBytes());
 				outStream.write(encodeParam("fcmd", fcmd, boundary).getBytes());
 				outStream.write(encodeParam("fid", fid, boundary).getBytes());
