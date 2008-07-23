@@ -34,6 +34,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jdom.output.XMLOutputter;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.assignment.api.Assignment;
@@ -838,6 +839,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write("&assign=".getBytes("UTF-8"));
 			outStream.write(assignEnc.getBytes("UTF-8"));
 
+			log.debug("assignid: " + assignid);
 			outStream.write("&assignid=".getBytes("UTF-8"));
 			outStream.write(assignid.getBytes("UTF-8"));
 
@@ -931,9 +933,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
 		if ((rcode > 0 && rcode < 100) || rcode == 419) {
-			log.debug("Create Assignment successful");						
+			log.debug("Create Assignment successful");	
+			log.debug("tii returned " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		} else {
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			//log.debug(root);
 			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
 	}
@@ -1464,7 +1468,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				outStream.close();
 			} catch (IOException e1) {
 				log.warn("Submission failed due to IO error: " + e1.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.toString());
 				dao.update(currentItem);
 				releaseLock(currentItem);
@@ -1472,7 +1476,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} 
 			catch (ServerOverloadException e3) {
 				log.warn("Submission failed due to server error: " + e3.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e3.toString());
 				dao.update(currentItem);
 				releaseLock(currentItem);
@@ -1484,7 +1488,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			} catch (IOException e1) {
 				log.warn("Unable to determine Submission status due to response IO error: " + e1.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e1.getMessage());
 				dao.update(currentItem);
 				releaseLock(currentItem);
@@ -1502,14 +1506,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 			catch (SAXException se) {
 				log.error("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				dao.update(currentItem);
 				releaseLock(currentItem);
 				continue;
 
 			} catch (IOException e) {
 				log.warn("Unable to determine Submission status due to response IO error: " + e.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				currentItem.setLastError("Submission Error:" + e.getMessage());
 				dao.update(currentItem);
 				releaseLock(currentItem);
