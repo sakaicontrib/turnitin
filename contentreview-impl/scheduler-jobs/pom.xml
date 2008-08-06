@@ -1,59 +1,57 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <artifactId>content-review-impl-base</artifactId>
-        <groupId>org.sakaiproject.contentreview</groupId>
-        <version>0.1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>content-review-impl-base</artifactId>
+		<groupId>org.sakaiproject.contentreview</groupId>
+		<version>0.1-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
 
-    <name>Turnitin Scheduler Component</name>
-    <groupId>org.sakaiproject.contentreview</groupId>
-    <artifactId>contentreview-scheduler</artifactId>
+	<name>Turnitin Scheduler Component</name>
+	<groupId>org.sakaiproject.contentreview</groupId>
+	<artifactId>contentreview-scheduler</artifactId>
 
-     <dependencies>
-       <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-contentreview-service-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>quartz</groupId>
-            <artifactId>quartz</artifactId>
-            <version>1.5.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-scheduler-api</artifactId>
-        </dependency>
+	<dependencies>
+		<dependency>
+			<groupId>org.sakaiproject</groupId>
+			<artifactId>sakai-contentreview-service-api</artifactId>
+		</dependency>
 
 		<dependency>
-		<groupId>org.sakaiproject</groupId>
-		<artifactId>sakai-tool-api</artifactId>
-		</dependency>       
+			<groupId>quartz</groupId>
+			<artifactId>quartz</artifactId>
+			<version>1.5.2</version>
+		</dependency>
 
-    </dependencies>
+		<dependency>
+			<groupId>org.sakaiproject</groupId>
+			<artifactId>sakai-scheduler-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.sakaiproject.kernel</groupId>
+			<artifactId>sakai-kernel-api</artifactId>
+		</dependency>
+	</dependencies>
 
-    <build>
-        <resources>
-            <resource>
-                <directory>${basedir}/src/sql</directory>
-                <includes>
-                    <include>**/*.sql</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/java</directory>
-                <includes>
-                    <include>**/*.xml</include>
-                    <include>**/*.properties</include>
-                </includes>
-                <excludes>
-                    <exclude>**/web.xml</exclude>
-                </excludes>
-            </resource>
-        </resources>
-    </build>
+	<build>
+		<resources>
+			<resource>
+				<directory>${basedir}/src/sql</directory>
+				<includes>
+					<include>**/*.sql</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/java</directory>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.properties</include>
+				</includes>
+				<excludes>
+					<exclude>**/web.xml</exclude>
+				</excludes>
+			</resource>
+		</resources>
+	</build>
 </project>
