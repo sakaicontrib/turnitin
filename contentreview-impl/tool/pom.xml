@@ -40,11 +40,7 @@
             <artifactId>servlet-api</artifactId>
         </dependency>
 
-        <!-- Sakai dependencies (all RSF apps must have this) -->
-        <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-util</artifactId>
-        </dependency>
+
     </dependencies>
 
     <build>
