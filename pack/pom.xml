@@ -36,9 +36,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.sakaiproject</groupId>
+            <groupId>org.sakaiproject.kernel.util</groupId>
             <artifactId>sakai-util</artifactId>
-            <scope>runtime</scope>
         </dependency>
 
     </dependencies>
