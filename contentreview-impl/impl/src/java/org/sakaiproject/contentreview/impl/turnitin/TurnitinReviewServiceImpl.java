@@ -2517,7 +2517,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String getUserFirstName(User user) {
       String ufn = user.getFirstName().trim();
       if (ufn == null || ufn.equals("")) {
-         boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", false);
+         boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", true);
          if (genFN) {
             String eid = user.getEid();
             if (eid != null 
