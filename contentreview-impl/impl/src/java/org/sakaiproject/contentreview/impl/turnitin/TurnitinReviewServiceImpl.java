@@ -589,7 +589,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 
-	private void createClass(String siteId) throws SubmissionException {
+	private void createClass(String siteId) throws SubmissionException, TransientSubmissionException {
 
 		log.debug("Creating class for site: " + siteId);
 
@@ -693,7 +693,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.close();
 		}
 		catch (Exception t) {
-			throw new SubmissionException("Class creation call to Turnitin API failed", t);
+			throw new TransientSubmissionException("Class creation call to Turnitin API failed", t);
 		}
 
 
@@ -701,7 +701,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 		} catch (Exception t) {
-			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
+			throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 		Document document = null;
 		try {	
@@ -712,16 +712,22 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
 		} catch (Exception t) {
-			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 
 
 		Element root = document.getDocumentElement();
+		String rcode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim();
+		
 		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("20") == 0 || 
 				((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("21") == 0 ) {
 			log.debug("Create Class successful");						
 		} else {
-			throw new SubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
+			if ("218".equals(rcode) || "9999".equals(rcode)) {
+				throw new TransientSubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
+			} else {
+				throw new SubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
+			}
 		}
 	}
 
@@ -1217,23 +1223,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			try {				
 				createClass(currentItem.getSiteId());
-			} catch (Exception t) {
+			} catch (SubmissionException t) {
 				log.debug ("Submission attempt unsuccessful: Could not create class", t);
-
-				if (t.getClass() == IOException.class) {
-					currentItem.setLastError("Class creation error: " + t.getMessage());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				} else {
-					currentItem.setLastError("Class creation error: " + t.getMessage());
-					if (t.getMessage().equals("Class creation call to Turnitin API failed") 
-							|| t.getMessage().equals("Cannot get Turnitin response. Assuming call was unsuccessful") 
-							|| t.getMessage().equals("Cannot parse Turnitin response. Assuming call was unsuccessful")
-							|| t.getMessage().equals("Create Class not successful. Message: Turnitin is down for scheduled system maintenance. The service will be available again at 5:00PM PDT.. Code: 9999") )
-
-						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-					else	
-						currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-				}
+				currentItem.setLastError("Class creation error: " + t.getMessage());
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+				dao.update(currentItem);
+				releaseLock(currentItem);
+				continue;
+			} catch (TransientSubmissionException tse) {
+				currentItem.setLastError("Class creation error: " + tse.getMessage());
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				dao.update(currentItem);
 				releaseLock(currentItem);
 				continue;
