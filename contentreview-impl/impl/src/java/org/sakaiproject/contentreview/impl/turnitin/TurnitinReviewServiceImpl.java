@@ -342,11 +342,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return this.isAcceptableContent(cr);
 		}
 		catch (IdUnusedException ue) {
-			log.warn("resource: " + contentId + "not found");
+			log.warn("resource: " + contentId + " not found");
+		} catch (PermissionException pe) {
+			log.warn("respource: " + contentId + " no permissions");
+		} catch (TypeException te) {
+			log.warn("resource: " + contentId + "  TypeException");
 		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
+
 		return false;
 
 	}
@@ -405,7 +407,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try {
 			md5 = getMD5(md5_str);
-		} catch (Exception t) {
+		} catch (NoSuchAlgorithmException t) {
 			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
 		}
 
@@ -519,7 +521,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try {
 			md5 = getMD5(md5_str);
-		} catch (Exception t) {
+		} catch (NoSuchAlgorithmException t) {
 			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
 		}
 
@@ -621,7 +623,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String md5;
 		try{
 			md5 = this.getMD5(md5_str);
-		} catch (Exception t) {
+		} catch (NoSuchAlgorithmException t) {
 			log.warn("MD5 error creating class on turnitin");
 			throw new SubmissionException("Cannot generate MD5 hash for Turnitin API call", t);
 		}
@@ -697,7 +699,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.close();
 		}
-		catch (Exception t) {
+		catch (IOException t) {
 			throw new TransientSubmissionException("Class creation call to Turnitin API failed", t);
 		}
 
@@ -705,7 +707,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Exception t) {
+		} catch (IOException t) {
 			throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 		Document document = null;
@@ -1565,7 +1567,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 
 				if (rMessage.equals("User password does not match user email") 
-						|| rCode.equals("1001") || rMessage.equals("") || rCode.equals("413")) {
+						|| "1001".equals(rCode) || "".equals(rMessage) || "413".equals(rCode) || "1025".equals(rCode)) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else if (rCode.equals("423")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
