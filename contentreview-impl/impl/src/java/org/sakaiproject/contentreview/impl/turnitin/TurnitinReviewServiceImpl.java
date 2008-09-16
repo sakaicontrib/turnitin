@@ -1314,7 +1314,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				try {
 					fileName = URLDecoder.decode(fileName, "UTF-8");
 					//in rare cases it seems filenames can be double encoded
-					if (fileName.indexOf("%20")> 0 ) {
+					while (fileName.indexOf("%20")> 0 || fileName.contains("%2520") ) {
 						try {
 							fileName = URLDecoder.decode(fileName, "UTF-8");
 						}
