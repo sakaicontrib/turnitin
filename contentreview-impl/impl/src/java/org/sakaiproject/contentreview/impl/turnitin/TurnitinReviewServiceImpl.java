@@ -1,3 +1,23 @@
+/**********************************************************************************
+ * $URL$
+ * $Id$
+ ***********************************************************************************
+ *
+ * Copyright (c) 2006 Sakai Foundation
+ *
+ * Licensed under the Educational Community License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.osedu.org/licenses/ECL-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ **********************************************************************************/
 package org.sakaiproject.contentreview.impl.turnitin;
 
 import java.io.BufferedReader;
@@ -294,10 +314,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		log.debug("Got a content type of " + mime);
 
 		Boolean fileTypeOk = false;
-		if (!(mime.equals("text/plain") || mime.equals("text/html") || mime.equals("application/msword") || 
+		if ((mime.equals("text/plain") || mime.equals("text/html") || mime.equals("application/msword") || 
 				mime.equals("application/postscript") || mime.equals("application/pdf") || mime.equals("text/rtf")) ) {
-			fileTypeOk =  false;
-			log.debug("FileType does not match know mime");
+			fileTypeOk =  true;
+			log.debug("FileType matches a known mime");
 		}
 
 		//as mime's can be tricky check the extensions
@@ -309,7 +329,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String extension = fileName.substring(fileName.lastIndexOf("."));
 				log.debug("file has an extension of " + extension);
 				if (extension.equals(".doc") || extension.equals(".wpd") || extension.equals(".eps") 
-						||  extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") || extension.equals(".pdf") || extension.equals(".docx"))
+						||  extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") 
+						|| extension.equals(".pdf") || extension.equals(".docx") || ".rtf".equals(extension))
 					fileTypeOk = true;
 
 			} else {
