@@ -1538,6 +1538,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			catch (SAXException se) {
 				log.error("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+				currentItem.setLastError("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
 				dao.update(currentItem);
 				releaseLock(currentItem);
 				continue;
