@@ -76,9 +76,9 @@ public class ContentReviewTestDataLoad {
    public final static Boolean UNLOCKED = Boolean.FALSE;
 
    public final static String ANSWER_TEXT = "text answer";
-   public final static Integer ANSWER_SCALED_ONE = new Integer(1);
-   public final static Integer ANSWER_SCALED_TWO = new Integer(2);
-   public final static Integer ANSWER_SCALED_THREE = new Integer(3);
+   public final static Integer ANSWER_SCALED_ONE = Integer.valueOf(1);
+   public final static Integer ANSWER_SCALED_TWO = Integer.valueOf(2);
+   public final static Integer ANSWER_SCALED_THREE = Integer.valueOf(3);
 
    public final static String EMAIL_MESSAGE = "This is a big long email message";
 

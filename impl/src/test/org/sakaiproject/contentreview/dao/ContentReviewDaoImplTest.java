@@ -81,7 +81,7 @@ public class ContentReviewDaoImplTest extends AbstractTransactionalSpringContext
 	   assertNotSame(newItem.getId(), contentReviewItemLockedExp.getId());
 	   
 	   //can we get the lock?
-	   Long tId = new Long(contentReviewItemLockedExp.getId());
+	   Long tId = Long.valueOf(contentReviewItemLockedExp.getId());
 	   String sId = tId.toString();
 	   assertTrue(contentReviewDao.obtainLock(sId, ADMIN_USER, -1000));
 
@@ -89,7 +89,7 @@ public class ContentReviewDaoImplTest extends AbstractTransactionalSpringContext
 	   //lock item
 	   contentReviewItemLocked = new ContentReviewItem(USER,"site","task","content",new Date(), ContentReviewItem.NOT_SUBMITTED_CODE);
 	   contentReviewDao.save(contentReviewItemLocked);
-	   contentReviewDao.obtainLock(new Long(contentReviewItemLocked.getId()).toString(), ADMIN_USER, 10000);
+	   contentReviewDao.obtainLock(Long.valueOf(contentReviewItemLocked.getId()).toString(), ADMIN_USER, 10000);
 
 	   contentReviewItemUnlocked = new ContentReviewItem(USER,"site","task","content",new Date(), ContentReviewItem.NOT_SUBMITTED_CODE);
 	   contentReviewDao.save(contentReviewItemUnlocked);
@@ -105,14 +105,14 @@ public class ContentReviewDaoImplTest extends AbstractTransactionalSpringContext
 
  public void testgetLock() {
 	 //Unlocked Item should be able to get lock
-	 assertTrue(contentReviewDao.obtainLock(new Long(contentReviewItemUnlocked.getId()).toString(), ADMIN_USER, 10000));
+	 assertTrue(contentReviewDao.obtainLock(Long.valueOf(contentReviewItemUnlocked.getId()).toString(), ADMIN_USER, 10000));
 	 
 	 
 	 //Item locked by ADMIN I shouldn't be able to get a lock
-	 assertFalse(contentReviewDao.obtainLock(new Long(contentReviewItemLocked.getId()).toString(), USER, 10000));
+	 assertFalse(contentReviewDao.obtainLock(Long.valueOf(contentReviewItemLocked.getId()).toString(), USER, 10000));
  
 	 //admin should be able to get their origional lock back
-	 assertTrue(contentReviewDao.obtainLock(new Long(contentReviewItemLocked.getId()).toString(), ADMIN_USER, 10000));
+	 assertTrue(contentReviewDao.obtainLock(Long.valueOf(contentReviewItemLocked.getId()).toString(), ADMIN_USER, 10000));
 	 
 	 //not sure why this doesn;t work
 	 //assertTrue(contentReviewDao.obtainLock(new Long(contentReviewItemLockedExp.getId()).toString(), USER, 10000));
