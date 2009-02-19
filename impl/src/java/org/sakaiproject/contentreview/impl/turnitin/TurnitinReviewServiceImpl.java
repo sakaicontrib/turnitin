@@ -1658,7 +1658,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		log.debug("Checking for updated reports from Turnitin in bulk mode");
 
 		// get the list of all items that are waiting for reports
-		List awaitingReport = dao.findByProperties(ContentReviewItem.class,
+		List<ContentReviewItem> awaitingReport = dao.findByProperties(ContentReviewItem.class,
 				new String[] { "status" },
 				new Object[] { ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE});
 
@@ -1666,8 +1666,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				new String[] { "status" },
 				new Object[] { ContentReviewItem.REPORT_ERROR_RETRY_CODE}));
 
-		Iterator listIterator = awaitingReport.iterator();
-		HashMap reportTable = new HashMap();
+		Iterator<ContentReviewItem> listIterator = awaitingReport.iterator();
+		HashMap<String, Integer> reportTable = new HashMap<String, Integer>();
 
 		log.debug("There are " + awaitingReport.size() + " submissions awaiting reports");
 
@@ -1916,7 +1916,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		log.debug("Checking for updated reports from Turnitin in individual mode");
 
 		// get the list of all items that are waiting for reports
-		List awaitingReport = dao.findByProperties(ContentReviewItem.class,
+		List<ContentReviewItem> awaitingReport = dao.findByProperties(ContentReviewItem.class,
 				new String[] { "status" },
 				new Object[] { ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE});
 
@@ -1924,8 +1924,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				new String[] { "status" },
 				new Object[] { ContentReviewItem.REPORT_ERROR_RETRY_CODE}));
 
-		Iterator listIterator = awaitingReport.iterator();
-		HashMap reportTable = new HashMap();
+		Iterator<ContentReviewItem> listIterator = awaitingReport.iterator();
+		HashMap<String, Integer> reportTable = new HashMap();
 
 		log.debug("There are " + awaitingReport.size() + " submissions awaiting reports");
 
@@ -2224,20 +2224,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return uem;
 	}
 
-	private String readerToString(BufferedReader in) {
-
-		String inputLine;
-		String retval = "";
-		try {
-			while ((inputLine = in.readLine()) != null) 
-				retval.concat(inputLine);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		return retval;
-
-	}
 
 	/**
 	 * Is this a valid email the service will recognize
