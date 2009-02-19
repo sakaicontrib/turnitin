@@ -111,7 +111,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	private String proxyPort = null;
 
-	private String defaultAssignmentName = null;
 	final static long LOCK_PERIOD = 12000000;
 
 	private String defaultInstructorEmail = null;
@@ -245,7 +244,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		apiURL = serverConfigurationService.getString("turnitin.apiURL","https://www.turnitin.com/api.asp?");
 
-		defaultAssignmentName = serverConfigurationService.getString("turnitin.defaultAssignmentName");
+		
 
 		defaultInstructorEmail = serverConfigurationService.getString("turnitin.defaultInstructorEmail");
 
@@ -267,7 +266,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
 		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId","admin");
 
-		maxRetry = new Long(serverConfigurationService.getInt("turnitin.maxRetry",100));
+		maxRetry = Long.valueOf(serverConfigurationService.getInt("turnitin.maxRetry",100));
 
 		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
 		
@@ -288,13 +287,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String urlBase = "/sakai-contentreview-tool/images/score_";
 		String suffix = ".gif";
 
-		if (score.equals(new Long(0))) {
+		if (score.equals(Long.valueOf(0))) {
 			return urlBase + "blue" + suffix;
-		} else if (score.compareTo(new Long(25)) < 0 ) {
+		} else if (score.compareTo(Long.valueOf(25)) < 0 ) {
 			return urlBase + "green" + suffix;
-		} else if (score.compareTo(new Long(50)) < 0  ) {
+		} else if (score.compareTo(Long.valueOf(50)) < 0  ) {
 			return urlBase + "yellow" + suffix;
-		} else if (score.compareTo(new Long(75)) < 0 ) {
+		} else if (score.compareTo(Long.valueOf(75)) < 0 ) {
 			return urlBase + "orange" + suffix;
 		} else {
 			return urlBase + "red" + suffix;
@@ -355,23 +354,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return false;
 		}
 		return true;
-	}
-
-	private boolean isAcceptableContent(String contentId) {
-		try {
-			ContentResource cr = contentHostingService.getResource(contentId);
-			return this.isAcceptableContent(cr);
-		}
-		catch (IdUnusedException ue) {
-			log.warn("resource: " + contentId + " not found");
-		} catch (PermissionException pe) {
-			log.warn("respource: " + contentId + " no permissions");
-		} catch (TypeException te) {
-			log.warn("resource: " + contentId + "  TypeException");
-		}
-
-		return false;
-
 	}
 	
 	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
@@ -1075,7 +1057,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write(diagnostic.getBytes("UTF-8"));
 
 			outStream.write("&dis=".getBytes("UTF-8"));
-			outStream.write(new Integer(sendNotifications).toString().getBytes("UTF-8"));
+			outStream.write(Integer.valueOf(sendNotifications).toString().getBytes("UTF-8"));
 						
 			outStream.write("&uem=".getBytes("UTF-8"));
 			outStream.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
@@ -1141,7 +1123,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(0);
 			//can we get a lock
 			
-			if (dao.obtainLock("item." + new Long(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
+			if (dao.obtainLock("item." + Long.valueOf(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
 			return  item;
 			
 		}
@@ -1152,7 +1134,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//we need the next one whose retry time has not been reached
 		for  (int i =0; i < notSubmittedItems.size(); i++ ) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(i);
-			if (hasReachedRetryTime(item) && dao.obtainLock("item." + new Long(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
+			if (hasReachedRetryTime(item) && dao.obtainLock("item." + Long.valueOf(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
 				return item;
 			
 		}
@@ -1180,7 +1162,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	
 	private void releaseLock(ContentReviewItem currentItem) {
 		
-		dao.releaseLock("item." + new Long(currentItem.getId()).toString(), serverConfigurationService.getServerId());
+		dao.releaseLock("item." + currentItem.getId().toString(), serverConfigurationService.getServerId());
 	}
 	
 	public void processQueue() {
@@ -1194,7 +1176,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 
 			if (currentItem.getRetryCount() == null ) {
-				currentItem.setRetryCount(new Long(0));
+				currentItem.setRetryCount(Long.valueOf(0));
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
 				dao.update(currentItem);
 			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
@@ -1204,8 +1186,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} else {
 				long l = currentItem.getRetryCount().longValue();
 				l++;
-				currentItem.setRetryCount(new Long(l));
-				currentItem.setNextRetryTime(this.getNextRetryTime(new Long(l)));
+				currentItem.setRetryCount(Long.valueOf(l));
+				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
 				dao.update(currentItem);
 			}
 			
@@ -1467,7 +1449,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				outStream.write(encodeParam("assign", assign, boundary).getBytes());
 				outStream.write(encodeParam("ctl", ctl, boundary).getBytes());
 				outStream.write(encodeParam("diagnostic", diagnostic, boundary).getBytes());
-				outStream.write(encodeParam("dis", new Integer(sendNotifications).toString(), boundary).getBytes());;
+				outStream.write(encodeParam("dis", Integer.valueOf(sendNotifications).toString(), boundary).getBytes());;
 				outStream.write(encodeParam("encrypt", encrypt, boundary).getBytes());
 				outStream.write(encodeParam("fcmd", fcmd, boundary).getBytes());
 				outStream.write(encodeParam("fid", fid, boundary).getBytes());
@@ -1574,7 +1556,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					log.debug("Submission successful");
 					currentItem.setExternalId(externalId);
 					currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
-					currentItem.setRetryCount(new Long(0));
+					currentItem.setRetryCount(Long.valueOf(0));
 					currentItem.setLastError(null);
 					currentItem.setDateSubmitted(new Date());
 					dao.update(currentItem);
@@ -1705,7 +1687,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 			
 			if (currentItem.getRetryCount() == null ) {
-				currentItem.setRetryCount(new Long(0));
+				currentItem.setRetryCount(Long.valueOf(0));
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
 			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
@@ -1714,13 +1696,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} else {
 				long l = currentItem.getRetryCount().longValue();
 				l++;
-				currentItem.setRetryCount(new Long(l));
-				currentItem.setNextRetryTime(this.getNextRetryTime(new Long(l)));
+				currentItem.setRetryCount(Long.valueOf(l));
+				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
 				dao.update(currentItem);
 			}
 
 			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
-				currentItem.setStatus(new Long(4));
+				currentItem.setStatus(Long.valueOf(4));
 				dao.update(currentItem);
 				continue;
 			}
@@ -1897,9 +1879,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
 						if (similarityScore.compareTo("-1") != 0) {
 							overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
-							reportTable.put(objectId, new Integer(overlap));
+							reportTable.put(objectId, Integer.valueOf(overlap));
 						} else {
-							reportTable.put(objectId, new Integer(-1));
+							reportTable.put(objectId, Integer.valueOf(-1));
 						}
 
 						log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
@@ -1963,7 +1945,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 			
 			if (currentItem.getRetryCount() == null ) {
-				currentItem.setRetryCount(new Long(0));
+				currentItem.setRetryCount(Long.valueOf(0));
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
 			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
@@ -1972,13 +1954,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} else {
 				long l = currentItem.getRetryCount().longValue();
 				l++;
-				currentItem.setRetryCount(new Long(l));
-				currentItem.setNextRetryTime(this.getNextRetryTime(new Long(l)));
+				currentItem.setRetryCount(Long.valueOf(l));
+				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
 				dao.update(currentItem);
 			}
 
 			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
-				currentItem.setStatus(new Long(4));
+				currentItem.setStatus(Long.valueOf(4));
 				dao.update(currentItem);
 				continue;
 			}
@@ -2158,9 +2140,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
 						if (similarityScore.compareTo("-1") != 0) {
 							overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
-							reportTable.put(objectId, new Integer(overlap));
+							reportTable.put(objectId, Integer.valueOf(overlap));
 						} else {
-							reportTable.put(objectId, new Integer(-1));
+							reportTable.put(objectId, Integer.valueOf(-1));
 						}
 
 						log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);

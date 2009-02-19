@@ -43,7 +43,7 @@
 
 	<bean
 		id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"
-		class="org.sakaiproject.contentreview.impl.adivisors.defaultSiteAdvisor">
+		class="org.sakaiproject.contentreview.impl.adivisors.DefaultSiteAdvisor">
 	</bean>
 
 	<!--  Uncomment this to use a site property to define which sites use c-r -->
