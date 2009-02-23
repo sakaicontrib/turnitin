@@ -721,6 +721,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
+			throw new TransientSubmissionException ("Parser configuration error", pce);
 		} catch (Exception t) {
 			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
@@ -2457,6 +2458,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
+			throw new SubmissionException("parser configuration error", pce);
 		} catch (Exception t) {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}		
