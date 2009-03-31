@@ -1015,7 +1015,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		HttpsURLConnection connection;
 
 		try {
-			URL hostURL = new URL(apiURL);
+			URL hostURL;
+	
+			hostURL = new URL(apiURL);
 			if (proxy == null) {
 				connection = (HttpsURLConnection) hostURL.openConnection();
 			} else {
@@ -1082,9 +1084,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write(uid.getBytes("UTF-8"));
 
 			outStream.close();
-		}
-		catch (Exception t) {
-			throw new SubmissionException("Student Enrollment call to Turnitin failed", t);
+		} catch (MalformedURLException e) {
+			throw new SubmissionException("Student Enrollment call to Turnitin failed", e);
+		} catch (IOException e) {
+			throw new SubmissionException("Student Enrollment call to Turnitin failed", e);		
 		}
 
 		BufferedReader in;
@@ -1094,11 +1097,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
-		Document document = null;
+		
 		try {	
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			document = parser.parse(new org.xml.sax.InputSource(in));
+			parser.parse(new org.xml.sax.InputSource(in));
 		}
 		catch (ParserConfigurationException pce){
 			log.error("parser configuration error: " + pce.getMessage());
@@ -2359,7 +2362,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		HttpsURLConnection connection;
 
 		try {
-			URL hostURL = new URL(apiURL);
+			URL hostURL;
+			
+			hostURL = new URL(apiURL);
 			if (proxy == null) {
 				connection = (HttpsURLConnection) hostURL.openConnection();
 			} else {
@@ -2438,11 +2443,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write(md5.getBytes("UTF-8"));
 
 			outStream.close();
+		} catch (MalformedURLException e) {
+			throw new SubmissionException("Assignment creation call to Turnitin API failed", e);
+		} catch (IOException e) {
+			throw new SubmissionException("Assignment creation call to Turnitin API failed", e);
 		}
-		catch (Exception t) {
-			throw new SubmissionException("Assignment creation call to Turnitin API failed", t);
-		}
-
+	
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
