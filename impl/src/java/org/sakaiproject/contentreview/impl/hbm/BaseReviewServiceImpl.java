@@ -102,7 +102,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		 * 
 		 */
 
-		List existingItems = dao
+		List<ContentReviewItem> existingItems = dao
 				.findByExample(new ContentReviewItem(contentId));
 		if (existingItems.size() > 0) {
 				throw new QueueException("Content " + contentId + " is already queued, not re-queued");
@@ -117,7 +117,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 			throws QueueException, ReportException, Exception {
 		log.debug("Getting review score for content: " + contentId);
 
-		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		List<ContentReviewItem> matchingItems = dao.findByExample(new ContentReviewItem(contentId));
 		if (matchingItems.size() == 0) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
@@ -141,7 +141,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 			throws QueueException {
 		log.debug("Returning review status for content: " + contentId);
 
-		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		List<ContentReviewItem> matchingItems = dao.findByExample(new ContentReviewItem(contentId));
 		
 		if (matchingItems.size() == 0) {
 			log.debug("Content " + contentId + " has not been queued previously");
@@ -158,7 +158,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 			throws QueueException {
 		log.debug("Returning date queued for content: " + contentId);
 
-		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		List<ContentReviewItem> matchingItems = dao.findByExample(new ContentReviewItem(contentId));
 		if (matchingItems.size() == 0) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
@@ -174,7 +174,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		throws QueueException, SubmissionException {
 		log.debug("Returning date queued for content: " + contentId);
 
-		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		List<ContentReviewItem> matchingItems = dao.findByExample(new ContentReviewItem(contentId));
 		
 		if (matchingItems.size() == 0) {
 			log.debug("Content " + contentId + " has not been queued previously");
@@ -195,12 +195,12 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 	
 
 
-	public List getReportList(String siteId, String taskId) {
+	public List<ContentReviewItem> getReportList(String siteId, String taskId) {
 		log.debug("Returning list of reports for site: " + siteId + ", task: " + taskId);
 		return dao.findByExample(new ContentReviewItem(null, siteId, taskId, null, null, ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE));
 	}
 	
-	public List getReportList(String siteId) {
+	public List<ContentReviewItem> getReportList(String siteId) {
 		log.debug("Returning list of reports for site: " + siteId);
 		return dao.findByExample(new ContentReviewItem(null, siteId, null, null, null, ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE));
 	}
@@ -212,7 +212,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		searchItem.setContentId(null);
 		searchItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 		searchItem.setUserId(userId);
-		List lockedItems = dao.findByExample(searchItem);
+		List<ContentReviewItem> lockedItems = dao.findByExample(searchItem);
 		for (int i =0; i < lockedItems.size();i++) {
 			ContentReviewItem thisItem = (ContentReviewItem) lockedItems.get(i);
 			thisItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
