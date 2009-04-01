@@ -34,6 +34,8 @@ import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.contentreview.service.ContentReviewService;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
+import org.sakaiproject.genericdao.api.search.Restriction;
+import org.sakaiproject.genericdao.api.search.Search;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.user.api.UserDirectoryService;
@@ -221,7 +223,14 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 	}
 	
 
-	
+	public void removeFromQueue(String ContentId) {
+		Search search = new Search();
+		search.addRestriction(new Restriction("contentId",ContentId));
+		List<ContentReviewItem> object = dao.findBySearch(ContentReviewItem.class, search);
+		dao.delete(object);
+		
+		
+	}
 
 	public boolean isSiteAcceptable(Site s) {
 		return siteAdvisor.siteCanUseReviewService(s);
@@ -274,6 +283,8 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 		// TODO Auto-generated method stub
 		
 	}
+
+	
 
 
 	

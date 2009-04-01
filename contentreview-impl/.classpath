@@ -23,5 +23,8 @@
 	<classpathentry kind="var" path="M2_REPO"/>
 	<classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-common-type-api/2.5.0/sakai-common-type-api-2.5.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sakai-assignment-api"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/poi/poi/3.5-beta5/poi-3.5-beta5.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/poi/poi-ooxml/3.5-beta4/poi-ooxml-3.5-beta4.jar.sha1"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/poi/poi-scratchpad/3.5-beta4/poi-scratchpad-3.5-beta4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

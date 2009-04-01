@@ -54,6 +54,11 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.poi.hpsf.DocumentSummaryInformation;
+import org.apache.poi.hpsf.SummaryInformation;
+import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.poifs.filesystem.POIFSDocument;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.jdom.output.XMLOutputter;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
@@ -353,9 +358,61 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("File is too big: " + resource.getContentLength());
 			return false;
 		}
+		
+		//if this is a msword type file we can check the legth
+		if (isMsWordDoc(resource)) {
+			if (wordDocLength(resource) < 20) {
+				return false;
+			}
+		}
+		
+		
 		return true;
 	}
 	
+	private int wordDocLength(ContentResource resource) {
+		try {
+			POIFSFileSystem pfs = new POIFSFileSystem(resource.streamContent());
+			HWPFDocument doc = new HWPFDocument(pfs);
+			SummaryInformation dsi = doc.getSummaryInformation();
+			int count = dsi.getWordCount();
+			log.debug("got a count of " + count);
+			//if this == 0 then its likely that something went wrong -poi couldn't read it
+			if (count == 0)
+				return 100;
+			return count;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServerOverloadException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//in case we can't read this lets err on the side of caution
+		return 100;
+	}
+
+	private boolean isMsWordDoc(ContentResource resource) {
+		String mime = resource.getContentType();
+		log.debug("Got a content type of " + mime);
+
+		
+		if (mime.equals("application/msword")) {
+			log.debug("FileType matches a known mime");
+			return true;
+		}
+		
+		ResourceProperties resourceProperties = resource.getProperties();
+		String fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
+		String extension = fileName.substring(fileName.lastIndexOf("."));
+		log.debug("file has an extension of " + extension);
+		if (extension.equals(".doc") || extension.equals(".docx") || ".rtf".equals(extension)) {
+			return true;
+		}
+		
+		return false;
+	}
+
 	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
 		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
 		if (matchingItems.size() == 0) {
