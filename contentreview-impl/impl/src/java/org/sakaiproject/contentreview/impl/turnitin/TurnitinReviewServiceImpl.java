@@ -371,6 +371,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 	
 	private int wordDocLength(ContentResource resource) {
+		if (!serverConfigurationService.getBoolean("tii.checkWordLength", false))
+			return 100;
+		
 		try {
 			POIFSFileSystem pfs = new POIFSFileSystem(resource.streamContent());
 			HWPFDocument doc = new HWPFDocument(pfs);
