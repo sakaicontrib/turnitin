@@ -407,9 +407,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 		ResourceProperties resourceProperties = resource.getProperties();
 		String fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
-		String extension = fileName.substring(fileName.lastIndexOf("."));
-		log.debug("file has an extension of " + extension);
-		if (extension.equals(".doc") || extension.equals(".docx") || ".rtf".equals(extension)) {
+		if (fileName.contains(".")) {
+			String extension = fileName.substring(fileName.lastIndexOf("."));
+			log.debug("file has an extension of " + extension);
+			if (extension.equals(".doc") || extension.equals(".docx") || ".rtf".equals(extension)) {
+				return true;
+			}
+		} else {
+			//if the file has no extension we assume its a doc
 			return true;
 		}
 		
@@ -528,7 +533,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
-		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		List<ContentReviewItem> matchingItems = dao.findByExample(new ContentReviewItem(contentId));
 		if (matchingItems.size() == 0) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
