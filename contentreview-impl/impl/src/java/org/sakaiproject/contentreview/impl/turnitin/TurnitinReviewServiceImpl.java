@@ -62,7 +62,7 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.jdom.output.XMLOutputter;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
-import org.sakaiproject.assignment.api.Assignment;
+//import org.sakaiproject.assignment.api.Assignment;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
@@ -97,6 +97,30 @@ import org.xml.sax.SAXException;
 
 public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
+	public static final String PROP_TURNITIN_GENERATE_FIRST_NAME = "turnitin.generate.first.name";
+	public static final String PROP_TURNITIN_GET_REPORTS_BULK = "turnitin.getReportsBulk";
+	public static final String PROP_TII_CHECK_WORD_LENGTH = "tii.checkWordLength";
+	public static final String PROP_TURNITIN_UPDATE_ASSINGMENTS = "turnitin.updateAssingments";
+	public static final String PROP_TURNITIN_MAX_FILE_SIZE = "turnitin.maxFileSize";
+	public static final String PROP_TURNITIN_MAX_RETRY = "turnitin.maxRetry";
+	public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID = "turnitin.defaultInstructorId";
+	public static final String PROP_TURNITIN_DEFAULT_CLASS_PASSWORD = "turnitin.defaultClassPassword";
+	public static final String PROP_TURNITIN_DEFAULT_ASSIGN_ID = "turnitin.defaultAssignId";
+	public static final String PROP_TURNITIN_SEND_NOTIFATIONS = "turnitin.sendnotifations";
+	public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD = "turnitin.defaultInstructorPassword";
+	public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME = "turnitin.defaultInstructorLName";
+	public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME = "turnitin.defaultInstructorFName";
+	public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL = "turnitin.defaultInstructorEmail";
+	public static final String PROP_TURNITIN_API_URL = "turnitin.apiURL";
+	public static final String PROP_TURNITIN_SECRET_KEY = "turnitin.secretKey";
+	public static final String PROP_TURNITIN_SAID = "turnitin.said";
+	public static final String PROP_TURNITIN_AID = "turnitin.aid";
+	public static final String PROP_HTTP_PROXY_PORT = "http.proxyPort";
+	public static final String PROP_HTTP_PROXY_HOST = "http.proxyHost";
+	public static final String PROP_TURNITIN_PROXY_HOST = "turnitin.proxyHost";
+	public static final String PROP_TURNITIN_PROXY_PORT = "turnitin.proxyPort";
+	
+	
 
 	private static final Log log = LogFactory
 	.getLog(TurnitinReviewServiceImpl.class);
@@ -217,9 +241,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		log.info("init()");
 
-		proxyHost = serverConfigurationService.getString("turnitin.proxyHost"); 
+		proxyHost = serverConfigurationService.getString(PROP_TURNITIN_PROXY_HOST); 
 
-		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
+		proxyPort = serverConfigurationService.getString(PROP_TURNITIN_PROXY_PORT);
 
 		
 		
@@ -231,51 +255,51 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} catch (NumberFormatException e) {
 				log.debug("Invalid proxy port specified: " + proxyPort);
 			}
-		} else if (System.getProperty("http.proxyHost") != null && !System.getProperty("http.proxyHost").equals("")) {
+		} else if (System.getProperty(PROP_HTTP_PROXY_HOST) != null && !System.getProperty(PROP_HTTP_PROXY_HOST).equals("")) {
 			try {
-				SocketAddress addr = new InetSocketAddress(System.getProperty("http.proxyHost"), new Integer(System.getProperty("http.proxyPort")).intValue());
+				SocketAddress addr = new InetSocketAddress(System.getProperty(PROP_HTTP_PROXY_HOST), new Integer(System.getProperty(PROP_HTTP_PROXY_PORT)).intValue());
 				proxy = new Proxy(Proxy.Type.HTTP, addr);
-				log.debug("Using proxy: " + System.getProperty("http.proxyHost") + " " + System.getProperty("http.proxyPort"));
+				log.debug("Using proxy: " + System.getProperty(PROP_HTTP_PROXY_HOST) + " " + System.getProperty(PROP_HTTP_PROXY_PORT));
 			} catch (NumberFormatException e) {
-				log.debug("Invalid proxy port specified: " + System.getProperty("http.proxyPort"));
+				log.debug("Invalid proxy port specified: " + System.getProperty(PROP_HTTP_PROXY_PORT));
 			}
 		}
  
-		aid = serverConfigurationService.getString("turnitin.aid");
+		aid = serverConfigurationService.getString(PROP_TURNITIN_AID);
 
-		said = serverConfigurationService.getString("turnitin.said");
+		said = serverConfigurationService.getString(PROP_TURNITIN_SAID);
 
-		secretKey = serverConfigurationService.getString("turnitin.secretKey");
+		secretKey = serverConfigurationService.getString(PROP_TURNITIN_SECRET_KEY);
 
-		apiURL = serverConfigurationService.getString("turnitin.apiURL","https://www.turnitin.com/api.asp?");
+		apiURL = serverConfigurationService.getString(PROP_TURNITIN_API_URL,"https://www.turnitin.com/api.asp?");
 
 		
 
-		defaultInstructorEmail = serverConfigurationService.getString("turnitin.defaultInstructorEmail");
+		defaultInstructorEmail = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL);
 
-		defaultInstructorFName = serverConfigurationService.getString("turnitin.defaultInstructorFName");
+		defaultInstructorFName = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME);
 
-		defaultInstructorLName = serverConfigurationService.getString("turnitin.defaultInstructorLName");
+		defaultInstructorLName = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME);
 
-		defaultInstructorPassword = serverConfigurationService.getString("turnitin.defaultInstructorPassword");
+		defaultInstructorPassword = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD);
 		
-		if  (!serverConfigurationService.getBoolean("turnitin.sendnotifations", true)) 
+		if  (!serverConfigurationService.getBoolean(PROP_TURNITIN_SEND_NOTIFATIONS, true)) 
 			sendNotifications = 1;
 
 		//note that the assignment id actually has to be unique globally so use this as a prefix
 		// assignid = defaultAssignId + siteId
-		defaultAssignId = serverConfigurationService.getString("turnitin.defaultAssignId");;
+		defaultAssignId = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_ASSIGN_ID);;
 
-		defaultClassPassword = serverConfigurationService.getString("turnitin.defaultClassPassword","changeit");;
+		defaultClassPassword = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_CLASS_PASSWORD,"changeit");;
 
 		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
-		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId","admin");
+		defaultInstructorId = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID,"admin");
 
-		maxRetry = Long.valueOf(serverConfigurationService.getInt("turnitin.maxRetry",100));
+		maxRetry = Long.valueOf(serverConfigurationService.getInt(PROP_TURNITIN_MAX_RETRY,100));
 
-		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
+		TII_MAX_FILE_SIZE = serverConfigurationService.getInt(PROP_TURNITIN_MAX_FILE_SIZE,10995116);
 		
-		if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
+		if (serverConfigurationService.getBoolean(PROP_TURNITIN_UPDATE_ASSINGMENTS, false))
 			doAssignments();
 
 	}
@@ -371,7 +395,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 	
 	private int wordDocLength(ContentResource resource) {
-		if (!serverConfigurationService.getBoolean("tii.checkWordLength", false))
+		if (!serverConfigurationService.getBoolean(PROP_TII_CHECK_WORD_LENGTH, false))
 			return 100;
 		
 		try {
@@ -682,129 +706,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String cid = siteId;
 		String uid = defaultInstructorId;
 
-		String gmtime = this.getGMTime();
-
-		// MD5 of function 2 - Create a class under a given account (instructor only)
-		String md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
-		gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-
-		String md5;
-		try{
-			md5 = this.getMD5(md5_str);
-		} catch (NoSuchAlgorithmException t) {
-			log.warn("MD5 error creating class on turnitin");
-			throw new SubmissionException("Cannot generate MD5 hash for Turnitin API call", t);
-		}
-
-		HttpsURLConnection connection;
-
-		try {
-			URL hostURL = new URL(apiURL);
-			if (proxy == null) {
-				connection = (HttpsURLConnection) hostURL.openConnection();
-			} else {
-				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-			}
-
-			connection.setRequestMethod("GET");
-			connection.setDoOutput(true);
-			connection.setDoInput(true);
-
-			log.debug("HTTPS Connection made to Turnitin");
-
-			OutputStream outStream = connection.getOutputStream();
-
-			outStream.write("uid=".getBytes("UTF-8"));
-			outStream.write(uid.getBytes("UTF-8"));
-
-			outStream.write("&cid=".getBytes("UTF-8"));
-			outStream.write(cid.getBytes("UTF-8"));
-
-			outStream.write("&aid=".getBytes("UTF-8"));
-			outStream.write(aid.getBytes("UTF-8"));			
-
-			outStream.write("&cpw=".getBytes("UTF-8"));
-			outStream.write(cpw.getBytes("UTF-8"));
-
-			outStream.write("&ctl=".getBytes("UTF-8"));
-			outStream.write(ctl.getBytes("UTF-8"));
-
-			outStream.write("&diagnostic=".getBytes("UTF-8"));
-			outStream.write(diagnostic.getBytes("UTF-8"));
-
-			outStream.write("&encrypt=".getBytes("UTF-8"));
-			outStream.write(encrypt.getBytes("UTF-8"));
-
-			outStream.write("&fcmd=".getBytes("UTF-8"));
-			outStream.write(fcmd.getBytes("UTF-8"));
-
-			outStream.write("&fid=".getBytes("UTF-8"));
-			outStream.write(fid.getBytes("UTF-8"));
-
-			outStream.write("&gmtime=".getBytes("UTF-8"));
-			outStream.write(gmtime.getBytes("UTF-8"));
-
-			outStream.write("&said=".getBytes("UTF-8"));
-			outStream.write(said.getBytes("UTF-8"));
-
-			outStream.write("&uem=".getBytes("UTF-8"));
-			outStream.write(uem.getBytes("UTF-8"));
-
-			outStream.write("&ufn=".getBytes("UTF-8"));
-			outStream.write(ufn.getBytes("UTF-8"));
-
-			outStream.write("&uln=".getBytes("UTF-8"));
-			outStream.write(uln.getBytes("UTF-8"));
-
-			outStream.write("&upw=".getBytes("UTF-8"));
-			outStream.write(upw.getBytes("UTF-8"));
-
-			outStream.write("&utp=".getBytes("UTF-8"));
-			outStream.write(utp.getBytes("UTF-8"));
-
-			outStream.write("&md5=".getBytes("UTF-8"));
-			outStream.write(md5.getBytes("UTF-8"));
-
-			outStream.close();
-		}
-		catch (IOException t) {
-			throw new TransientSubmissionException("Class creation call to Turnitin API failed", t);
-		}
-
-
-		BufferedReader in;
-		try {
-			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (IOException t) {
-			throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
-		}
-		Document document = null;
-		try {	
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			document = parser.parse(new org.xml.sax.InputSource(in));
-		}
-		catch (ParserConfigurationException pce){
-			log.error("parser configuration error: " + pce.getMessage());
-			throw new TransientSubmissionException ("Parser configuration error", pce);
-		} catch (Exception t) {
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
-		}
-
-
-		Element root = document.getDocumentElement();
-		String rcode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim();
 		
-		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("20") == 0 || 
-				((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("21") == 0 ) {
-			log.debug("Create Class successful");						
-		} else {
-			if ("218".equals(rcode) || "9999".equals(rcode)) {
-				throw new TransientSubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
-			} else {
-				throw new SubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
-			}
-		}
+		TurnitinAPIUtil.createClass(cid, ctl, cpw,
+				uem, ufn, uln, upw, uid, aid,
+				secretKey, said, apiURL, proxy );
+		
 	}
 
 	private String getAssignmentTitle(String taskId){
@@ -815,11 +721,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			Entity ent = ep.getEntity(ref);
 			log.debug("got entity " + ent);
-			if (ent instanceof Assignment) {
-				Assignment as = (Assignment)ent;
-				log.debug("Got assignemment with title " + as.getTitle());
-				return URLDecoder.decode(as.getTitle(),"UTF-8");
-			}
+			ent.getClass().getMethod("getTitle");
+			//if (ent instanceof Assignment) {
+			//	Assignment as = (Assignment)ent;
+			//	log.debug("Got assignemment with title " + as.getTitle());
+			//	return URLDecoder.decode(as.getTitle(),"UTF-8");
+			//}
+			return "The Title";
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -834,33 +742,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String taskTitle = getAssignmentTitle(taskId);
 		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
 
-		String diagnostic = "0"; //0 = off; 1 = on
-
-		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
-		dform.applyPattern("yyyyMMdd");
-		Calendar cal = Calendar.getInstance();
-		//set this to yesterday so we avoid timezine probelms etc
-		cal.add(Calendar.DAY_OF_MONTH, -1);
-		String dtstart = dform.format(cal.getTime());
-
-
-		//set the due dates for the assignments to be in 5 month's time
-		//turnitin automatically sets each class end date to 6 months after it is created
-		//the assignment end date must be on or before the class end date
-
-		//TODO use the 'secret' function to change this to longer
-		cal.add(Calendar.MONTH, 5);
-		String dtdue = dform.format(cal.getTime());
-
-		String encrypt = "0";					//encryption flag
-		String fcmd = "2";						//new assignment
-		String fid = "4";						//function id
 		String uem = defaultInstructorEmail;
 		String ufn = defaultInstructorFName;
 		String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
 		String upw = defaultInstructorPassword;
-		String s_view_report = "1";
 
 		String cid = siteId;
 		String uid = defaultInstructorId;
@@ -868,160 +754,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String assign = taskTitle;
 		String ctl = siteId;
 
-		String gmtime = getGMTime();
-		String assignEnc = assign;
-		try {
-			if (assign.contains("&")) {
-				//log.debug("replacing & in assingment title");
-				assign = assign.replace('&', 'n');
+		TurnitinAPIUtil.createAssignment(cid, ctl, assignid, assign, 
+				uem, ufn, uln, upw, uid, aid,
+				secretKey, said, apiURL, proxy );
 
-			}
-			assignEnc = assign;
-			log.debug("Assign title is " + assignEnc);
-
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-		fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-
-		String md5;
-		try{
-			md5 = this.getMD5(md5_str);
-		} catch (Exception t) {
-			log.warn("MD5 error creating assignment on turnitin");
-			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
-		}
-
-		HttpsURLConnection connection;
-
-		try {		
-			URL hostURL = new URL(apiURL);
-			if (proxy == null) {
-				connection = (HttpsURLConnection) hostURL.openConnection();
-			} else {
-				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-			}
-
-			
-				connection.setRequestMethod("GET");
-			
-			connection.setDoOutput(true);
-			connection.setDoInput(true);
-
-			log.debug("HTTPS connection made to Turnitin");
-
-			OutputStream outStream = connection.getOutputStream();
-
-			outStream.write("aid=".getBytes("UTF-8"));
-			outStream.write(aid.getBytes("UTF-8"));
-
-			outStream.write("&assign=".getBytes("UTF-8"));
-			outStream.write(assignEnc.getBytes("UTF-8"));
-
-			log.debug("assignid: " + assignid);
-			outStream.write("&assignid=".getBytes("UTF-8"));
-			outStream.write(assignid.getBytes("UTF-8"));
-
-			outStream.write("&cid=".getBytes("UTF-8"));
-			outStream.write(cid.getBytes("UTF-8"));
-
-			outStream.write("&uid=".getBytes("UTF-8"));
-			outStream.write(uid.getBytes("UTF-8"));
-
-			outStream.write("&ctl=".getBytes("UTF-8"));
-			outStream.write(ctl.getBytes("UTF-8"));	
-
-			outStream.write("&diagnostic=".getBytes("UTF-8"));
-			outStream.write(diagnostic.getBytes("UTF-8"));
-
-			outStream.write("&dtdue=".getBytes("UTF-8"));
-			outStream.write(dtdue.getBytes("UTF-8"));
-
-			outStream.write("&dtstart=".getBytes("UTF-8"));
-			outStream.write(dtstart.getBytes("UTF-8"));
-
-			outStream.write("&encrypt=".getBytes("UTF-8"));
-			outStream.write(encrypt.getBytes("UTF-8"));
-
-			outStream.write("&fcmd=".getBytes("UTF-8"));
-			outStream.write(fcmd.getBytes("UTF-8"));
-
-			outStream.write("&fid=".getBytes("UTF-8"));
-			outStream.write(fid.getBytes("UTF-8"));
-
-			outStream.write("&gmtime=".getBytes("UTF-8"));
-			outStream.write(gmtime.getBytes("UTF-8"));
-
-			outStream.write("&s_view_report=".getBytes("UTF-8"));
-			outStream.write(s_view_report.getBytes("UTF-8"));
-			
-			outStream.write("&said=".getBytes("UTF-8"));
-			outStream.write(said.getBytes("UTF-8"));
-
-			outStream.write("&uem=".getBytes("UTF-8"));
-			outStream.write(uem.getBytes("UTF-8"));
-
-			outStream.write("&ufn=".getBytes("UTF-8"));
-			outStream.write(ufn.getBytes("UTF-8"));
-
-			outStream.write("&uln=".getBytes("UTF-8"));
-			outStream.write(uln.getBytes("UTF-8"));
-
-			outStream.write("&upw=".getBytes("UTF-8"));
-			outStream.write(upw.getBytes("UTF-8"));
-
-			outStream.write("&utp=".getBytes("UTF-8"));
-			outStream.write(utp.getBytes("UTF-8"));
-
-			outStream.write("&md5=".getBytes("UTF-8"));
-			outStream.write(md5.getBytes("UTF-8"));
-
-			outStream.close();
-		} catch (ProtocolException e) {
-			throw new TransientSubmissionException("Assignment creation: ProtocolException", e);
-		} catch (MalformedURLException e) {
-			throw new TransientSubmissionException("Assignment creation: MalformedURLException", e);
-		} catch (IOException e) {
-			throw new TransientSubmissionException("Assignment creation: IOException", e);
-		}
-		
-		BufferedReader in;
-		
-			try {
-				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			} catch (IOException e1) {
-				throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e1);
-			}
-		 
-
-		Document document = null;
-		try {	
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			document = parser.parse(new org.xml.sax.InputSource(in));
-		}
-		catch (ParserConfigurationException pce){
-			log.error("parser configuration error: " + pce.getMessage());
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", pce);
-		} catch (SAXException e) {
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e);
-		} catch (IOException e) {
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e);
-		} 	
-
-		Element root = document.getDocumentElement();
-		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
-		if ((rcode > 0 && rcode < 100) || rcode == 419) {
-			log.debug("Create Assignment successful");	
-			log.debug("tii returned " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
-		} else {
-			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
-			//log.debug(root);
-			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
-		}
 	}
 
 	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException {
@@ -1709,7 +1445,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	public void checkForReports() {
-		if (serverConfigurationService.getBoolean("turnitin.getReportsBulk", true))
+		if (serverConfigurationService.getBoolean(PROP_TURNITIN_GET_REPORTS_BULK, true))
 			checkForReportsBulk();
 		else 
 			checkForReportsIndividual();
@@ -2581,7 +2317,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String getUserFirstName(User user) {
       String ufn = user.getFirstName().trim();
       if (ufn == null || ufn.equals("")) {
-         boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", true);
+         boolean genFN = (boolean) serverConfigurationService.getBoolean(PROP_TURNITIN_GENERATE_FIRST_NAME, true);
          if (genFN) {
             String eid = user.getEid();
             if (eid != null 
