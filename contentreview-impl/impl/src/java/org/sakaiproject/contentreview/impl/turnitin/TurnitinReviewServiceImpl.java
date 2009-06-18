@@ -54,12 +54,9 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.hpsf.DocumentSummaryInformation;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.poifs.filesystem.POIFSDocument;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.jdom.output.XMLOutputter;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.assignment.api.Assignment;
@@ -2368,7 +2365,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
 		dform.applyPattern("yyyyMMdd");
 		Calendar cal = Calendar.getInstance();
-		//set this to yesterday so we avoid timezine probelms etc
+		//set this to yesterday so we avoid timezpne problems etc
 		cal.add(Calendar.DAY_OF_MONTH, -1);
 		String dtstart = dform.format(cal.getTime());
 
