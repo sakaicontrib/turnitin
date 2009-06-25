@@ -760,7 +760,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	}
 
-	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException {
+	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException, TransientSubmissionException {
 
 		String ctl = siteId; 			//class title
 		String fid = "3";
@@ -799,116 +799,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String uid = userId;
 		String cid = siteId;
-
-		String gmtime = this.getGMTime();
-
-		String md5_str = aid + cid + ctl + diagnostic + sendNotifications +  encrypt + fcmd + fid + gmtime + said + tem + uem +
-		ufn + uid + uln + utp + secretKey;
-
-		String md5;
-		try{
-			md5 = this.getMD5(md5_str);
-		} catch (Exception t) {
-			log.warn("MD5 error enrolling student on turnitin");
-			throw new SubmissionException("Cannot generate MD5 hash for Class Enrollment Turnitin API call", t);
-		}
-
-		HttpsURLConnection connection;
-
-		try {
-			URL hostURL;
-	
-			hostURL = new URL(apiURL);
-			if (proxy == null) {
-				connection = (HttpsURLConnection) hostURL.openConnection();
-			} else {
-				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-			}
-
-			connection.setRequestMethod("GET");
-			connection.setDoOutput(true);
-			connection.setDoInput(true);
-
-			log.debug("Connection made to Turnitin");
-
-			OutputStream outStream = connection.getOutputStream();
-
-			outStream.write("fid=".getBytes("UTF-8"));
-			outStream.write(fid.getBytes("UTF-8"));
-
-			outStream.write("&fcmd=".getBytes("UTF-8"));
-			outStream.write(fcmd.getBytes("UTF-8"));
-
-			outStream.write("&cid=".getBytes("UTF-8"));
-			outStream.write(cid.getBytes("UTF-8"));
-
-			outStream.write("&tem=".getBytes());
-			outStream.write(tem.getBytes("UTF-8"));
-
-			outStream.write("&ctl=".getBytes());
-			outStream.write(ctl.getBytes("UTF-8"));
-
-			outStream.write("&encrypt=".getBytes());
-			outStream.write(encrypt.getBytes("UTF-8"));
-
-			outStream.write("&aid=".getBytes("UTF-8"));
-			outStream.write(aid.getBytes("UTF-8"));
-
-			outStream.write("&said=".getBytes("UTF-8"));
-			outStream.write(said.getBytes("UTF-8"));
-
-			outStream.write("&diagnostic=".getBytes("UTF-8"));
-			outStream.write(diagnostic.getBytes("UTF-8"));
-
-			outStream.write("&dis=".getBytes("UTF-8"));
-			outStream.write(Integer.valueOf(sendNotifications).toString().getBytes("UTF-8"));
-						
-			outStream.write("&uem=".getBytes("UTF-8"));
-			outStream.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
-
-			outStream.write("&ufn=".getBytes("UTF-8"));
-			outStream.write(ufn.getBytes("UTF-8"));
-
-			outStream.write("&uln=".getBytes("UTF-8"));
-			outStream.write(uln.getBytes("UTF-8"));
-
-			outStream.write("&utp=".getBytes("UTF-8"));
-			outStream.write(utp.getBytes("UTF-8"));
-
-			outStream.write("&gmtime=".getBytes("UTF-8"));
-			outStream.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
-
-			outStream.write("&md5=".getBytes("UTF-8"));
-			outStream.write(md5.getBytes("UTF-8"));
-
-			outStream.write("&uid=".getBytes("UTF-8"));
-			outStream.write(uid.getBytes("UTF-8"));
-
-			outStream.close();
-		} catch (MalformedURLException e) {
-			throw new SubmissionException("Student Enrollment call to Turnitin failed", e);
-		} catch (IOException e) {
-			throw new SubmissionException("Student Enrollment call to Turnitin failed", e);		
-		}
-
-		BufferedReader in;
-		try {
-			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Exception t) {
-			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
-		}
-
 		
-		try {	
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			parser.parse(new org.xml.sax.InputSource(in));
-		}
-		catch (ParserConfigurationException pce){
-			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Exception t) {
-			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
-		}
+		TurnitinAPIUtil.enrollInClass(cid, ctl, userId, tem, uem, ufn, uln, uid,
+			sendNotifications+"", secretKey, aid, said, apiURL, proxy);
 	}
 	
 	/*

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -48,7 +49,7 @@ public class TurnitinAPIUtil {
     private static final Log log = LogFactory.getLog(TurnitinAPIUtil.class);
 
 
-    private void enrollInClass(String cid, String ctl, String userId, 
+    public static void enrollInClass(String cid, String ctl, String userId, 
             String tem, String uem,
             String ufn, String uln, String uid, String sendNotifications,
             String secretKey, String aid, String said, String apiURL,
@@ -240,16 +241,21 @@ public class TurnitinAPIUtil {
      * @param said Sub Account ID
      * @param apiURL API Url. This is usually always 
      * @param proxy
+     * @param extra params for new API functionality. Additionally, these will
+     * override any other parameters we have defaults for, or the other options
+     * passed in.
      * @return 
      * @throws SubmissionException
      * @throws TransientSubmissionException
      */
     public static Document createAssignment(String cid, String ctl, 
             String assignid, String assignTitle, 
-            String uem, String ufn, String uln, String upw, String uid, 
-            String aid,
-            String secretKey, String said, String apiURL, Proxy proxy ) throws SubmissionException, TransientSubmissionException {
-
+            String uem, String ufn, String uln, String upw, String uid, String aid,
+            String secretKey, String said, String apiURL, Proxy proxy, String... extraparams) throws SubmissionException, TransientSubmissionException {
+        if (extraparams.length % 2 != 0) {
+            throw new IllegalArgumentException("The extra params must even numbered (key/val pairs)");
+        }
+        
         String diagnostic = "0"; //0 = off; 1 = on
 
         SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
@@ -279,7 +285,6 @@ public class TurnitinAPIUtil {
             if (assignTitle.contains("&")) {
                 //log.debug("replacing & in assingment title");
                 assignTitle = assignTitle.replace('&', 'n');
-
             }
             assignEnc = assignTitle;
             log.debug("Assign title is " + assignEnc);
@@ -289,82 +294,20 @@ public class TurnitinAPIUtil {
             e.printStackTrace();
         }
 
-        String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-        fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-
-        String md5;
-        try{
-            md5 = getMD5(md5_str);
-        } catch (Exception t) {
-            log.warn("MD5 error creating assignment on turnitin");
-            throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
-        }
-
-        HttpsURLConnection connection;
-
-        try {		
-            connection = fetchConnection(apiURL, proxy);
-
-            log.debug("HTTPS connection made to Turnitin");
-
-            OutputStream outStream = connection.getOutputStream();
-
-            writeBytesToOutputStream(outStream, 
-                    "aid=",            aid,
-                    "&assign=",        assignEnc,
-                    "&assignid=",      assignid,
-                    "&cid=",           cid,
-                    "&uid=",           uid,
-                    "&ctl=",           ctl,
-                    "&diagnostic=",    diagnostic,
-                    "&dtdue=",         dtdue,
-                    "&dtstart=",       dtstart,
-                    "&encrypt=",       encrypt,
-                    "&fcmd=",          fcmd,
-                    "&fid=",           fid,
-                    "&gmtime=",        gmtime,
-                    "&s_view_report=", s_view_report,
-                    "&said=",          said, 
-                    "&uem=",           uem,
-                    "&ufn=",           ufn,
-                    "&uln=",           uln,
-                    "&upw=",           upw, 
-                    "&utp=",           utp,
-                    "&md5=",           md5
-            );
-
-            outStream.close();
-        } catch (ProtocolException e) {
-            throw new TransientSubmissionException("Assignment creation: ProtocolException", e);
-        } catch (MalformedURLException e) {
-            throw new TransientSubmissionException("Assignment creation: MalformedURLException", e);
-        } catch (IOException e) {
-            throw new TransientSubmissionException("Assignment creation: IOException", e);
-        }
-
-        BufferedReader in;
-
-        try {
-            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        } catch (IOException e1) {
-            throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e1);
-        }
-
-
-        Document document = null;
-        try {	
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-            document = parser.parse(new org.xml.sax.InputSource(in));
-        }
-        catch (ParserConfigurationException pce){
-            log.error("parser configuration error: " + pce.getMessage());
-            throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", pce);
-        } catch (SAXException e) {
-            throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e);
-        } catch (IOException e) {
-            throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e);
-        } 	
+        Map params = packMap(null,
+                "aid", aid,      "assign", assignEnc,    "assignid", assignid,
+                "cid", cid,      "uid", uid,             "ctl", ctl,
+                "diagnostic", diagnostic,                "dtdue", dtdue,
+                "dtstart", dtstart,                      "encrypt", encrypt,
+                "fcmd", fcmd,    "fid", fid,             "gmtime", gmtime,
+                "s_view_report", s_view_report,          "said", said, 
+                "uem", uem,      "ufn", ufn,             "uln", uln,
+                "upw", upw,      "utp", utp
+        );
+        
+        params = packMap(params, extraparams);
+        
+        Document document = callTurnitin(apiURL, params, secretKey, proxy);
 
         Element root = document.getDocumentElement();
         int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
@@ -415,6 +358,20 @@ public class TurnitinAPIUtil {
         return gmtime;
     }
 
+    public static Map packMap(Map map, String... vargs) {
+        Map togo = map;
+        if (map == null) {
+            map = new HashMap();
+        }
+        if (vargs.length % 2 != 0) {
+            throw new IllegalArgumentException("You need to supply an even number of vargs for the key-val pairs.");
+        }
+        for (int i = 0; i < vargs.length; i+=2) {
+            map.put(vargs[i], vargs[i+1]);
+        }
+        return map;
+    }
+    
     public static void writeBytesToOutputStream(OutputStream outStream, String... vargs) throws UnsupportedEncodingException, IOException {
         for (String next: vargs) {
             outStream.write(next.getBytes("UTF-8"));
@@ -449,7 +406,12 @@ public class TurnitinAPIUtil {
 
     public static Document callTurnitin(String apiURL, Map<String,Object> parameters, 
             String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
-
+        if (!parameters.containsKey("fid")) {
+            throw new IllegalArgumentException("You must to include a fid in the parameters");
+        }
+        
+        TIIFID fid = TIIFID.getFid(Integer.parseInt((String) parameters.get("fid")));
+        
         //if (!parameters.containsKey("gmttime")) {
         parameters.put("gmttime", getGMTime());
         //}
@@ -459,9 +421,12 @@ public class TurnitinAPIUtil {
 
         Collections.sort(sortedkeys);
 
+        
         StringBuilder md5sb = new StringBuilder();
         for (int i = 0; i < sortedkeys.size(); i++) {
-            md5sb.append(parameters.get(sortedkeys.get(i)));
+            if (fid.includeParamInMD5(sortedkeys.get(i))) {
+                md5sb.append(parameters.get(sortedkeys.get(i)));
+            }
         }
 
         md5sb.append(secretKey);
@@ -486,8 +451,8 @@ public class TurnitinAPIUtil {
                     parameters.get(sortedkeys.get(0)).toString());
             
             for (int i = 1; i < sortedkeys.size(); i++) {
-                writeBytesToOutputStream(outStream, "&", sortedkeys.get(0), "=", 
-                        parameters.get(sortedkeys.get(0)).toString());
+                writeBytesToOutputStream(outStream, "&", sortedkeys.get(i), "=", 
+                        parameters.get(sortedkeys.get(i)).toString());
             }
             
             writeBytesToOutputStream(outStream, "&md5=", md5);
