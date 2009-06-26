@@ -43,8 +43,8 @@ public class TurnitinAPITest extends TestCase {
     private static String TEST_SHARED_SECRET = "***********";
     private static String TEST_APIURL = "https://www.turnitin.com/api.asp?";
     private static Proxy TEST_PROXY = null;
-
-    public void standardCreateAssignment(String assignid, String assigntitle, String ... vargs) {
+    
+    private void standardCreateAssignment(String assignid, String assigntitle, String ... vargs) {
         try {
             Date d = new Date();
             //Proxy proxy = new Proxy(Proxy.Type.HTTP, 
@@ -75,6 +75,55 @@ public class TurnitinAPITest extends TestCase {
             e.printStackTrace();
             assertTrue(false);
         }
+    }
+    
+    public void testCreateClass() {
+        Date d = new Date();
+        
+        String classname = "My Test Class " + d.getTime();
+        try {
+            TurnitinAPIUtil.createClass(
+                    classname, // cid
+                    classname, //ctl, 
+                    "sdlkfgjdw", //cpw, 
+                    TEST_UEM, // uem, 
+                    TEST_UFN, // ufn, 
+                    TEST_ULN, // uln,
+                    TEST_UPW, // upw, 
+                    TEST_UID, // uid, 
+                    TEST_AID, // aid, 
+                    TEST_SHARED_SECRET, // secretKey, 
+                    TEST_AID, // said, 
+                    TEST_APIURL, // apiURL, 
+                    TEST_PROXY // proxy
+                    );
+            
+            TurnitinAPIUtil.createAssignment(
+                    classname, // cid
+                    classname, // ctl 
+                    "FirstAssign", // assignid
+                    "FirstAssign", // assignTitle
+                    TEST_UEM, // uem
+                    TEST_UFN, //ufn
+                    TEST_ULN,  //uln
+                    TEST_UPW, // upw
+                    TEST_UID, // uid
+                    TEST_AID, // aid
+                    TEST_SHARED_SECRET, // shared secret
+                    TEST_AID, //sub account id
+                    TEST_APIURL, // api url
+                    TEST_PROXY // proxy
+                    
+            );
+        } catch (SubmissionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            assertTrue(false);
+        } catch (TransientSubmissionException e) {
+            // TODO Auto-generated catch block
+            assertTrue(false);
+        }
+        
     }
 
     public void testCreateAssignment() {

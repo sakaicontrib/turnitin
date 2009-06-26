@@ -145,7 +145,7 @@ public class TurnitinAPIUtil {
         String gmtime = getGMTime();
 
         // MD5 of function 2 - Create a class under a given account (instructor only)
-        String md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
+        String md5_str = aid + /*cid +*/ cpw + ctl + diagnostic + encrypt + fcmd + fid +
         gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
 
         String md5;
@@ -166,7 +166,7 @@ public class TurnitinAPIUtil {
 
             writeBytesToOutputStream(outStream, 
                     "uid=", uid, 
-                    "&cid=", cid, 
+                    //"&cid=", cid, 
                     "&aid=", aid, 
                     "&cpw=", cpw, 
                     "&ctl=", ctl,
