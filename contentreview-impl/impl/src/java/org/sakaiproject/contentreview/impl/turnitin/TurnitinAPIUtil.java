@@ -2,6 +2,7 @@ package org.sakaiproject.contentreview.impl.turnitin;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -31,12 +32,17 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.azeckoski.reflectutils.transcoders.XMLTranscoder;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+
+import uk.org.ponder.streamutil.StreamCopyUtil;
+
+import com.thoughtworks.xstream.XStream;
 
 /**
  * This is a utility class for wrapping the physical https calls to the
@@ -224,6 +230,49 @@ public class TurnitinAPIUtil {
             }
         }
     }
+    
+    public static void getAssignment(String cid, String ctl, 
+            String assignid, String assignTitle, 
+            String uem, String ufn, String uln, String upw, String uid, String aid,
+            String secretKey, String said, String apiURL, Proxy proxy, String... extraparams) throws TransientSubmissionException, SubmissionException {
+        log.debug("Fetching Assignmetn: " + ctl);
+        
+        String diagnostic = "0"; //0 = off; 1 = on
+        String encrypt = "0";  // encryption flag
+        String fcmd = "7";
+        String fid = "4";
+        String utp = "2"; 
+        String gmtime = getGMTime();
+        String assignEnc = encodeSakaiTitles(assignTitle);
+        
+        Map params = packMap(null,
+                "aid", aid,      "assign", assignEnc,    "assignid", assignid,
+                "cid", cid,      "uid", uid,             "ctl", ctl,
+                "diagnostic", diagnostic,                "encrypt", encrypt,    
+                "fcmd", fcmd,    "fid", fid,             "gmtime", gmtime,
+                "said", said, 
+                "uem", uem,      "ufn", ufn,             "uln", uln,
+                "upw", upw,      "utp", utp
+        );
+        
+        params = packMap(params, extraparams);
+        
+        InputStream istream = callTurnitinReturnInputStream(apiURL, params, secretKey, proxy);
+        
+        //XStream xstream = new XStream();
+        
+        //Object obj = xstream.fromXML(istream);
+        
+        String retdata = StreamCopyUtil.streamToString(istream);
+        
+        XMLTranscoder xmlt = new XMLTranscoder();
+        
+        Map retobj = xmlt.decode(retdata);
+        
+        log.debug("Assignment Title: " + ((Map) retobj.get("object")).get("assign"));
+        
+        //return document;
+    }
 
     /**
      * @param cid Course ID
@@ -280,19 +329,7 @@ public class TurnitinAPIUtil {
         String s_view_report = "1";
 
         String gmtime = getGMTime();
-        String assignEnc = assignTitle;
-        try {
-            if (assignTitle.contains("&")) {
-                //log.debug("replacing & in assingment title");
-                assignTitle = assignTitle.replace('&', 'n');
-            }
-            assignEnc = assignTitle;
-            log.debug("Assign title is " + assignEnc);
-
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+        String assignEnc = encodeSakaiTitles(assignTitle);
 
         Map params = packMap(null,
                 "aid", aid,      "assign", assignEnc,    "assignid", assignid,
@@ -307,7 +344,7 @@ public class TurnitinAPIUtil {
         
         params = packMap(params, extraparams);
         
-        Document document = callTurnitin(apiURL, params, secretKey, proxy);
+        Document document = callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
 
         Element root = document.getDocumentElement();
         int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
@@ -321,6 +358,24 @@ public class TurnitinAPIUtil {
         }
 
         return document;
+    }
+
+
+    private static String encodeSakaiTitles(String assignTitle) {
+        String assignEnc = assignTitle;
+        try {
+            if (assignTitle.contains("&")) {
+                //log.debug("replacing & in assingment title");
+                assignTitle = assignTitle.replace('&', 'n');
+            }
+            assignEnc = assignTitle;
+            log.debug("Assign title is " + assignEnc);
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return assignEnc;
     }
 
     private static HttpsURLConnection fetchConnection(String apiURL, Proxy proxy)
@@ -404,8 +459,32 @@ public class TurnitinAPIUtil {
         return md5;
     }
 
-    public static Document callTurnitin(String apiURL, Map<String,Object> parameters, 
+    public static Document callTurnitinReturnDocument(String apiURL, Map<String,Object> parameters, 
             String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
+        InputStream inputStream = callTurnitinReturnInputStream(apiURL, parameters, secretKey, proxy);
+        
+        BufferedReader in;
+        in = new BufferedReader(new InputStreamReader(inputStream));
+        Document document = null;
+        try {   
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+            document = parser.parse(new org.xml.sax.InputSource(in));
+        }
+        catch (ParserConfigurationException pce){
+            log.error("parser configuration error: " + pce.getMessage());
+            throw new TransientSubmissionException ("Parser configuration error", pce);
+        } catch (Exception t) {
+            throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+        }
+        
+        return document;
+    }
+    
+    public static InputStream callTurnitinReturnInputStream(String apiURL, Map<String,Object> parameters, 
+            String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
+        InputStream togo = null;
+        
         if (!parameters.containsKey("fid")) {
             throw new IllegalArgumentException("You must to include a fid in the parameters");
         }
@@ -458,31 +537,16 @@ public class TurnitinAPIUtil {
             writeBytesToOutputStream(outStream, "&md5=", md5);
         
             outStream.close();
+            
+            togo = connection.getInputStream();
         }
         catch (IOException t) {
             throw new TransientSubmissionException("Class creation call to Turnitin API failed", t);
         }
         
-        BufferedReader in;
-        try {
-            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        } catch (IOException t) {
-            throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
-        }
-        Document document = null;
-        try {   
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-            document = parser.parse(new org.xml.sax.InputSource(in));
-        }
-        catch (ParserConfigurationException pce){
-            log.error("parser configuration error: " + pce.getMessage());
-            throw new TransientSubmissionException ("Parser configuration error", pce);
-        } catch (Exception t) {
-            throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
-        }
+        return togo;
         
-        return document;
+        
         
     }
 

@@ -8,12 +8,18 @@ import java.util.Date;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.contentreview.impl.turnitin.TurnitinAPIUtil;
 import org.springframework.test.AbstractTransactionalSpringContextTests;
+import org.w3c.dom.Document;
+
+import com.thoughtworks.xstream.XStream;
 
 public class TurnitinAPITest extends TestCase {
+    private static final Log log = LogFactory.getLog(TurnitinAPITest.class);
 
     protected String[] getConfigLocations() {
         return new String[]{};
@@ -46,7 +52,6 @@ public class TurnitinAPITest extends TestCase {
     
     private void standardCreateAssignment(String assignid, String assigntitle, String ... vargs) {
         try {
-            Date d = new Date();
             //Proxy proxy = new Proxy(Proxy.Type.HTTP, 
             //              new InetSocketAddress(InetAddress.getByAddress(new byte[] {127,0,0,1}), 8008));
             TurnitinAPIUtil.createAssignment(
@@ -77,6 +82,37 @@ public class TurnitinAPITest extends TestCase {
         }
     }
     
+    private void fetchStandardAssignment(String assignid, String assigntitle, String ... vargs) {
+        try {
+             TurnitinAPIUtil.getAssignment(
+                    TEST_CID, // cid
+                    TEST_CTL, // ctl 
+                    assignid, // assignid
+                    assigntitle, // assignTitle
+                    TEST_UEM, // uem
+                    TEST_UFN, //ufn
+                    TEST_ULN,  //uln
+                    TEST_UPW, // upw
+                    TEST_UID, // uid
+                    TEST_AID, // aid
+                    TEST_SHARED_SECRET, // shared secret
+                    TEST_AID, //sub account id
+                    TEST_APIURL, // api url
+                    TEST_PROXY, // proxy
+                    vargs
+            );
+        } catch (SubmissionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            assertTrue(false);
+        } catch (TransientSubmissionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            assertTrue(false);
+        }
+        
+    }
+    
     public void testCreateClass() {
         Date d = new Date();
         
@@ -101,8 +137,8 @@ public class TurnitinAPITest extends TestCase {
             TurnitinAPIUtil.createAssignment(
                     classname, // cid
                     classname, // ctl 
-                    "FirstAssign", // assignid
-                    "FirstAssign", // assignTitle
+                    "FirstAssign" + d.getTime(), // assignid
+                    "FirstAssign" + d.getTime(), // assignTitle
                     TEST_UEM, // uem
                     TEST_UFN, //ufn
                     TEST_ULN,  //uln
@@ -155,6 +191,13 @@ public class TurnitinAPITest extends TestCase {
         
         idtitle = "Blank Repo Option: " + d.getTime();
         standardCreateAssignment(idtitle, idtitle, SUBMIT_PAPERS_TO, "");
+        
+        fetchStandardAssignment(idtitle, idtitle);
+        
+        log.debug("Fetching Assignment for RepoToSubmitTo Test:");
+       // log.debug(document);
+        
+       
     }
     
     /**
