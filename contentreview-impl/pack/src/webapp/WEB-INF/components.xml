@@ -11,6 +11,13 @@
 	<!-- Bring in the hibernate related beans -->
 	<import resource="spring-hibernate.xml" />
 
+	<!-- EntityBroker Providers -->
+	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
+		class="org.sakaiproject.contentreview.impl.entity.TurnitinClassEntityProvider">
+	
+	</bean>
+
+
 	<!-- create a logic bean, give it the dao from above and some sakai services -->
 	<bean
 		id="org.sakaiproject.contentreview.service.ContentReviewService"

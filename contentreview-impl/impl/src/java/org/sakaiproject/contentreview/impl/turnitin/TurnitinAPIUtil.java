@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -17,7 +16,6 @@ import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,11 +36,8 @@ import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
 import uk.org.ponder.streamutil.StreamCopyUtil;
-
-import com.thoughtworks.xstream.XStream;
 
 /**
  * This is a utility class for wrapping the physical https calls to the
@@ -53,7 +48,6 @@ import com.thoughtworks.xstream.XStream;
  */
 public class TurnitinAPIUtil {
     private static final Log log = LogFactory.getLog(TurnitinAPIUtil.class);
-
 
     public static void enrollInClass(String cid, String ctl, String userId, 
             String tem, String uem,
@@ -231,7 +225,7 @@ public class TurnitinAPIUtil {
         }
     }
     
-    public static void getAssignment(String cid, String ctl, 
+    public static Map getAssignment(String cid, String ctl, 
             String assignid, String assignTitle, 
             String uem, String ufn, String uln, String upw, String uid, String aid,
             String secretKey, String said, String apiURL, Proxy proxy, String... extraparams) throws TransientSubmissionException, SubmissionException {
@@ -259,19 +253,17 @@ public class TurnitinAPIUtil {
         
         InputStream istream = callTurnitinReturnInputStream(apiURL, params, secretKey, proxy);
         
-        //XStream xstream = new XStream();
-        
-        //Object obj = xstream.fromXML(istream);
-        
         String retdata = StreamCopyUtil.streamToString(istream);
+        
+        log.debug(retdata);
         
         XMLTranscoder xmlt = new XMLTranscoder();
         
         Map retobj = xmlt.decode(retdata);
         
-        log.debug("Assignment Title: " + ((Map) retobj.get("object")).get("assign"));
+        //log.debug("Assignment Title: " + ((Map) retobj.get("object")).get("assign"));
         
-        //return document;
+        return retobj;
     }
 
     /**

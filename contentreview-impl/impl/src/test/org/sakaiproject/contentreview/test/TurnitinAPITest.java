@@ -37,7 +37,13 @@ public class TurnitinAPITest extends TestCase {
     public void testCreateAssignmentWithNewInstructor() {
 
     }
+    
+    // Extra fid4 options
+    private static String SUBMIT_PAPERS_TO = "submit_papers_to";
+    private static String REPORT_GEN_SPEED = "report_gen_speed";
+    private static String S_VIEW_REPORT = "s_view_report";
 
+    // Dummy data
     private static String TEST_CID = "***********";
     private static String TEST_CTL = "StevesTestClass2";
     private static String TEST_UEM = "***********";
@@ -113,6 +119,36 @@ public class TurnitinAPITest extends TestCase {
         
     }
     
+    public void testNonExistingAssignmentFetch() {
+        try {
+            TurnitinAPIUtil.getAssignment(
+                   TEST_CID, // cid
+                   TEST_CTL, // ctl 
+                   "notanassignment132425", // assignid
+                   "notanassignment132425", // assignTitle
+                   TEST_UEM, // uem
+                   TEST_UFN, //ufn
+                   TEST_ULN,  //uln
+                   TEST_UPW, // upw
+                   TEST_UID, // uid
+                   TEST_AID, // aid
+                   TEST_SHARED_SECRET, // shared secret
+                   TEST_AID, //sub account id
+                   TEST_APIURL, // api url
+                   TEST_PROXY // proxy
+                   
+           );
+       } catch (SubmissionException e) {
+           // TODO Auto-generated catch block
+           e.printStackTrace();
+           assertTrue(false);
+       } catch (TransientSubmissionException e) {
+           // TODO Auto-generated catch block
+           e.printStackTrace();
+           assertTrue(false);
+       }
+    }
+    
     public void testCreateClass() {
         Date d = new Date();
         
@@ -174,7 +210,7 @@ public class TurnitinAPITest extends TestCase {
      * 2 = submit to institutional repository
      */
     public void testRepositoryToSubmitTo() {
-        String SUBMIT_PAPERS_TO = "submit_papers_to";
+        
         
         Date d = new Date();
         String idtitle = "Do Not Submit to Repo: " + d.getTime();
@@ -209,7 +245,7 @@ public class TurnitinAPITest extends TestCase {
      * default is 0
      */
     public void testWhenToGenerateOrigReports() {
-        String REPORT_GEN_SPEED = "report_gen_speed";
+        
         
         Date d = new Date();
         String idtitle = "ReportGen: First report is final " + d.getTime();
@@ -234,7 +270,7 @@ public class TurnitinAPITest extends TestCase {
      * 
      */
     public void testAllowStudentsToSeeOriginalityReports() {
-       String S_VIEW_REPORT = "s_view_report";
+       
        
        Date d = new Date();
        String idtitle = "Student CANNOT See Orig Report " + d.getTime();
