@@ -9,6 +9,7 @@ import java.util.Map;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.contentreview.impl.turnitin.TurnitinAPIUtil;
+import org.sakaiproject.contentreview.impl.turnitin.TurnitinUtil;
 import org.sakaiproject.entitybroker.EntityReference;
 import org.sakaiproject.entitybroker.entityprovider.CoreEntityProvider;
 import org.sakaiproject.entitybroker.entityprovider.capabilities.CRUDable;
@@ -21,17 +22,7 @@ public class TurnitinClassEntityProvider extends AbstractEntityProvider
 implements Updateable {
     public static String PREFIX = "turnitin-class";
     
-    private static String TEST_CID = "***********";
-    private static String TEST_CTL = "StevesTestClass2";
-    private static String TEST_UEM = "***********";
-    private static String TEST_UFN = "Test First Name";
-    private static String TEST_ULN = "Test Last Name"; 
-    private static String TEST_UPW = "***********";
-    private static String TEST_UID = "***********";
-    private static String TEST_AID = "***********";
-    private static String TEST_SHARED_SECRET = "***********";
-    private static String TEST_APIURL = "https://www.turnitin.com/api.asp?";
-    private static Proxy TEST_PROXY = null;
+    
 
     public String getEntityPrefix() {
         return PREFIX;
@@ -46,10 +37,12 @@ implements Updateable {
         }
         
         try {
-            TurnitinAPIUtil.createAssignment(TEST_CID, TEST_CTL, ref.getId(), 
-                    ref.getId(), TEST_UEM, TEST_UFN, TEST_ULN, TEST_UPW, TEST_UID, 
-                    TEST_AID, TEST_SHARED_SECRET, 
-                    TEST_AID, TEST_APIURL, TEST_PROXY, extra.toArray(new String[] {}));
+            TurnitinAPIUtil.createAssignment(TurnitinUtil.TEST_CID, TurnitinUtil.TEST_CTL, ref.getId(), 
+                    ref.getId(), TurnitinUtil.TEST_UEM, TurnitinUtil.TEST_UFN, 
+                    TurnitinUtil.TEST_ULN, TurnitinUtil.TEST_UPW, TurnitinUtil.TEST_UID, 
+                    TurnitinUtil.TEST_AID, TurnitinUtil.TEST_SHARED_SECRET, 
+                    TurnitinUtil.TEST_AID, TurnitinUtil.TEST_APIURL, 
+                    TurnitinUtil.TEST_PROXY, extra.toArray(new String[] {}));
         } catch (SubmissionException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -65,20 +58,20 @@ implements Updateable {
         Map togo = null;
         try {
             Map retdata = TurnitinAPIUtil.getAssignment(
-                       TEST_CID, // cid
-                       TEST_CTL, // ctl 
+                       TurnitinUtil.TEST_CID, // cid
+                       TurnitinUtil.TEST_CTL, // ctl 
                        ref.getId(), // assignid
                        ref.getId(), // assignTitle
-                       TEST_UEM, // uem
-                       TEST_UFN, //ufn
-                       TEST_ULN,  //uln
-                       TEST_UPW, // upw
-                       TEST_UID, // uid
-                       TEST_AID, // aid
-                       TEST_SHARED_SECRET, // shared secret
-                       TEST_AID, //sub account id
-                       TEST_APIURL, // api url
-                       TEST_PROXY // proxy
+                       TurnitinUtil.TEST_UEM, // uem
+                       TurnitinUtil.TEST_UFN, //ufn
+                       TurnitinUtil.TEST_ULN,  //uln
+                       TurnitinUtil.TEST_UPW, // upw
+                       TurnitinUtil.TEST_UID, // uid
+                       TurnitinUtil.TEST_AID, // aid
+                       TurnitinUtil.TEST_SHARED_SECRET, // shared secret
+                       TurnitinUtil.TEST_AID, //sub account id
+                       TurnitinUtil.TEST_APIURL, // api url
+                       TurnitinUtil.TEST_PROXY // proxy
             );
             if (retdata.containsKey("object")) {
                 togo = (Map) retdata.get("object");

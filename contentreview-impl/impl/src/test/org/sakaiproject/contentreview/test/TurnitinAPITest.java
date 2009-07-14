@@ -13,6 +13,7 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.contentreview.impl.turnitin.TurnitinAPIUtil;
+import org.sakaiproject.contentreview.impl.turnitin.TurnitinUtil;
 import org.springframework.test.AbstractTransactionalSpringContextTests;
 import org.w3c.dom.Document;
 
@@ -42,39 +43,26 @@ public class TurnitinAPITest extends TestCase {
     private static String SUBMIT_PAPERS_TO = "submit_papers_to";
     private static String REPORT_GEN_SPEED = "report_gen_speed";
     private static String S_VIEW_REPORT = "s_view_report";
-
-    // Dummy data
-    private static String TEST_CID = "***********";
-    private static String TEST_CTL = "StevesTestClass2";
-    private static String TEST_UEM = "***********";
-    private static String TEST_UFN = "Test First Name";
-    private static String TEST_ULN = "Test Last Name"; 
-    private static String TEST_UPW = "***********";
-    private static String TEST_UID = "***********";
-    private static String TEST_AID = "***********";
-    private static String TEST_SHARED_SECRET = "***********";
-    private static String TEST_APIURL = "https://www.turnitin.com/api.asp?";
-    private static Proxy TEST_PROXY = null;
     
     private void standardCreateAssignment(String assignid, String assigntitle, String ... vargs) {
         try {
             //Proxy proxy = new Proxy(Proxy.Type.HTTP, 
             //              new InetSocketAddress(InetAddress.getByAddress(new byte[] {127,0,0,1}), 8008));
             TurnitinAPIUtil.createAssignment(
-                    TEST_CID, // cid
-                    TEST_CTL, // ctl 
+                    TurnitinUtil.TEST_CID, // cid
+                    TurnitinUtil.TEST_CTL, // ctl 
                     assignid, // assignid
                     assigntitle, // assignTitle
-                    TEST_UEM, // uem
-                    TEST_UFN, //ufn
-                    TEST_ULN,  //uln
-                    TEST_UPW, // upw
-                    TEST_UID, // uid
-                    TEST_AID, // aid
-                    TEST_SHARED_SECRET, // shared secret
-                    TEST_AID, //sub account id
-                    TEST_APIURL, // api url
-                    TEST_PROXY, // proxy
+                    TurnitinUtil.TEST_UEM, // uem
+                    TurnitinUtil.TEST_UFN, //ufn
+                    TurnitinUtil.TEST_ULN,  //uln
+                    TurnitinUtil.TEST_UPW, // upw
+                    TurnitinUtil.TEST_UID, // uid
+                    TurnitinUtil.TEST_AID, // aid
+                    TurnitinUtil.TEST_SHARED_SECRET, // shared secret
+                    TurnitinUtil.TEST_AID, //sub account id
+                    TurnitinUtil.TEST_APIURL, // api url
+                    TurnitinUtil.TEST_PROXY, // proxy
                     vargs
             );
         } catch (SubmissionException e) {
@@ -91,20 +79,20 @@ public class TurnitinAPITest extends TestCase {
     private void fetchStandardAssignment(String assignid, String assigntitle, String ... vargs) {
         try {
              TurnitinAPIUtil.getAssignment(
-                    TEST_CID, // cid
-                    TEST_CTL, // ctl 
+            		TurnitinUtil.TEST_CID, // cid
+            		TurnitinUtil.TEST_CTL, // ctl 
                     assignid, // assignid
                     assigntitle, // assignTitle
-                    TEST_UEM, // uem
-                    TEST_UFN, //ufn
-                    TEST_ULN,  //uln
-                    TEST_UPW, // upw
-                    TEST_UID, // uid
-                    TEST_AID, // aid
-                    TEST_SHARED_SECRET, // shared secret
-                    TEST_AID, //sub account id
-                    TEST_APIURL, // api url
-                    TEST_PROXY, // proxy
+                    TurnitinUtil.TEST_UEM, // uem
+                    TurnitinUtil.TEST_UFN, //ufn
+                    TurnitinUtil.TEST_ULN,  //uln
+                    TurnitinUtil.TEST_UPW, // upw
+                    TurnitinUtil.TEST_UID, // uid
+                    TurnitinUtil.TEST_AID, // aid
+                    TurnitinUtil.TEST_SHARED_SECRET, // shared secret
+                    TurnitinUtil.TEST_AID, //sub account id
+                    TurnitinUtil.TEST_APIURL, // api url
+                    TurnitinUtil.TEST_PROXY, // proxy
                     vargs
             );
         } catch (SubmissionException e) {
@@ -122,20 +110,20 @@ public class TurnitinAPITest extends TestCase {
     public void testNonExistingAssignmentFetch() {
         try {
             TurnitinAPIUtil.getAssignment(
-                   TEST_CID, // cid
-                   TEST_CTL, // ctl 
+            		TurnitinUtil.TEST_CID, // cid
+            		TurnitinUtil.TEST_CTL, // ctl 
                    "notanassignment132425", // assignid
                    "notanassignment132425", // assignTitle
-                   TEST_UEM, // uem
-                   TEST_UFN, //ufn
-                   TEST_ULN,  //uln
-                   TEST_UPW, // upw
-                   TEST_UID, // uid
-                   TEST_AID, // aid
-                   TEST_SHARED_SECRET, // shared secret
-                   TEST_AID, //sub account id
-                   TEST_APIURL, // api url
-                   TEST_PROXY // proxy
+                   TurnitinUtil.TEST_UEM, // uem
+                   TurnitinUtil.TEST_UFN, //ufn
+                   TurnitinUtil.TEST_ULN,  //uln
+                   TurnitinUtil.TEST_UPW, // upw
+                   TurnitinUtil.TEST_UID, // uid
+                   TurnitinUtil.TEST_AID, // aid
+                   TurnitinUtil.TEST_SHARED_SECRET, // shared secret
+                   TurnitinUtil.TEST_AID, //sub account id
+                   TurnitinUtil.TEST_APIURL, // api url
+                   TurnitinUtil.TEST_PROXY // proxy
                    
            );
        } catch (SubmissionException e) {
@@ -158,16 +146,16 @@ public class TurnitinAPITest extends TestCase {
                     classname, // cid
                     classname, //ctl, 
                     "sdlkfgjdw", //cpw, 
-                    TEST_UEM, // uem, 
-                    TEST_UFN, // ufn, 
-                    TEST_ULN, // uln,
-                    TEST_UPW, // upw, 
-                    TEST_UID, // uid, 
-                    TEST_AID, // aid, 
-                    TEST_SHARED_SECRET, // secretKey, 
-                    TEST_AID, // said, 
-                    TEST_APIURL, // apiURL, 
-                    TEST_PROXY // proxy
+                    TurnitinUtil.TEST_UEM, // uem, 
+                    TurnitinUtil.TEST_UFN, // ufn, 
+                    TurnitinUtil.TEST_ULN, // uln,
+                    TurnitinUtil.TEST_UPW, // upw, 
+                    TurnitinUtil.TEST_UID, // uid, 
+                    TurnitinUtil.TEST_AID, // aid, 
+                    TurnitinUtil.TEST_SHARED_SECRET, // secretKey, 
+                    TurnitinUtil.TEST_AID, // said, 
+                    TurnitinUtil.TEST_APIURL, // apiURL, 
+                    TurnitinUtil.TEST_PROXY // proxy
                     );
             
             TurnitinAPIUtil.createAssignment(
@@ -175,16 +163,16 @@ public class TurnitinAPITest extends TestCase {
                     classname, // ctl 
                     "FirstAssign" + d.getTime(), // assignid
                     "FirstAssign" + d.getTime(), // assignTitle
-                    TEST_UEM, // uem
-                    TEST_UFN, //ufn
-                    TEST_ULN,  //uln
-                    TEST_UPW, // upw
-                    TEST_UID, // uid
-                    TEST_AID, // aid
-                    TEST_SHARED_SECRET, // shared secret
-                    TEST_AID, //sub account id
-                    TEST_APIURL, // api url
-                    TEST_PROXY // proxy
+                    TurnitinUtil.TEST_UEM, // uem
+                    TurnitinUtil.TEST_UFN, //ufn
+                    TurnitinUtil.TEST_ULN,  //uln
+                    TurnitinUtil.TEST_UPW, // upw
+                    TurnitinUtil.TEST_UID, // uid
+                    TurnitinUtil.TEST_AID, // aid
+                    TurnitinUtil.TEST_SHARED_SECRET, // shared secret
+                    TurnitinUtil.TEST_AID, //sub account id
+                    TurnitinUtil.TEST_APIURL, // api url
+                    TurnitinUtil.TEST_PROXY // proxy
                     
             );
         } catch (SubmissionException e) {
