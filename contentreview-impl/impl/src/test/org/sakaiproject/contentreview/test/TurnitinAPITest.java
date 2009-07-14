@@ -43,6 +43,10 @@ public class TurnitinAPITest extends TestCase {
     private static String SUBMIT_PAPERS_TO = "submit_papers_to";
     private static String REPORT_GEN_SPEED = "report_gen_speed";
     private static String S_VIEW_REPORT = "s_view_report";
+    private static String S_PAPER_CHECK = "s_paper_check";
+    private static String INTERNET_CHECK = "internet_check";
+    private static String JOURNAL_CHECK = "journal_check";
+    private static String INSTITUTION_CHECK = "institution_check";
     
     private void standardCreateAssignment(String assignid, String assigntitle, String ... vargs) {
         try {
@@ -273,10 +277,55 @@ public class TurnitinAPITest extends TestCase {
     }
     
     /**
-     *  
+     *  "s_paper_check" - values of 0 to not check against student paper  
+     *  repository, 1 to check against it, default is 1
      */
     public void testCheckOriginalityAgainstStudentPaperRepo() {
+        Date d = new Date();
+        String idtitle = "Check against Student Repository" + d.getTime();
+        standardCreateAssignment(idtitle, idtitle, S_PAPER_CHECK, "1");
         
+        idtitle = "DO NOT Check against Student Repository" + d.getTime();
+        standardCreateAssignment(idtitle, idtitle, S_PAPER_CHECK, "0");
+        
+    }
+    
+    /**
+     * "internet_check" - values of 0 to not check against internet, 1 to  
+     * check against it, default is 1
+     */
+    public void testCheckOriginalityAgainstTheInternet() {
+        Date d = new Date();
+        String idtitle = "Check against Internet " + d.getTime();
+        standardCreateAssignment(idtitle, idtitle, INTERNET_CHECK, "1");
+        
+        idtitle = "DO NOT Check against Internet " + d.getTime();
+        standardCreateAssignment(idtitle, idtitle, INTERNET_CHECK, "0");
+    }
+    
+    /**
+     * "journal_check" - values of 0 to not check against periodicals, etc.,  
+     * 1 to check against it, default is 1
+     */
+    public void testCheckOriginalityAgainstJournals() {
+        Date d = new Date();
+        String idtitle = "Check against Journals " + d.getTime();
+        standardCreateAssignment(idtitle, idtitle, JOURNAL_CHECK, "1");
+        
+        idtitle = "DO NOT Check against Journals " + d.getTime();
+        standardCreateAssignment(idtitle, idtitle, JOURNAL_CHECK, "0");
+    }
+    
+    /**
+     * "institution_check" - values of 0 to not check against institutional
+     * repository, 1 check against it.
+     */
+    public void testCheckOriginalityAgainstInstitution() {
+        Date d = new Date();
+        String idtitle = "Check against Institution Repo " + d.getTime();
+        standardCreateAssignment(idtitle, idtitle, INSTITUTION_CHECK, "1");
+        idtitle = "DO NOT Check against Institution Repo " + d.getTime();
+        standardCreateAssignment(idtitle, idtitle, INSTITUTION_CHECK, "0");
     }
 
     //public void test
