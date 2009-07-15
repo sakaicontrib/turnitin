@@ -49,6 +49,5 @@ public enum TIIFID {
         }
         return togo;
     }
-    
-    
+
 }

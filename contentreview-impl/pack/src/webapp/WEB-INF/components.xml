@@ -17,6 +17,11 @@
 	
 	</bean>
 
+	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
+		class="org.sakaiproject.contentreview.impl.entity.TurnitinAssignmentEntityProvider">
+	
+	</bean>
+
 
 	<!-- create a logic bean, give it the dao from above and some sakai services -->
 	<bean

@@ -68,7 +68,7 @@ public class TurnitinAPIUtil {
         ufn + uid + uln + utp + secretKey;
 
         String md5;
-        try{
+        try {
             md5 = getMD5(md5_str);
         } catch (Exception t) {
             log.warn("MD5 error enrolling student on turnitin");
