@@ -14,17 +14,34 @@ import java.util.Map;
  */
 public class TurnitinUtil {
 
-    public static String TEST_CID = "***********";
-    public static String TEST_CTL = "StevesTestClass2";
-    public static String TEST_UEM = "***********";
-    public static String TEST_UFN = "Test First Name";
-    public static String TEST_ULN = "Test Last Name"; 
-    public static String TEST_UPW = "***********";
-    public static String TEST_UID = "***********";
-    public static String TEST_AID = "***********";
-    public static String TEST_SHARED_SECRET = "***********";
-    public static String TEST_APIURL = "https://www.turnitin.com/api.asp?";
     public static Proxy TEST_PROXY = null;
+    
+    public static final String PROP_TURNITIN_GENERATE_FIRST_NAME = "turnitin.generate.first.name";
+    public static final String PROP_TURNITIN_GET_REPORTS_BULK = "turnitin.getReportsBulk";
+    public static final String PROP_TII_CHECK_WORD_LENGTH = "tii.checkWordLength";
+    public static final String PROP_TURNITIN_UPDATE_ASSINGMENTS = "turnitin.updateAssingments";
+    public static final String PROP_TURNITIN_MAX_FILE_SIZE = "turnitin.maxFileSize";
+    public static final String PROP_TURNITIN_MAX_RETRY = "turnitin.maxRetry";
+    public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID = "turnitin.defaultInstructorId";
+    public static final String PROP_TURNITIN_DEFAULT_CLASS_PASSWORD = "turnitin.defaultClassPassword";
+    public static final String PROP_TURNITIN_DEFAULT_ASSIGN_ID = "turnitin.defaultAssignId";
+    public static final String PROP_TURNITIN_SEND_NOTIFATIONS = "turnitin.sendnotifations";
+    public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD = "turnitin.defaultInstructorPassword";
+    public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME = "turnitin.defaultInstructorLName";
+    public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME = "turnitin.defaultInstructorFName";
+    public static final String PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL = "turnitin.defaultInstructorEmail";
+    public static final String PROP_TURNITIN_API_URL = "turnitin.apiURL";
+    public static final String PROP_TURNITIN_SECRET_KEY = "turnitin.secretKey";
+    public static final String PROP_TURNITIN_SAID = "turnitin.said";
+    public static final String PROP_TURNITIN_AID = "turnitin.aid";
+    public static final String PROP_HTTP_PROXY_PORT = "http.proxyPort";
+    public static final String PROP_HTTP_PROXY_HOST = "http.proxyHost";
+    public static final String PROP_TURNITIN_PROXY_HOST = "turnitin.proxyHost";
+    public static final String PROP_TURNITIN_PROXY_PORT = "turnitin.proxyPort";
+    
+    //TODO - do we need these as properties??
+    public static final String PROP_TURNITIN_CID = "turnitin.cid";
+    public static final String PROP_TURNITIN_CTL = "turnitin.ctl";
 
     public static String[] mapToStringArray(Map map) {
         if (map == null) {

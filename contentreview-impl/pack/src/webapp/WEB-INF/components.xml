@@ -14,11 +14,12 @@
 	<!-- EntityBroker Providers -->
 	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
 		class="org.sakaiproject.contentreview.impl.entity.TurnitinClassEntityProvider">
-	
+	   <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService" />
 	</bean>
 
 	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
 		class="org.sakaiproject.contentreview.impl.entity.TurnitinAssignmentEntityProvider">
+        <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService" />
 	
 	</bean>
 

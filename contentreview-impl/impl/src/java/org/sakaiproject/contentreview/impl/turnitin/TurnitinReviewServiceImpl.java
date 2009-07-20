@@ -97,7 +97,7 @@ import org.xml.sax.SAXException;
 
 public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
-	public static final String PROP_TURNITIN_GENERATE_FIRST_NAME = "turnitin.generate.first.name";
+	/*public static final String PROP_TURNITIN_GENERATE_FIRST_NAME = "turnitin.generate.first.name";
 	public static final String PROP_TURNITIN_GET_REPORTS_BULK = "turnitin.getReportsBulk";
 	public static final String PROP_TII_CHECK_WORD_LENGTH = "tii.checkWordLength";
 	public static final String PROP_TURNITIN_UPDATE_ASSINGMENTS = "turnitin.updateAssingments";
@@ -118,7 +118,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public static final String PROP_HTTP_PROXY_PORT = "http.proxyPort";
 	public static final String PROP_HTTP_PROXY_HOST = "http.proxyHost";
 	public static final String PROP_TURNITIN_PROXY_HOST = "turnitin.proxyHost";
-	public static final String PROP_TURNITIN_PROXY_PORT = "turnitin.proxyPort";
+	public static final String PROP_TURNITIN_PROXY_PORT = "turnitin.proxyPort";*/
 	
 	
 
@@ -241,9 +241,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		log.info("init()");
 
-		proxyHost = serverConfigurationService.getString(PROP_TURNITIN_PROXY_HOST); 
+		proxyHost = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_PROXY_HOST); 
 
-		proxyPort = serverConfigurationService.getString(PROP_TURNITIN_PROXY_PORT);
+		proxyPort = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_PROXY_PORT);
 
 		
 		
@@ -255,51 +255,51 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} catch (NumberFormatException e) {
 				log.debug("Invalid proxy port specified: " + proxyPort);
 			}
-		} else if (System.getProperty(PROP_HTTP_PROXY_HOST) != null && !System.getProperty(PROP_HTTP_PROXY_HOST).equals("")) {
+		} else if (System.getProperty(TurnitinUtil.PROP_HTTP_PROXY_HOST) != null && !System.getProperty(TurnitinUtil.PROP_HTTP_PROXY_HOST).equals("")) {
 			try {
-				SocketAddress addr = new InetSocketAddress(System.getProperty(PROP_HTTP_PROXY_HOST), new Integer(System.getProperty(PROP_HTTP_PROXY_PORT)).intValue());
+				SocketAddress addr = new InetSocketAddress(System.getProperty(TurnitinUtil.PROP_HTTP_PROXY_HOST), new Integer(System.getProperty(TurnitinUtil.PROP_HTTP_PROXY_PORT)).intValue());
 				proxy = new Proxy(Proxy.Type.HTTP, addr);
-				log.debug("Using proxy: " + System.getProperty(PROP_HTTP_PROXY_HOST) + " " + System.getProperty(PROP_HTTP_PROXY_PORT));
+				log.debug("Using proxy: " + System.getProperty(TurnitinUtil.PROP_HTTP_PROXY_HOST) + " " + System.getProperty(TurnitinUtil.PROP_HTTP_PROXY_PORT));
 			} catch (NumberFormatException e) {
-				log.debug("Invalid proxy port specified: " + System.getProperty(PROP_HTTP_PROXY_PORT));
+				log.debug("Invalid proxy port specified: " + System.getProperty(TurnitinUtil.PROP_HTTP_PROXY_PORT));
 			}
 		}
  
-		aid = serverConfigurationService.getString(PROP_TURNITIN_AID);
+		aid = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_AID);
 
-		said = serverConfigurationService.getString(PROP_TURNITIN_SAID);
+		said = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SAID);
 
-		secretKey = serverConfigurationService.getString(PROP_TURNITIN_SECRET_KEY);
+		secretKey = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SECRET_KEY);
 
-		apiURL = serverConfigurationService.getString(PROP_TURNITIN_API_URL,"https://www.turnitin.com/api.asp?");
+		apiURL = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_API_URL,"https://www.turnitin.com/api.asp?");
 
 		
 
-		defaultInstructorEmail = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL);
+		defaultInstructorEmail = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL);
 
-		defaultInstructorFName = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME);
+		defaultInstructorFName = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME);
 
-		defaultInstructorLName = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME);
+		defaultInstructorLName = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME);
 
-		defaultInstructorPassword = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD);
+		defaultInstructorPassword = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD);
 		
-		if  (!serverConfigurationService.getBoolean(PROP_TURNITIN_SEND_NOTIFATIONS, true)) 
+		if  (!serverConfigurationService.getBoolean(TurnitinUtil.PROP_TURNITIN_SEND_NOTIFATIONS, true)) 
 			sendNotifications = 1;
 
 		//note that the assignment id actually has to be unique globally so use this as a prefix
 		// assignid = defaultAssignId + siteId
-		defaultAssignId = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_ASSIGN_ID);;
+		defaultAssignId = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_ASSIGN_ID);;
 
-		defaultClassPassword = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_CLASS_PASSWORD,"changeit");;
+		defaultClassPassword = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_CLASS_PASSWORD,"changeit");;
 
 		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
-		defaultInstructorId = serverConfigurationService.getString(PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID,"admin");
+		defaultInstructorId = serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID,"admin");
 
-		maxRetry = Long.valueOf(serverConfigurationService.getInt(PROP_TURNITIN_MAX_RETRY,100));
+		maxRetry = Long.valueOf(serverConfigurationService.getInt(TurnitinUtil.PROP_TURNITIN_MAX_RETRY,100));
 
-		TII_MAX_FILE_SIZE = serverConfigurationService.getInt(PROP_TURNITIN_MAX_FILE_SIZE,10995116);
+		TII_MAX_FILE_SIZE = serverConfigurationService.getInt(TurnitinUtil.PROP_TURNITIN_MAX_FILE_SIZE,10995116);
 		
-		if (serverConfigurationService.getBoolean(PROP_TURNITIN_UPDATE_ASSINGMENTS, false))
+		if (serverConfigurationService.getBoolean(TurnitinUtil.PROP_TURNITIN_UPDATE_ASSINGMENTS, false))
 			doAssignments();
 
 	}
@@ -395,7 +395,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 	
 	private int wordDocLength(ContentResource resource) {
-		if (!serverConfigurationService.getBoolean(PROP_TII_CHECK_WORD_LENGTH, false))
+		if (!serverConfigurationService.getBoolean(TurnitinUtil.PROP_TII_CHECK_WORD_LENGTH, false))
 			return 100;
 		
 		try {
@@ -1338,7 +1338,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	public void checkForReports() {
-		if (serverConfigurationService.getBoolean(PROP_TURNITIN_GET_REPORTS_BULK, true))
+		if (serverConfigurationService.getBoolean(TurnitinUtil.PROP_TURNITIN_GET_REPORTS_BULK, true))
 			checkForReportsBulk();
 		else 
 			checkForReportsIndividual();
@@ -2210,7 +2210,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String getUserFirstName(User user) {
       String ufn = user.getFirstName().trim();
       if (ufn == null || ufn.equals("")) {
-         boolean genFN = (boolean) serverConfigurationService.getBoolean(PROP_TURNITIN_GENERATE_FIRST_NAME, true);
+         boolean genFN = (boolean) serverConfigurationService.getBoolean(TurnitinUtil.PROP_TURNITIN_GENERATE_FIRST_NAME, true);
          if (genFN) {
             String eid = user.getEid();
             if (eid != null 

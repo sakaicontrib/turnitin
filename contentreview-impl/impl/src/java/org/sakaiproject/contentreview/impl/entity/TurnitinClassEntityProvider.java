@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.contentreview.impl.turnitin.TurnitinAPIUtil;
@@ -37,12 +38,22 @@ implements Updateable {
         }
         
         try {
-            TurnitinAPIUtil.createAssignment(TurnitinUtil.TEST_CID, TurnitinUtil.TEST_CTL, ref.getId(), 
-                    ref.getId(), TurnitinUtil.TEST_UEM, TurnitinUtil.TEST_UFN, 
-                    TurnitinUtil.TEST_ULN, TurnitinUtil.TEST_UPW, TurnitinUtil.TEST_UID, 
-                    TurnitinUtil.TEST_AID, TurnitinUtil.TEST_SHARED_SECRET, 
-                    TurnitinUtil.TEST_AID, TurnitinUtil.TEST_APIURL, 
-                    TurnitinUtil.TEST_PROXY, extra.toArray(new String[] {}));
+            TurnitinAPIUtil.createAssignment(
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_CID), // cid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_CTL), // ctl 
+                    ref.getId(), // assignid
+                    ref.getId(), // assignTitle
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL), // uem
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME), //ufn
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME),  //uln
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD), // upw
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID), // uid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_AID), // aid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SECRET_KEY), // shared secret
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SAID), //sub account id
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_API_URL), // api url
+                    TurnitinUtil.TEST_PROXY, 
+                    extra.toArray(new String[] {}));
         } catch (SubmissionException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -58,20 +69,20 @@ implements Updateable {
         Map togo = null;
         try {
             Map retdata = TurnitinAPIUtil.getAssignment(
-                       TurnitinUtil.TEST_CID, // cid
-                       TurnitinUtil.TEST_CTL, // ctl 
-                       ref.getId(), // assignid
-                       ref.getId(), // assignTitle
-                       TurnitinUtil.TEST_UEM, // uem
-                       TurnitinUtil.TEST_UFN, //ufn
-                       TurnitinUtil.TEST_ULN,  //uln
-                       TurnitinUtil.TEST_UPW, // upw
-                       TurnitinUtil.TEST_UID, // uid
-                       TurnitinUtil.TEST_AID, // aid
-                       TurnitinUtil.TEST_SHARED_SECRET, // shared secret
-                       TurnitinUtil.TEST_AID, //sub account id
-                       TurnitinUtil.TEST_APIURL, // api url
-                       TurnitinUtil.TEST_PROXY // proxy
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_CID), // cid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_CTL), // ctl 
+                    ref.getId(), // assignid
+                    ref.getId(), // assignTitle
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL), // uem
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME), //ufn
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME),  //uln
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD), // upw
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID), // uid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_AID), // aid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SECRET_KEY), // shared secret
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SAID), //sub account id
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_API_URL), // api url
+                    TurnitinUtil.TEST_PROXY // proxy
             );
             if (retdata.containsKey("object")) {
                 togo = (Map) retdata.get("object");
@@ -85,6 +96,11 @@ implements Updateable {
         }
         
         return togo;
+    }
+    
+    private ServerConfigurationService serverConfigurationService;
+    public void setServerConfigurationService(ServerConfigurationService serverConfigurationService) {
+        this.serverConfigurationService = serverConfigurationService;
     }
 
 }

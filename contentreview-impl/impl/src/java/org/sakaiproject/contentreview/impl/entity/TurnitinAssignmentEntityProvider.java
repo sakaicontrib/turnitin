@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.contentreview.impl.turnitin.TurnitinAPIUtil;
@@ -56,19 +57,19 @@ implements CRUDable {
 
         try {
             TurnitinAPIUtil.createAssignment(
-                    TurnitinUtil.TEST_CID, // cid
-                    TurnitinUtil.TEST_CTL, // ctl 
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_CID), // cid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_CTL), // ctl 
                     ref.getId(), // assignid
                     ref.getId(), // assignTitle
-                    TurnitinUtil.TEST_UEM, // uem
-                    TurnitinUtil.TEST_UFN, //ufn
-                    TurnitinUtil.TEST_ULN,  //uln
-                    TurnitinUtil.TEST_UPW, // upw
-                    TurnitinUtil.TEST_UID, // uid
-                    TurnitinUtil.TEST_AID, // aid
-                    TurnitinUtil.TEST_SHARED_SECRET, // shared secret
-                    TurnitinUtil.TEST_AID, //sub account id
-                    TurnitinUtil.TEST_APIURL, // api url
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL), // uem
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME), //ufn
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME),  //uln
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD), // upw
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID), // uid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_AID), // aid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SECRET_KEY), // shared secret
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SAID), //sub account id
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_API_URL), // api url
                     TurnitinUtil.TEST_PROXY, // proxy
                     TurnitinUtil.mapToStringArray(tiiopts)
             );
@@ -99,19 +100,19 @@ implements CRUDable {
         try
         {
             Map asnndata =  TurnitinAPIUtil.getAssignment(
-                    TurnitinUtil.TEST_CID, // cid
-                    TurnitinUtil.TEST_CTL, // ctl 
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_CID), // cid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_CTL), // ctl 
                     ref.getId(), // assignid
                     ref.getId(), // assignTitle
-                    TurnitinUtil.TEST_UEM, // uem
-                    TurnitinUtil.TEST_UFN, //ufn
-                    TurnitinUtil.TEST_ULN,  //uln
-                    TurnitinUtil.TEST_UPW, // upw
-                    TurnitinUtil.TEST_UID, // uid
-                    TurnitinUtil.TEST_AID, // aid
-                    TurnitinUtil.TEST_SHARED_SECRET, // shared secret
-                    TurnitinUtil.TEST_AID, //sub account id
-                    TurnitinUtil.TEST_APIURL, // api url
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_EMAIL), // uem
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_FIRST_NAME), //ufn
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_LAST_NAME),  //uln
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_PASSWORD), // upw
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_DEFAULT_INSTRUCTOR_ID), // uid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_AID), // aid
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SECRET_KEY), // shared secret
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_SAID), //sub account id
+                    serverConfigurationService.getString(TurnitinUtil.PROP_TURNITIN_API_URL), // api url
                     TurnitinUtil.TEST_PROXY // proxy
             );
             
@@ -148,6 +149,11 @@ implements CRUDable {
     public void deleteEntity(EntityReference ref, Map<String, Object> params) {
         // TODO Auto-generated method stub
 
+    }
+    
+    private ServerConfigurationService serverConfigurationService;
+    public void setServerConfigurationService(ServerConfigurationService serverConfigurationService) {
+        this.serverConfigurationService = serverConfigurationService;
     }
 
 }
