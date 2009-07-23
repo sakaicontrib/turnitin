@@ -714,6 +714,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	private String getAssignmentTitle(String taskId){
+	    return taskId;
+	/*
 		try {
 			Reference ref = entityManager.newReference(taskId);
 			log.debug("got ref " + ref + " of type: " + ref.getType());
@@ -733,7 +735,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			e.printStackTrace();
 		}
 		return taskId;
-
+*/
 	}
 
 	private void createAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
