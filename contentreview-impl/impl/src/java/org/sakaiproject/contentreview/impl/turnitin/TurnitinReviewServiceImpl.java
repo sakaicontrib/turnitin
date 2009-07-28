@@ -59,7 +59,6 @@ import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
-import org.sakaiproject.assignment.api.Assignment;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
@@ -804,24 +803,51 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 	}
 
+	/**
+	 * This returns the String that will be used as the Assignment Title
+	 * in Turn It In.
+	 * 
+	 * The current implementation here has a few interesting caveats so that
+	 * it will work with both, the existing Assignments 1 integration, and
+	 * the new Assignments 2 integration under development.
+	 * 
+	 * We will check and see if the taskId starts with /assignment/. If it
+	 * does we will look up the Assignment Entity on the legacy Entity bus.
+	 * (not the entitybroker).  This needs some general work to be made 
+	 * generally modular ( and useful for more than just Assignments 1 and 2
+	 * ). We will need to look at some more concrete use cases and then
+	 * factor it accordingly in the future when the next scenerio is 
+	 * required.
+	 * 
+	 * Another oddity is that to get rid of our hard dependency on Assignments 1
+	 * we are invoking the getTitle method by hand. We probably need a 
+	 * mechanism to register a title handler or something as part of the 
+	 * setup process for new services that want to be reviewable.
+	 * 
+	 * @param taskId
+	 * @return
+	 */
 	private String getAssignmentTitle(String taskId){
-		try {
-			Reference ref = entityManager.newReference(taskId);
-			log.debug("got ref " + ref + " of type: " + ref.getType());
-			EntityProducer ep = ref.getEntityProducer();
+		String togo = taskId;
+		if (taskId.startsWith("/assignment/")) {
+			try {
+				Reference ref = entityManager.newReference(taskId);
+				log.debug("got ref " + ref + " of type: " + ref.getType());
+				EntityProducer ep = ref.getEntityProducer();
 
-			Entity ent = ep.getEntity(ref);
-			log.debug("got entity " + ent);
-			if (ent instanceof Assignment) {
-				Assignment as = (Assignment)ent;
-				log.debug("Got assignemment with title " + as.getTitle());
-				return URLDecoder.decode(as.getTitle(),"UTF-8");
+				Entity ent = ep.getEntity(ref);
+				log.debug("got entity " + ent);
+				String title = 
+				ent.getClass().getMethod("getTitle").invoke(ent).toString();
+				log.debug("Got reflected assignemment title from entity " + title);
+				togo = URLDecoder.decode(title,"UTF-8");
+
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
-		return taskId;
+		
+		return togo;
 
 	}
 
