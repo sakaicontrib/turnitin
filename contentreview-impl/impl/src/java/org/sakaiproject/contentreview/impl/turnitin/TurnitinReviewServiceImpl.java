@@ -82,6 +82,7 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.ServerOverloadException;
 import org.sakaiproject.exception.TypeException;
+import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
@@ -862,7 +863,23 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		createAssignment(siteId, taskId, null);
 	}
 
-
+	@SuppressWarnings("unchecked")
+	public Map getAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
+		String taskTitle = getAssignmentTitle(taskId);
+		String diagnostic = "0"; //0 = off; 1 = on
+		
+		Map params = TurnitinAPIUtil.packMap(null,
+			"aid", aid, "assign", taskTitle, "assignid", taskId,
+			"cid", siteId, "uid", defaultInstructorId, "ctl", siteId,
+			"diagnostic", "0", "encrypt", "0",
+			"fcmd", "7", "fid", "4", "gmtime", getGMTime(),
+			"said", said,
+			"uem", defaultInstructorEmail, "ufn", defaultInstructorFName, "uln", defaultInstructorLName,
+			"upw", defaultInstructorPassword, "utp", "2" );
+		
+		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
+	}
+	
 	/**
 	 * @param siteId
 	 * @param taskId

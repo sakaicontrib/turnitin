@@ -133,6 +133,14 @@
 			<artifactId>poi-scratchpad</artifactId>
 			<version>3.5-beta5</version>
 		</dependency>	
+		
+        <!-- PonderUtilCore for StreamUtils -->
+        <dependency>
+            <groupId>uk.org.ponder</groupId>
+            <artifactId>ponderutilcore</artifactId>
+            <version>1.2.4</version>
+        </dependency>
+
         <!-- testing dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>
