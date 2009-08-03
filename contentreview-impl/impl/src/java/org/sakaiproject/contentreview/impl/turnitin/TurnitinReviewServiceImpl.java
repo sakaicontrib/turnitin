@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 
@@ -850,8 +851,26 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return togo;
 
 	}
+	
+	/**
+	 * @param siteId
+	 * @param taskId
+	 * @throws SubmissionException
+	 * @throws TransientSubmissionException
+	 */
+	public void createAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
+		createAssignment(siteId, taskId, null);
+	}
 
-	private void createAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
+
+	/**
+	 * @param siteId
+	 * @param taskId
+	 * @param extraAsnnOpts
+	 * @throws SubmissionException
+	 * @throws TransientSubmissionException
+	 */
+	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts) throws SubmissionException, TransientSubmissionException {
 
 		//get the assignment reference
 		String taskTitle = getAssignmentTitle(taskId);
@@ -1001,6 +1020,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
+			
+			if (extraAsnnOpts != null) {
+				for (Object key: extraAsnnOpts.keySet()) {
+					if (extraAsnnOpts.get(key) == null) {
+						continue;
+					}
+					outStream.write("&".getBytes("UTF-8"));
+					outStream.write(key.toString().getBytes("UTF-8"));
+					outStream.write("=".getBytes("UTF-8"));
+					outStream.write(extraAsnnOpts.get(key).toString().getBytes("UTF-8"));
+				}
+			}
 
 			outStream.close();
 		} catch (ProtocolException e) {
