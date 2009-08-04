@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 
@@ -81,6 +82,7 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.ServerOverloadException;
 import org.sakaiproject.exception.TypeException;
+import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
@@ -850,8 +852,42 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return togo;
 
 	}
+	
+	/**
+	 * @param siteId
+	 * @param taskId
+	 * @throws SubmissionException
+	 * @throws TransientSubmissionException
+	 */
+	public void createAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
+		createAssignment(siteId, taskId, null);
+	}
 
-	private void createAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
+	@SuppressWarnings("unchecked")
+	public Map getAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
+		String taskTitle = getAssignmentTitle(taskId);
+		String diagnostic = "0"; //0 = off; 1 = on
+		
+		Map params = TurnitinAPIUtil.packMap(null,
+			"aid", aid, "assign", taskTitle, "assignid", taskId,
+			"cid", siteId, "uid", defaultInstructorId, "ctl", siteId,
+			"diagnostic", "0", "encrypt", "0",
+			"fcmd", "7", "fid", "4", "gmtime", getGMTime(),
+			"said", said,
+			"uem", defaultInstructorEmail, "ufn", defaultInstructorFName, "uln", defaultInstructorLName,
+			"upw", defaultInstructorPassword, "utp", "2" );
+		
+		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
+	}
+	
+	/**
+	 * @param siteId
+	 * @param taskId
+	 * @param extraAsnnOpts
+	 * @throws SubmissionException
+	 * @throws TransientSubmissionException
+	 */
+	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts) throws SubmissionException, TransientSubmissionException {
 
 		//get the assignment reference
 		String taskTitle = getAssignmentTitle(taskId);
@@ -1001,6 +1037,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
+			
+			if (extraAsnnOpts != null) {
+				for (Object key: extraAsnnOpts.keySet()) {
+					if (extraAsnnOpts.get(key) == null) {
+						continue;
+					}
+					outStream.write("&".getBytes("UTF-8"));
+					outStream.write(key.toString().getBytes("UTF-8"));
+					outStream.write("=".getBytes("UTF-8"));
+					outStream.write(extraAsnnOpts.get(key).toString().getBytes("UTF-8"));
+				}
+			}
 
 			outStream.close();
 		} catch (ProtocolException e) {
