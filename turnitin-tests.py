@@ -1,5 +1,3 @@
-print "Turnitin Tests 2"
-
 import unittest
 import random
 from org.sakaiproject.component.cover import ComponentManager
@@ -23,15 +21,46 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
     def setUp(self):
         self.tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
         self.idmanager = ComponentManager.get("org.sakaiproject.id.api.IdManager")
-        pass
 
     # TODO Test Legacy Assignment with createAssignment("asdf","/assignment/adsf")
     # The title should be the Asnn1 title, not the taskid
 
+    def testStudentsViewReports(self):
+        """
+        s_view_report / sviewreports
+        0 = not allowed
+        1 = allowed
+        default is 0
+        """
+
+        # First Test that Students can view the report
+        opts = HashMap()
+        opts.put('s_view_report','1')
+        tiiasnnid = "/unittests/studcanviewreport/"+str(uuid.uuid1())
+        self.tiireview_serv.createAssignment("tii-unit-test",
+            tiiasnnid, opts)
+
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['sviewreports']),str('1'))
+
+        # Test that Students cannot view the report
+        opts.put('s_view_report','0')
+        tiiasnnid = "/unittests/studcannotviewreport/"+str(uuid.uuid1())
+        self.tiireview_serv.createAssignment("tii-unit-test",
+            tiiasnnid, opts)
+
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['sviewreports']),str('0'))
+
     def testCreateAssignment(self):
         # Test creating a general assignment
-        self.tiireview_serv.createAssignment("tii-unit-test","/unittests/"+str(uuid.uuid1()))
+        tiiasnnid = "/unittests/"+str(uuid.uuid1())
+        self.tiireview_serv.createAssignment("tii-unit-test",tiiasnnid)
 
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['assign']),str(tiiasnnid))
+
+    def testCheckAgainstJournals(self):
         opts = HashMap()
         opts.put('journal_check','1')
         tiiasnnid = "/unittests/usejournals/"+str(uuid.uuid1())
@@ -41,14 +70,13 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
 
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
-        #print(tiiresult)
 
         # Test creating an assignment checked against Journals
         opts.put('journal_check','0')
         tiiasnnid = "/unittests/nojournals/"+str(uuid.uuid1())
         self.tiireview_serv.createAssignment("tii-unit-test",
             tiiasnnid, opts)
-
+        
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
 
