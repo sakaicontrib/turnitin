@@ -161,8 +161,28 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
 
     def testCheckAgainstInstitutionRepository(self):
-        "Currently no institution repo information in return payload"
-        self.fail() 
+        """
+        institution_check / searchinstitution 
+        values of 0 to not check against institutional
+        repository, 1 check against it.
+        """
+        opts = HashMap()
+        opts.put('institution_check','1')
+        tiiasnnid = "/unittests/useinstitution/"+str(uuid.uuid1())
+        # Test creating an assignment checked against Journals
+        self.tiireview_serv.createAssignment("tii-unit-test",
+            tiiasnnid, opts)
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['searchinstitution']),str('1'))
+
+        # Test creating an assignment checked against Journals
+        opts.put('institution_check','0')
+        tiiasnnid = "/unittests/noinstitution/"+str(uuid.uuid1())
+        self.tiireview_serv.createAssignment("tii-unit-test",
+            tiiasnnid, opts)
+         
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['searchinstitution']),str('0'))
         
 
 if __name__ == '__main__':
