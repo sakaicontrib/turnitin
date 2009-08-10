@@ -205,8 +205,22 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchinstitution']),str('0'))
         
+    def testGetNonExistantAssignment(self):
+        """Trying to fetch an assignment that does not exist should return
+        error code 206
+        """
+        tiiasnnid = "/unittests/nothere/"+str(uuid.uuid1())
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals("206", str(tiiresult["rcode"]))
         
 tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
+
+def trySomething():
+    """tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
+    tiiresult = tiireview_serv.getAssignment("tii-unit-test", "/unittests/nothere/asdfaasdfsafd")
+    print tiiresult
+    """
+    pass
 
 if __name__ == '__main__':
     tii_suites = []
@@ -214,3 +228,4 @@ if __name__ == '__main__':
         tii_suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
     alltests = unittest.TestSuite(tii_suites)
     unittest.TextTestRunner(verbosity=2).run(alltests)
+    trySomething()
