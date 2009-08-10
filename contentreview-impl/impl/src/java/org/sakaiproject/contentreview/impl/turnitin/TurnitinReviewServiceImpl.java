@@ -881,6 +881,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 	
 	/**
+	 * Creates or Updates an Assignment
+	 * 
 	 * @param siteId
 	 * @param taskId
 	 * @param extraAsnnOpts
@@ -913,6 +915,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String encrypt = "0";					//encryption flag
 		String fcmd = "2";						//new assignment
+		
+		// If this assignment already exists, we should use fcmd 3 to update it.
+		Map tiiresult = this.getAssignment(siteId, taskId);
+		if (tiiresult.get("rcode") != null && tiiresult.get("rcode").equals("85")) {
+			fcmd = "3";
+		}
+
 		String fid = "4";						//function id
 		String uem = defaultInstructorEmail;
 		String ufn = defaultInstructorFName;
@@ -2644,6 +2653,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return cal.getTime();
 	}
 
+	public Map callTurnitinReturnMap(String apiURL, Map<String,Object> parameters, 
+			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
+		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
+	}
+	
 	/**
 	 * Gets a first name for a user or generates an initial from the eid
 	 * @param user a sakai user
