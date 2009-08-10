@@ -929,6 +929,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp = "2"; 					//user type 2 = instructor
 		String upw = defaultInstructorPassword;
 		String s_view_report = "1";
+		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("s_view_report")) {
+			s_view_report = extraAsnnOpts.get("s_view_report").toString();
+			extraAsnnOpts.remove("s_view_report");
+		}
 
 		String cid = siteId;
 		String uid = defaultInstructorId;
@@ -1419,7 +1423,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	
 				try {
-					createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					Map tiiresult = this.getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					if (tiiresult.get("rcode") != null && !tiiresult.get("rcode").equals("85")) {
+						createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					}
 				} catch (SubmissionException se) {
 					currentItem.setLastError("Assign creation error: " + se.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
