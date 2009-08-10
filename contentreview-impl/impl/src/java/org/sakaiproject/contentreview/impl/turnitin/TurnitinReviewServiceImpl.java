@@ -124,6 +124,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	private String defaultInstructorPassword = null;
 	
+	private boolean useSourceParameter = false;
+	
 	private int sendNotifications = 0;
 
 	private Long maxRetry = null;
@@ -256,6 +258,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		defaultInstructorLName = serverConfigurationService.getString("turnitin.defaultInstructorLName");
 
 		defaultInstructorPassword = serverConfigurationService.getString("turnitin.defaultInstructorPassword");
+		
+		useSourceParameter = serverConfigurationService.getBoolean("turnitin.useSourceParameter", false);
 		
 		if  (!serverConfigurationService.getBoolean("turnitin.sendnotifations", true)) 
 			sendNotifications = 1;
@@ -880,6 +884,42 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
 	}
 	
+	private String getProvisionerEmail() {
+		if (this.useSourceParameter) {
+			return userDirectoryService.getCurrentUser().getEmail();
+		}
+		else {
+			return defaultInstructorEmail;
+		}
+	}
+	
+	private String getProvisionerFName() {
+		if (this.useSourceParameter) {
+			return userDirectoryService.getCurrentUser().getFirstName();
+		}
+		else {
+			return defaultInstructorFName;
+		}
+	}
+	
+	private String getProvisionerLName() {
+		if (this.useSourceParameter) {
+			return userDirectoryService.getCurrentUser().getLastName();
+		}
+		else {
+			return defaultInstructorLName;
+		}
+	}
+	
+	private String getProvisionerUserID() {
+		if (this.useSourceParameter) {
+			return userDirectoryService.getCurrentUser().getId();
+		}
+		else {
+			return defaultInstructorId;
+		}
+	}
+	
 	/**
 	 * Creates or Updates an Assignment
 	 * 
@@ -923,9 +963,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		String fid = "4";						//function id
-		String uem = defaultInstructorEmail;
-		String ufn = defaultInstructorFName;
-		String uln = defaultInstructorLName;
+		String uem = this.getProvisionerEmail(); // defaultInstructorEmail;
+		String ufn = this.getProvisionerFName(); // defaultInstructorFName;
+		String uln = this.getProvisionerLName(); // defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
 		String upw = defaultInstructorPassword;
 		String s_view_report = "1";
@@ -956,8 +996,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			e.printStackTrace();
 		}
 
-		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-		fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+		String md5_str = null;
+		if (this.useSourceParameter) {
+			md5_str= aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+			fcmd + fid + gmtime + said + uem + ufn + uid + uln + utp + secretKey;
+		} else {
+			md5_str= aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+			fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+		}
 
 		String md5;
 		try{
@@ -1042,8 +1088,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write("&uln=".getBytes("UTF-8"));
 			outStream.write(uln.getBytes("UTF-8"));
 
-			outStream.write("&upw=".getBytes("UTF-8"));
-			outStream.write(upw.getBytes("UTF-8"));
+			if (this.useSourceParameter) {
+				outStream.write("&src=".getBytes("UTF-8"));
+				outStream.write("9".getBytes("UTF-8"));
+			} else {
+				outStream.write("&upw=".getBytes("UTF-8"));
+				outStream.write(upw.getBytes("UTF-8"));
+			}
 
 			outStream.write("&utp=".getBytes("UTF-8"));
 			outStream.write(utp.getBytes("UTF-8"));
@@ -2658,6 +2709,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, offset);
 		return cal.getTime();
+	}
+	
+	public Map callTurnitinWDefaultsReturnMap(Map<String,Object> parameters) throws TransientSubmissionException, SubmissionException {
+		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
 	}
 
 	public Map callTurnitinReturnMap(String apiURL, Map<String,Object> parameters, 

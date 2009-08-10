@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+//import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import javax.net.ssl.HttpsURLConnection;
+import sun.net.www.protocol.http.HttpURLConnection;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -188,7 +190,7 @@ public class TurnitinAPIUtil {
         TIIFID fid = TIIFID.getFid(Integer.parseInt((String) parameters.get("fid")));
         
         //if (!parameters.containsKey("gmttime")) {
-        parameters.put("gmttime", getGMTime());
+        parameters.put("gmtime", getGMTime());
         //}
 
         List<String> sortedkeys = new ArrayList<String>();
