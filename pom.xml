@@ -78,5 +78,15 @@
             https://source.sakaiproject.org/contrib/turnitin/branches/sakai_2.6.x/contentreview-impl
         </url>
     </scm>
-
+ <repositories>
+    <repository>
+      <id>sakai-maven</id>
+      <name>Sakai Maven Repo</name>
+      <layout>default</layout>
+      <url>http://source.sakaiproject.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+</repository>
 </project>
