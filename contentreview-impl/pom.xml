@@ -19,7 +19,7 @@
     <name>Sakai Content Review - Turnitin</name>
     <groupId>org.sakaiproject.contentreview</groupId>
     <artifactId>content-review-impl-base</artifactId>
-    <version>0.5</version>
+    <version>0.6-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -43,7 +43,7 @@
             <dependency>
                 <groupId>org.sakaiproject.contentreview</groupId>
                 <artifactId>sakai-contentreview-hbm</artifactId>
-                <version>0.5</version><!--turnitin.version-->
+                <version>0.6-SNAPSHOT</version><!--turnitin.version-->
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -55,25 +55,25 @@
             <dependency>
                 <groupId>org.sakaiproject.contentreview</groupId>
                 <artifactId>sakai-contentreview-impl</artifactId>
-                <version>0.5</version><!--turnitin.version-->
+                <version>0.6-SNAPSHOT</version><!--turnitin.version-->
             </dependency>
             <dependency>
                 <groupId>org.sakaiproject.contentreview</groupId>
                 <artifactId>contentreview-scheduler</artifactId>
-                <version>0.5</version><!--turnitin.version-->
+                <version>0.6-SNAPSHOT</version><!--turnitin.version-->
             </dependency>
           </dependencies>
     </dependencyManagement>
 
     <scm>
         <connection>
-            scm:svn:https://source.sakaiproject.org/contrib/turnitin/tags/content-review-impl-base-0.5
+            scm:svn:https://source.sakaiproject.org/contrib/turnitin/branches/sakai_2.6.x/contentreview-impl
         </connection>
         <developerConnection>
-            scm:svn:https://source.sakaiproject.org/contrib/turnitin/tags/content-review-impl-base-0.5
+            scm:svn:https://source.sakaiproject.org/contrib/turnitin/branches/sakai_2.6.x/contentreview-impl
         </developerConnection>
         <url>
-            https://source.sakaiproject.org/contrib/turnitin/tags/content-review-impl-base-0.5
+            https://source.sakaiproject.org/contrib/turnitin/branches/sakai_2.6.x/contentreview-impl
         </url>
     </scm>
  <repositories>
