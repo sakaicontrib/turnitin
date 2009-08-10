@@ -14,14 +14,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <name>Sakai Content Review - Turnitin</name>
     <groupId>org.sakaiproject.contentreview</groupId>
     <artifactId>content-review-impl-base</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.5</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -45,7 +43,7 @@
             <dependency>
                 <groupId>org.sakaiproject.contentreview</groupId>
                 <artifactId>sakai-contentreview-hbm</artifactId>
-                <version>0.1-SNAPSHOT</version><!--turnitin.version-->
+                <version>0.5</version><!--turnitin.version-->
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -57,25 +55,25 @@
             <dependency>
                 <groupId>org.sakaiproject.contentreview</groupId>
                 <artifactId>sakai-contentreview-impl</artifactId>
-                <version>0.1-SNAPSHOT</version><!--turnitin.version-->
+                <version>0.5</version><!--turnitin.version-->
             </dependency>
             <dependency>
                 <groupId>org.sakaiproject.contentreview</groupId>
                 <artifactId>contentreview-scheduler</artifactId>
-                <version>0.1-SNAPSHOT</version><!--turnitin.version-->
+                <version>0.5</version><!--turnitin.version-->
             </dependency>
           </dependencies>
     </dependencyManagement>
 
     <scm>
         <connection>
-            scm:svn:https://source.sakaiproject.org/contrib/turnitin/branches/sakai_2.6.x/contentreview-impl
+            scm:svn:https://source.sakaiproject.org/contrib/turnitin/tags/content-review-impl-base-0.5
         </connection>
         <developerConnection>
-            scm:svn:https://source.sakaiproject.org/contrib/turnitin/branches/sakai_2.6.x/contentreview-impl
+            scm:svn:https://source.sakaiproject.org/contrib/turnitin/tags/content-review-impl-base-0.5
         </developerConnection>
         <url>
-            https://source.sakaiproject.org/contrib/turnitin/branches/sakai_2.6.x/contentreview-impl
+            https://source.sakaiproject.org/contrib/turnitin/tags/content-review-impl-base-0.5
         </url>
     </scm>
  <repositories>
