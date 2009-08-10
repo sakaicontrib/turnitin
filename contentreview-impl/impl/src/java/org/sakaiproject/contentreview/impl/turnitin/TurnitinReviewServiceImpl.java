@@ -881,6 +881,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 	
 	/**
+	 * Creates or Updates an Assignment
+	 * 
 	 * @param siteId
 	 * @param taskId
 	 * @param extraAsnnOpts
@@ -913,6 +915,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String encrypt = "0";					//encryption flag
 		String fcmd = "2";						//new assignment
+		
+		// If this assignment already exists, we should use fcmd 3 to update it.
+		Map tiiresult = this.getAssignment(siteId, taskId);
+		if (tiiresult.get("rcode") != null && tiiresult.get("rcode").equals("85")) {
+			fcmd = "3";
+		}
+
 		String fid = "4";						//function id
 		String uem = defaultInstructorEmail;
 		String ufn = defaultInstructorFName;
@@ -920,6 +929,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp = "2"; 					//user type 2 = instructor
 		String upw = defaultInstructorPassword;
 		String s_view_report = "1";
+		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("s_view_report")) {
+			s_view_report = extraAsnnOpts.get("s_view_report").toString();
+			extraAsnnOpts.remove("s_view_report");
+		}
 
 		String cid = siteId;
 		String uid = defaultInstructorId;
@@ -1410,7 +1423,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	
 				try {
-					createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					Map tiiresult = this.getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					if (tiiresult.get("rcode") != null && !tiiresult.get("rcode").equals("85")) {
+						createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					}
 				} catch (SubmissionException se) {
 					currentItem.setLastError("Assign creation error: " + se.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
@@ -2644,6 +2660,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return cal.getTime();
 	}
 
+	public Map callTurnitinReturnMap(String apiURL, Map<String,Object> parameters, 
+			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
+		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
+	}
+	
 	/**
 	 * Gets a first name for a user or generates an initial from the eid
 	 * @param user a sakai user
