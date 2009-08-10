@@ -51,7 +51,7 @@
             <dependency>
                 <groupId>org.sakaiproject</groupId>
                 <artifactId>sakai-contentreview-model-api</artifactId>
-                <version>2.6.0RC1-SNAPSHOT</version>
+                <version>2.6.0</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
