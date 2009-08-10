@@ -213,13 +213,33 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
         self.assertEquals("206", str(tiiresult["rcode"]))
         
+    def testUpdatingExistingAssignment(self):
+        """Test to make sure changes to an existing assignment are getting
+        updated and saved.
+        """
+        tiiasnnid = "/unittests/asnnupdate/"+str(uuid.uuid1())
+        opts = HashMap()
+        opts.put('journal_check','1')
+        self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
+        
+        opts.put('journal_check','0')
+        self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
+        
+        
 tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
 
 def trySomething():
-    """tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
-    tiiresult = tiireview_serv.getAssignment("tii-unit-test", "/unittests/nothere/asdfaasdfsafd")
-    print tiiresult
-    """
+    '''tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
+    tiiasnnid = "/unittests/nothere/asdfaasdfsafd"
+    tiireview_serv.createAssignment("tii-unit-test",
+            tiiasnnid)
+    tiireview_serv.createAssignment("tii-unit-test",
+            tiiasnnid)
+    '''
     pass
 
 if __name__ == '__main__':
