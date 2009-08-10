@@ -16,6 +16,28 @@ class SakaiUuid(object):
 
 uuid = SakaiUuid()
 
+class TestAssignment1Requirements(unittest.TestCase):
+    """
+    
+    """
+
+class TestAssignment2Requirements(unittest.TestCase):
+    """
+    This set of tests will look at making sure the parameters and options being
+    used by Assignments 2 continue to work.
+    """
+    def setUp(self):
+        self.tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
+    
+    def testCreateAsnn2(self):
+        "According to the TII API assignments only have to be unique in a class"
+        siteid = str(uuid.uuid1())
+        asnnid = "/assignment2/1"
+        self.tiireview_serv.createAssignment(siteid,asnnid)
+        print(siteid)
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['assign']),str(asnnid))
+
 class TestTurnitinSourceSakai(unittest.TestCase):
     """
     This set of tests will test the ability to use the src=9 parameter to
@@ -24,7 +46,7 @@ class TestTurnitinSourceSakai(unittest.TestCase):
     enterprise account using it.
     """
     def setUp(self):
-        pass
+        self.tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
 
     def testExample(self):
         pass 
@@ -33,7 +55,6 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
 
     def setUp(self):
         self.tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
-        self.idmanager = ComponentManager.get("org.sakaiproject.id.api.IdManager")
 
     # TODO Test Legacy Assignment with createAssignment("asdf","/assignment/adsf")
     # The title should be the Asnn1 title, not the taskid
@@ -184,9 +205,47 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchinstitution']),str('0'))
         
+    def testGetNonExistantAssignment(self):
+        """Trying to fetch an assignment that does not exist should return
+        error code 206
+        """
+        tiiasnnid = "/unittests/nothere/"+str(uuid.uuid1())
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals("206", str(tiiresult["rcode"]))
+        
+    def testUpdatingExistingAssignment(self):
+        """Test to make sure changes to an existing assignment are getting
+        updated and saved.
+        """
+        tiiasnnid = "/unittests/asnnupdate/"+str(uuid.uuid1())
+        opts = HashMap()
+        opts.put('journal_check','1')
+        self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
+        
+        opts.put('journal_check','0')
+        self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
+        
+        
+tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
+
+def trySomething():
+    '''tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
+    tiiasnnid = "/unittests/nothere/asdfaasdfsafd"
+    tiireview_serv.createAssignment("tii-unit-test",
+            tiiasnnid)
+    tiireview_serv.createAssignment("tii-unit-test",
+            tiiasnnid)
+    '''
+    pass
 
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestTurnitinSourceSakai)
-    suite2 = unittest.TestLoader().loadTestsFromTestCase(TestTurnitinReviewServiceImpl)
-    alltests = unittest.TestSuite([suite, suite2])
+    tii_suites = []
+    for testcase in tii_testcases:
+        tii_suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
+    alltests = unittest.TestSuite(tii_suites)
     unittest.TextTestRunner(verbosity=2).run(alltests)
+    trySomething()
