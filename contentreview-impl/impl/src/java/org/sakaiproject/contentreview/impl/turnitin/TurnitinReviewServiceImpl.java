@@ -463,11 +463,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String uid;
 		
 
-		uem = defaultInstructorEmail;
-		ufn = defaultInstructorFName;
-		uln = defaultInstructorLName;
+		uem = getProvisionerEmail();
+		ufn = getProvisionerFName();
+		uln = getProvisionerLName();
 		utp = "2";
-		uid = defaultInstructorId;
+		uid = getProvisionerUserID();
 
 		String gmtime = getGMTime();
 
@@ -532,6 +532,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		reportURL += "&md5=";
 		reportURL += md5;
+		
+		if (useSourceParameter) {
+			reportURL += "&src=9";
+		}
 
 		return reportURL;
 	}
@@ -646,6 +650,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		reportURL += "&md5=";
 		reportURL += md5;
+		
+		if (useSourceParameter) {
+			reportURL += "&src=9";
+		}
 
 		return reportURL;
 		}
@@ -1171,15 +1179,26 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
 	}
+	
+	private String getTEM(String cid) {
+		if (useSourceParameter) {
+			return cid + "_" + this.aid + "@tiisakai.com";
+		} else {
+			return defaultInstructorEmail;
+		}
+	}
 
 	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException {
 
+		String uid = userId;
+		String cid = siteId;
+		
 		String ctl = siteId; 			//class title
 		String fid = "3";
 		String fcmd = "2";
 		String encrypt = "0";
 		String diagnostic = "0";
-		String tem = defaultInstructorEmail;
+		String tem = getTEM(cid);
 
 		User user;
 		try {
@@ -1208,9 +1227,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		String utp = "1";
-
-		String uid = userId;
-		String cid = siteId;
 
 		String gmtime = this.getGMTime();
 
@@ -1607,14 +1623,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String ptl =  userEid  + ":" + fileName;
 			String ptype = "2";
 
-			// TODO ONC-1292 How to get this, and is it still required with src=9?
-			String tem = defaultInstructorEmail;
-
-			String utp = "1";
-
 			String uid = currentItem.getUserId();
 			String cid = currentItem.getSiteId();
 			String assignid = currentItem.getTaskId();
+			
+			// TODO ONC-1292 How to get this, and is it still required with src=9?
+			String tem = getTEM(cid);
+
+			String utp = "1";
+
+			
 
 			String assign = getAssignmentTitle(currentItem.getTaskId());;
 			String ctl = currentItem.getSiteId();
@@ -1955,15 +1973,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					log.error("Unable to look up user: " + currentItem.getUserId() + " for contentItem: " + currentItem.getId(), e);
 				}
 				
-				String tem = defaultInstructorEmail;
+				String cid = currentItem.getSiteId();
+				String tem = getTEM(cid);
 
-				String uem = defaultInstructorEmail;
-				String ufn = defaultInstructorFName;
-				String uln = defaultInstructorLName;
+				String uem = getTEM(cid);
+				//String uem = defaultInstructorEmail;
+				//String ufn = defaultInstructorFName;
+				//String uln = defaultInstructorLName;
+				String ufn = "Sakai";
+				String uln = "Instructor";
 				String utp = "2";
 
-				String uid = defaultInstructorId;
-				String cid = currentItem.getSiteId();
+				//String uid = defaultInstructorId;
+				
 				String assignid = currentItem.getTaskId();
 
 				String assign = currentItem.getTaskId();
@@ -1973,7 +1995,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				String md5_str = aid + assign + assignid + cid + ctl
 				+ diagnostic + encrypt + fcmd + fid + gmtime + said
-				+ tem + uem + ufn + uid + uln + utp + secretKey;
+				+ tem + uem + ufn + /* uid + */ uln + utp + secretKey;
 
 				String md5;
 				try{
@@ -2011,8 +2033,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					out.write("&fcmd=".getBytes("UTF-8"));
 					out.write(fcmd.getBytes("UTF-8"));
 
-					out.write("&uid=".getBytes("UTF-8"));
-					out.write(uid.getBytes("UTF-8"));
+					//out.write("&uid=".getBytes("UTF-8"));
+					//out.write(uid.getBytes("UTF-8"));
 
 					out.write("&tem=".getBytes("UTF-8"));
 					out.write(tem.getBytes("UTF-8"));
@@ -2216,15 +2238,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String fcmd = "2";
 				String fid = "10";
 
-				String tem = defaultInstructorEmail;
+				String cid = currentItem.getSiteId();
+				
+				String tem = getTEM(cid);
 
 				String uem = defaultInstructorEmail;
-				String ufn = defaultInstructorFName;
-				String uln = defaultInstructorLName;
+				//String ufn = defaultInstructorFName;
+				//String uln = defaultInstructorLName;
+				String ufn = "Sakai";
+				String uln = "Instructor";
 				String utp = "2";
 
-				String uid = defaultInstructorId;
-				String cid = currentItem.getSiteId();
+				//String uid = defaultInstructorId;
+				
 				String assignid = currentItem.getTaskId();
 
 				String assign = currentItem.getTaskId();
@@ -2235,7 +2261,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				String md5_str = aid + assign + assignid + cid + ctl
 				+ diagnostic + encrypt + fcmd + fid + gmtime + oid + said
-				+ tem + uem + ufn + uid + uln + utp + secretKey;
+				+ tem + uem + ufn + /* uid +*/  uln + utp + secretKey;
 
 				String md5;
 				try{
@@ -2273,8 +2299,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					out.write("&fcmd=".getBytes("UTF-8"));
 					out.write(fcmd.getBytes("UTF-8"));
 
-					out.write("&uid=".getBytes("UTF-8"));
-					out.write(uid.getBytes("UTF-8"));
+					//out.write("&uid=".getBytes("UTF-8"));
+					//out.write(uid.getBytes("UTF-8"));
 
 					out.write("&tem=".getBytes("UTF-8"));
 					out.write(tem.getBytes("UTF-8"));
