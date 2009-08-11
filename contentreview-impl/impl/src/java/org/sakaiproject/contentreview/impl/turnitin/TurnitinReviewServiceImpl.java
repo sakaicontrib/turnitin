@@ -277,8 +277,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
 		
-		if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
-			doAssignments();
+		if (!useSourceParameter) {
+			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
+				doAssignments();
+		}
 
 	}
 
@@ -689,6 +691,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		// MD5 of function 2 - Create a class under a given account (instructor only)
 		String md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
 		gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+		
+		if (useSourceParameter) {
+			md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
+			gmtime + said + uem + ufn + uid + uln + utp + secretKey;
+		}
 
 		String md5;
 		try{
@@ -758,14 +765,20 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write("&uln=".getBytes("UTF-8"));
 			outStream.write(uln.getBytes("UTF-8"));
 
-			outStream.write("&upw=".getBytes("UTF-8"));
-			outStream.write(upw.getBytes("UTF-8"));
-
+			if (useSourceParameter) {
+				outStream.write("&md5=".getBytes("UTF-8"));
+			} else {
+				outStream.write("&upw=".getBytes("UTF-8"));
+				outStream.write(upw.getBytes("UTF-8"));
+			}
+				
 			outStream.write("&utp=".getBytes("UTF-8"));
 			outStream.write(utp.getBytes("UTF-8"));
 
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
+			
+			
 
 			outStream.close();
 		}
@@ -874,12 +887,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 		Map params = TurnitinAPIUtil.packMap(null,
 			"aid", aid, "assign", taskTitle, "assignid", taskId,
-			"cid", siteId, "uid", defaultInstructorId, "ctl", siteId,
+			"cid", siteId, "uid", this.getProvisionerUserID(), "ctl", siteId,
 			"diagnostic", "0", "encrypt", "0",
 			"fcmd", "7", "fid", "4", "gmtime", getGMTime(),
 			"said", said,
-			"uem", defaultInstructorEmail, "ufn", defaultInstructorFName, "uln", defaultInstructorLName,
-			"upw", defaultInstructorPassword, "utp", "2" );
+			"uem", this.getProvisionerEmail(), "ufn", this.getProvisionerFName(), "uln", this.getProvisionerLName(),
+			"utp", "2" ); // "upw", defaultInstructorPassword,
 		
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
 	}
@@ -1282,6 +1295,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.write("&uid=".getBytes("UTF-8"));
 			outStream.write(uid.getBytes("UTF-8"));
+			
+			if (useSourceParameter) {
+				outStream.write("&src=9".getBytes("UTF-8"));
+			}
 
 			outStream.close();
 		} catch (MalformedURLException e) {
@@ -1438,21 +1455,23 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			try {				
-				createClass(currentItem.getSiteId());
-			} catch (SubmissionException t) {
-				log.debug ("Submission attempt unsuccessful: Could not create class", t);
-				currentItem.setLastError("Class creation error: " + t.getMessage());
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
-			} catch (TransientSubmissionException tse) {
-				currentItem.setLastError("Class creation error: " + tse.getMessage());
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
+			if (!useSourceParameter) {
+				try {				
+					createClass(currentItem.getSiteId());
+				} catch (SubmissionException t) {
+					log.debug ("Submission attempt unsuccessful: Could not create class", t);
+					currentItem.setLastError("Class creation error: " + t.getMessage());
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					dao.update(currentItem);
+					releaseLock(currentItem);
+					continue;
+				} catch (TransientSubmissionException tse) {
+					currentItem.setLastError("Class creation error: " + tse.getMessage());
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					dao.update(currentItem);
+					releaseLock(currentItem);
+					continue;
+				}
 			}
 
 			try {
@@ -1472,7 +1491,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-	
+			if (!useSourceParameter) {
 				try {
 					Map tiiresult = this.getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
 					if (tiiresult.get("rcode") != null && !tiiresult.get("rcode").equals("85")) {
@@ -1492,6 +1511,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					continue;
 					
 				} 
+			}
 			
 			//get all the info for the api call
 			//we do this before connecting so that if there is a problem we can jump out - saves time
@@ -1587,6 +1607,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String ptl =  userEid  + ":" + fileName;
 			String ptype = "2";
 
+			// TODO ONC-1292 How to get this, and is it still required with src=9?
 			String tem = defaultInstructorEmail;
 
 			String utp = "1";
@@ -1670,6 +1691,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				outStream.write(encodeParam("uln", uln, boundary).getBytes());
 				outStream.write(encodeParam("utp", utp, boundary).getBytes());
 				outStream.write(encodeParam("md5", md5, boundary).getBytes());
+				if (useSourceParameter) {
+					outStream.write(encodeParam("src", "9", boundary).getBytes());
+				}
 
 				// put in the actual file
 
@@ -1860,6 +1884,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	/*
 	 * Fetch reports on a class by class basis
 	 */
+	@SuppressWarnings({ "deprecation", "unchecked" })
 	private void checkForReportsBulk() {
 
 		log.debug("Checking for updated reports from Turnitin in bulk mode");
@@ -1924,6 +1949,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String fcmd = "2";
 				String fid = "10";
 
+				try {
+					User user = userDirectoryService.getUser(currentItem.getUserId());
+				} catch (Exception e) {
+					log.error("Unable to look up user: " + currentItem.getUserId() + " for contentItem: " + currentItem.getId(), e);
+				}
+				
 				String tem = defaultInstructorEmail;
 
 				String uem = defaultInstructorEmail;
@@ -2027,6 +2058,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 					out.write("&md5=".getBytes("UTF-8"));
 					out.write(md5.getBytes("UTF-8"));
+					
+					if (useSourceParameter) {
+						out.write("&src=9".getBytes("UTF-8"));
+					}
 
 					out.close();
 				} catch (IOException e) {
@@ -2288,6 +2323,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 					out.write("&md5=".getBytes("UTF-8"));
 					out.write(md5.getBytes("UTF-8"));
+					
+					if (useSourceParameter) {
+						out.write("&src=9".getBytes("UTF-8"));
+					}
 
 					out.close();
 				} catch (IOException e) {
@@ -2644,6 +2683,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
+			
+			if (useSourceParameter) {
+				outStream.write("&src=9".getBytes("UTF-8"));
+			}
 
 			outStream.close();
 		} catch (MalformedURLException e) {
