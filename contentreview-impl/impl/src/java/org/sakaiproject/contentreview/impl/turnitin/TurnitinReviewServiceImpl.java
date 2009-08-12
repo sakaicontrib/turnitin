@@ -774,7 +774,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			outStream.write(uln.getBytes("UTF-8"));
 
 			if (useSourceParameter) {
-				outStream.write("&md5=".getBytes("UTF-8"));
+				outStream.write("&src=9".getBytes("UTF-8"));
 			} else {
 				outStream.write("&upw=".getBytes("UTF-8"));
 				outStream.write(upw.getBytes("UTF-8"));
