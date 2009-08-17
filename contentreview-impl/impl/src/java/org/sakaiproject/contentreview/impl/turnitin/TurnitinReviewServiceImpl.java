@@ -1491,13 +1491,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							currentItem.setLastError("FileName decode exception: " + fileName);
 							dao.update(currentItem);
 							releaseLock(currentItem);
-							continue;
+							throw new SubmissionException("Can't decode fileName!");
 						}
 
 					}
 				} 
 				catch (IllegalArgumentException eae) {
 					log.warn("Unable to decode fileName: " + fileName);
+				}  catch (SubmissionException se) {
+					log.debug("got a submission exception from decoding");
+					continue;
 				}
 
 				
