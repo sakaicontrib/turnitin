@@ -16,10 +16,51 @@ class SakaiUuid(object):
 
 uuid = SakaiUuid()
 
-class TestAssignment1Requirements(unittest.TestCase):
+test_inst_ids = ['inst01','inst02','inst03']
+test_stud_ids = ['stud01','stud02','stud02']
+
+
+def createTestUsers():
     """
+    This will create some users we can use for the tests.
+    """
+    user_serv = ComponentManager.get("org.sakaiproject.user.api.UserDirectoryService")
     
+    users= []
+    users.extend(test_inst_ids)
+    users.extend(test_stud_ids)
+    
+    for i in users:
+        try:
+            user_serv.addUser(None,i,"First"+i,"Last"+i,i+"@sakaitest.org","tester",None,None)
+        except:
+            pass
+    
+def becomeUser(userEid="inst01"):
     """
+    Some methods are keyed to depend on the current thread bound user. This will
+    change the current thread to the userid passed in.
+    
+    If userid is None this will effectively clear the current session to no user
+    is logged in.
+    """
+    session_mgr = ComponentManager.get("org.sakaiproject.tool.api.SessionManager")
+    authz_srv = ComponentManager.get("org.sakaiproject.authz.api.AuthzGroupService")
+    security_srv = ComponentManager.get("org.sakaiproject.authz.api.SecurityService")
+    user_serv = ComponentManager.get("org.sakaiproject.user.api.UserDirectoryService")
+    
+    session = session_mgr.getCurrentSession()
+    user = user_serv.getUserByEid(userEid)
+    session.clear()
+    session.setUserId(user.getId())
+    session.setUserEid(user.getEid())
+    authz_srv.refreshUser(user.getId())
+
+class TestAssignment1Requirements(unittest.TestCase):
+    
+    def setUp(self):
+        pass
+    
 
 class TestAssignment2Requirements(unittest.TestCase):
     """
@@ -243,9 +284,9 @@ def trySomething():
     pass
 
 if __name__ == '__main__':
+    becomeUser()
     tii_suites = []
     for testcase in tii_testcases:
         tii_suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
     alltests = unittest.TestSuite(tii_suites)
     unittest.TextTestRunner(verbosity=2).run(alltests)
-    trySomething()
