@@ -273,6 +273,9 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         
 tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
 
+        
+        
+
 def trySomething():
     '''tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
     tiiasnnid = "/unittests/nothere/asdfaasdfsafd"
@@ -284,9 +287,10 @@ def trySomething():
     pass
 
 if __name__ == '__main__':
-    becomeUser()
+    becomeUser("inst03")
     tii_suites = []
     for testcase in tii_testcases:
         tii_suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
     alltests = unittest.TestSuite(tii_suites)
     unittest.TextTestRunner(verbosity=2).run(alltests)
+    becomeUser("admin")
