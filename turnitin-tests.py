@@ -96,7 +96,13 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
 
     def setUp(self):
         self.tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
-
+        self.cachedSourceParameter = self.tiireview_serv.useSourceParameter
+        self.tiireview_serv.useSourceParameter = False
+        
+    def tearDown(self):
+        self.tiireview_serv.useSourceParameter = self.cachedSourceParameter
+        
+        
     # TODO Test Legacy Assignment with createAssignment("asdf","/assignment/adsf")
     # The title should be the Asnn1 title, not the taskid
 
@@ -269,12 +275,9 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
-        
-        
-tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
 
-        
-        
+#tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
+tii_testcases = [TestTurnitinReviewServiceImpl]
 
 def trySomething():
     '''tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")

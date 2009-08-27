@@ -125,7 +125,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String defaultInstructorPassword = null;
 	
 	private boolean useSourceParameter = false;
-	
+
+	public boolean isUseSourceParameter() {
+	    return useSourceParameter;
+	}
+
+	public void setUseSourceParameter(boolean useSourceParameter) {
+	    this.useSourceParameter = useSourceParameter;
+	}
+
 	private int sendNotifications = 0;
 
 	private Long maxRetry = null;
