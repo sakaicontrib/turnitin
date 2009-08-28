@@ -684,7 +684,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 
-	private void createClass(String siteId) throws SubmissionException, TransientSubmissionException {
+	/**
+	 * This method was originally private, but is being made public for the 
+	 * moment so we can run integration tests. TODO Revisit this decision.
+	 * 
+	 * @param siteId
+	 * @throws SubmissionException
+	 * @throws TransientSubmissionException
+	 */
+	public void createClass(String siteId) throws SubmissionException, TransientSubmissionException {
 
 		log.debug("Creating class for site: " + siteId);
 

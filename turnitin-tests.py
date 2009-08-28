@@ -3,6 +3,7 @@ import random
 from org.sakaiproject.component.cover import ComponentManager
 #import uuid
 from java.util import HashMap
+from org.sakaiproject.contentreview.exception import SubmissionException
 
 class SakaiUuid(object):
     """My Current Jython impl doens't seem to have UUID, so re-implementing it 
@@ -105,6 +106,15 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         
     # TODO Test Legacy Assignment with createAssignment("asdf","/assignment/adsf")
     # The title should be the Asnn1 title, not the taskid
+
+    def testCreateClass(self):
+        """Integration test to flex the TurnitinReviewServiceImpl.createClass
+        method."""
+        # Does failUnlessRaises not work in Jython 2.2?
+        #self.failUnlessRaises(SubmissionException, self.tiireview_serv.createClass, "1")
+        #self.tiireview_serv.createClass("1")
+        tiiclassid = str(uuid.uuid1())
+        self.tiireview_serv.createClass(tiiclassid)
 
     """
     Creating and Reading Turnitin Assignments
