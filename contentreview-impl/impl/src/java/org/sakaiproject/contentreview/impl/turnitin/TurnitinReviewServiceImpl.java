@@ -692,8 +692,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * @throws SubmissionException
 	 * @throws TransientSubmissionException
 	 */
+	@SuppressWarnings("unchecked")
 	public void createClass(String siteId) throws SubmissionException, TransientSubmissionException {
-
 		log.debug("Creating class for site: " + siteId);
 
 		String cpw = defaultClassPassword;
@@ -712,124 +712,33 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String gmtime = this.getGMTime();
 
-		// MD5 of function 2 - Create a class under a given account (instructor only)
-		String md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
-		gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+		Document document = null;
+
+		Map params = TurnitinAPIUtil.packMap(null,
+				"uid", uid,
+				"cid", cid,
+				"aid", aid,
+				"cpw", cpw,
+				"ctl", ctl,
+				"diagnostic", diagnostic,
+				"encrypt", encrypt,
+				"fcmd", fcmd,
+				"fid", fid,
+				"gmtime", gmtime,
+				"said", said,
+				"uem", uem,
+				"ufn", ufn,
+				"uln", uln,
+				"utp", utp
+		);
 
 		if (useSourceParameter) {
-			md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
-			gmtime + said + uem + ufn + uid + uln + utp + secretKey;
+			params = TurnitinAPIUtil.packMap(params, "src", "9");
+		} else {
+			params = TurnitinAPIUtil.packMap(params, "upw", upw);
 		}
 
-		String md5;
-		try{
-			md5 = this.getMD5(md5_str);
-		} catch (NoSuchAlgorithmException t) {
-			log.warn("MD5 error creating class on turnitin");
-			throw new SubmissionException("Cannot generate MD5 hash for Turnitin API call", t);
-		}
-
-		HttpsURLConnection connection;
-
-		try {
-			URL hostURL = new URL(apiURL);
-			if (proxy == null) {
-				connection = (HttpsURLConnection) hostURL.openConnection();
-			} else {
-				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-			}
-
-			connection.setRequestMethod("GET");
-			connection.setDoOutput(true);
-			connection.setDoInput(true);
-
-			log.debug("HTTPS Connection made to Turnitin");
-
-			OutputStream outStream = connection.getOutputStream();
-
-			outStream.write("uid=".getBytes("UTF-8"));
-			outStream.write(uid.getBytes("UTF-8"));
-
-			outStream.write("&cid=".getBytes("UTF-8"));
-			outStream.write(cid.getBytes("UTF-8"));
-
-			outStream.write("&aid=".getBytes("UTF-8"));
-			outStream.write(aid.getBytes("UTF-8"));			
-
-			outStream.write("&cpw=".getBytes("UTF-8"));
-			outStream.write(cpw.getBytes("UTF-8"));
-
-			outStream.write("&ctl=".getBytes("UTF-8"));
-			outStream.write(ctl.getBytes("UTF-8"));
-
-			outStream.write("&diagnostic=".getBytes("UTF-8"));
-			outStream.write(diagnostic.getBytes("UTF-8"));
-
-			outStream.write("&encrypt=".getBytes("UTF-8"));
-			outStream.write(encrypt.getBytes("UTF-8"));
-
-			outStream.write("&fcmd=".getBytes("UTF-8"));
-			outStream.write(fcmd.getBytes("UTF-8"));
-
-			outStream.write("&fid=".getBytes("UTF-8"));
-			outStream.write(fid.getBytes("UTF-8"));
-
-			outStream.write("&gmtime=".getBytes("UTF-8"));
-			outStream.write(gmtime.getBytes("UTF-8"));
-
-			outStream.write("&said=".getBytes("UTF-8"));
-			outStream.write(said.getBytes("UTF-8"));
-
-			outStream.write("&uem=".getBytes("UTF-8"));
-			outStream.write(uem.getBytes("UTF-8"));
-
-			outStream.write("&ufn=".getBytes("UTF-8"));
-			outStream.write(ufn.getBytes("UTF-8"));
-
-			outStream.write("&uln=".getBytes("UTF-8"));
-			outStream.write(uln.getBytes("UTF-8"));
-
-			if (useSourceParameter) {
-				outStream.write("&src=9".getBytes("UTF-8"));
-			} else {
-				outStream.write("&upw=".getBytes("UTF-8"));
-				outStream.write(upw.getBytes("UTF-8"));
-			}
-
-			outStream.write("&utp=".getBytes("UTF-8"));
-			outStream.write(utp.getBytes("UTF-8"));
-
-			outStream.write("&md5=".getBytes("UTF-8"));
-			outStream.write(md5.getBytes("UTF-8"));
-
-
-
-			outStream.close();
-		}
-		catch (IOException t) {
-			throw new TransientSubmissionException("Class creation call to Turnitin API failed", t);
-		}
-
-
-		BufferedReader in;
-		try {
-			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (IOException t) {
-			throw new TransientSubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
-		}
-		Document document = null;
-		try {	
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			document = parser.parse(new org.xml.sax.InputSource(in));
-		}
-		catch (ParserConfigurationException pce){
-			log.error("parser configuration error: " + pce.getMessage());
-			throw new TransientSubmissionException ("Parser configuration error", pce);
-		} catch (Exception t) {
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
-		}
-
+		document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
 
 		Element root = document.getDocumentElement();
 		String rcode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim();
@@ -1034,25 +943,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			e.printStackTrace();
 		}
 
-		//String md5_str = null;
-		//if (this.useSourceParameter) {
-		//	md5_str= aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-		//	fcmd + fid + gmtime + said + uem + ufn + uid + uln + utp + secretKey;
-		//} else {
-		//	md5_str= aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-		//	fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-		//}
-
-		//String md5;
-		//try{
-		//	md5 = this.getMD5(md5_str);
-		//} catch (Exception t) {
-		//	log.warn("MD5 error creating assignment on turnitin");
-		//	throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
-		//}
-
 		Document document = null;
-
 
 		Map params = TurnitinAPIUtil.packMap(null, 
 				"aid", aid, 
@@ -1081,9 +972,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		} else {
 			params = TurnitinAPIUtil.packMap(params, "upw", upw);
 		}
-
-		//outStream.write("&md5=".getBytes("UTF-8"));
-		//outStream.write(md5.getBytes("UTF-8"));
 
 		if (extraAsnnOpts != null) {
 			for (Object key: extraAsnnOpts.keySet()) {

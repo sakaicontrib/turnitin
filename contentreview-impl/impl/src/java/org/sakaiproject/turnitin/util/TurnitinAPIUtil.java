@@ -103,7 +103,8 @@ public class TurnitinAPIUtil {
         return gmtime;
     }
 
-    public static Map packMap(Map map, String... vargs) {
+    @SuppressWarnings({ "unchecked" })
+	public static Map packMap(Map map, String... vargs) {
         Map togo = map;
         if (map == null) {
             map = new HashMap();
