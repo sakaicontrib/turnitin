@@ -123,15 +123,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String defaultInstructorLName = null;
 
 	private String defaultInstructorPassword = null;
-	
+
 	private boolean useSourceParameter = false;
 
 	public boolean isUseSourceParameter() {
-	    return useSourceParameter;
+		return useSourceParameter;
 	}
 
 	public void setUseSourceParameter(boolean useSourceParameter) {
-	    this.useSourceParameter = useSourceParameter;
+		this.useSourceParameter = useSourceParameter;
 	}
 
 	private int sendNotifications = 0;
@@ -210,12 +210,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public void setSecurityService(SecurityService ss) {
 		securityService = ss;
 	}
-	
+
 	private SqlService sqlService;
 	public void setSqlService(SqlService sql) {
 		sqlService = sql;
 	}
-	
+
 	/**
 	 * Place any code that should run when this class is initialized by spring
 	 * here
@@ -229,8 +229,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
 
-		
-		
+
+
 		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
 			try {
 				SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
@@ -248,7 +248,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.debug("Invalid proxy port specified: " + System.getProperty("http.proxyPort"));
 			}
 		}
- 
+
 		aid = serverConfigurationService.getString("turnitin.aid");
 
 		said = serverConfigurationService.getString("turnitin.said");
@@ -257,7 +257,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		apiURL = serverConfigurationService.getString("turnitin.apiURL","https://www.turnitin.com/api.asp?");
 
-		
+
 
 		defaultInstructorEmail = serverConfigurationService.getString("turnitin.defaultInstructorEmail");
 
@@ -266,9 +266,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		defaultInstructorLName = serverConfigurationService.getString("turnitin.defaultInstructorLName");
 
 		defaultInstructorPassword = serverConfigurationService.getString("turnitin.defaultInstructorPassword");
-		
+
 		useSourceParameter = serverConfigurationService.getBoolean("turnitin.useSourceParameter", false);
-		
+
 		if  (!serverConfigurationService.getBoolean("turnitin.sendnotifations", true)) 
 			sendNotifications = 1;
 
@@ -284,7 +284,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		maxRetry = Long.valueOf(serverConfigurationService.getInt("turnitin.maxRetry",100));
 
 		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
-		
+
 		if (!useSourceParameter) {
 			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
 				doAssignments();
@@ -370,22 +370,22 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("File is too big: " + resource.getContentLength());
 			return false;
 		}
-		
+
 		//if this is a msword type file we can check the legth
 		if (isMsWordDoc(resource)) {
 			if (wordDocLength(resource) < 20) {
 				return false;
 			}
 		}
-		
-		
+
+
 		return true;
 	}
-	
+
 	private int wordDocLength(ContentResource resource) {
 		if (!serverConfigurationService.getBoolean("tii.checkWordLength", false))
 			return 100;
-		
+
 		try {
 			POIFSFileSystem pfs = new POIFSFileSystem(resource.streamContent());
 			HWPFDocument doc = new HWPFDocument(pfs);
@@ -411,12 +411,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String mime = resource.getContentType();
 		log.debug("Got a content type of " + mime);
 
-		
+
 		if (mime.equals("application/msword")) {
 			log.debug("FileType matches a known mime");
 			return true;
 		}
-		
+
 		ResourceProperties resourceProperties = resource.getProperties();
 		String fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
 		if (fileName.contains(".")) {
@@ -429,7 +429,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			//if the file has no extension we assume its a doc
 			return true;
 		}
-		
+
 		return false;
 	}
 
@@ -452,7 +452,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("Report not available: " + item.getStatus());
 			throw new ReportException("Report not available: " + item.getStatus());
 		}
-		
+
 
 		// report is available - generate the URL to display
 
@@ -463,13 +463,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String diagnostic = "0";
 		String cid = item.getSiteId();
 		String assignid = defaultAssignId + item.getSiteId();
-		
+
 		String uem;
 		String ufn;
 		String uln;
 		String utp;
 		String uid;
-		
+
 
 		uem = getProvisionerEmail();
 		ufn = getProvisionerFName();
@@ -540,7 +540,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		reportURL += "&md5=";
 		reportURL += md5;
-		
+
 		if (useSourceParameter) {
 			reportURL += "&src=9";
 		}
@@ -567,8 +567,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("Report not available: " + item.getStatus());
 			throw new ReportException("Report not available: " + item.getStatus());
 		}
-		
-		
+
+
 		// report is available - generate the URL to display
 
 		String oid = item.getExternalId();
@@ -578,14 +578,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String diagnostic = "0";
 		String cid = item.getSiteId();
 		String assignid = defaultAssignId + item.getSiteId();
-		
+
 		String uem;
 		String ufn;
 		String uln;
 		String utp;
 		String uid;
-		
-		
+
+
 		User user = userDirectoryService.getCurrentUser();
 		uem = user.getEmail();
 		ufn = getUserFirstName(user);
@@ -594,7 +594,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		utp = "1";
 
 
-		
+
 		String gmtime = getGMTime();
 
 		// note that these vars must be ordered alphabetically according to
@@ -658,13 +658,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		reportURL += "&md5=";
 		reportURL += md5;
-		
+
 		if (useSourceParameter) {
 			reportURL += "&src=9";
 		}
 
 		return reportURL;
-		}
+	}
 
 	public String getReviewReport(String contentId)
 	throws QueueException, ReportException {
@@ -707,7 +707,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		// MD5 of function 2 - Create a class under a given account (instructor only)
 		String md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
 		gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-		
+
 		if (useSourceParameter) {
 			md5_str = aid + cid + cpw + ctl + diagnostic + encrypt + fcmd + fid +
 			gmtime + said + uem + ufn + uid + uln + utp + secretKey;
@@ -787,14 +787,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				outStream.write("&upw=".getBytes("UTF-8"));
 				outStream.write(upw.getBytes("UTF-8"));
 			}
-				
+
 			outStream.write("&utp=".getBytes("UTF-8"));
 			outStream.write(utp.getBytes("UTF-8"));
 
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
-			
-			
+
+
 
 			outStream.close();
 		}
@@ -825,7 +825,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		Element root = document.getDocumentElement();
 		String rcode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim();
-		
+
 		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("20") == 0 || 
 				((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("21") == 0 ) {
 			log.debug("Create Class successful");						
@@ -873,7 +873,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				Entity ent = ep.getEntity(ref);
 				log.debug("got entity " + ent);
 				String title = 
-				ent.getClass().getMethod("getTitle").invoke(ent).toString();
+					ent.getClass().getMethod("getTitle").invoke(ent).toString();
 				log.debug("Got reflected assignemment title from entity " + title);
 				togo = URLDecoder.decode(title,"UTF-8");
 
@@ -881,11 +881,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				e.printStackTrace();
 			}
 		}
-		
+
 		return togo;
 
 	}
-	
+
 	/**
 	 * @param siteId
 	 * @param taskId
@@ -900,19 +900,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public Map getAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
 		String taskTitle = getAssignmentTitle(taskId);
 		String diagnostic = "0"; //0 = off; 1 = on
-		
+
 		Map params = TurnitinAPIUtil.packMap(null,
-			"aid", aid, "assign", taskTitle, "assignid", taskId,
-			"cid", siteId, "uid", this.getProvisionerUserID(), "ctl", siteId,
-			"diagnostic", "0", "encrypt", "0",
-			"fcmd", "7", "fid", "4", "gmtime", getGMTime(),
-			"said", said,
-			"uem", this.getProvisionerEmail(), "ufn", this.getProvisionerFName(), "uln", this.getProvisionerLName(),
-			"utp", "2" ); // "upw", defaultInstructorPassword,
-		
+				"aid", aid, "assign", taskTitle, "assignid", taskId,
+				"cid", siteId, "uid", this.getProvisionerUserID(), "ctl", siteId,
+				"diagnostic", "0", "encrypt", "0",
+				"fcmd", "7", "fid", "4", "gmtime", getGMTime(),
+				"said", said,
+				"uem", this.getProvisionerEmail(), "ufn", this.getProvisionerFName(), "uln", this.getProvisionerLName(),
+				"utp", "2" ); // "upw", defaultInstructorPassword,
+
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
 	}
-	
+
 	private String getProvisionerEmail() {
 		if (this.useSourceParameter) {
 			return userDirectoryService.getCurrentUser().getEmail();
@@ -921,7 +921,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return defaultInstructorEmail;
 		}
 	}
-	
+
 	private String getProvisionerFName() {
 		if (this.useSourceParameter) {
 			return userDirectoryService.getCurrentUser().getFirstName();
@@ -930,7 +930,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return defaultInstructorFName;
 		}
 	}
-	
+
 	private String getProvisionerLName() {
 		if (this.useSourceParameter) {
 			return userDirectoryService.getCurrentUser().getLastName();
@@ -939,7 +939,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return defaultInstructorLName;
 		}
 	}
-	
+
 	private String getProvisionerUserID() {
 		if (this.useSourceParameter) {
 			return userDirectoryService.getCurrentUser().getId();
@@ -948,7 +948,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return defaultInstructorId;
 		}
 	}
-	
+
 	/**
 	 * Creates or Updates an Assignment
 	 * 
@@ -958,6 +958,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * @throws SubmissionException
 	 * @throws TransientSubmissionException
 	 */
+	@SuppressWarnings("unchecked")
 	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts) throws SubmissionException, TransientSubmissionException {
 
 		//get the assignment reference
@@ -984,7 +985,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String encrypt = "0";					//encryption flag
 		String fcmd = "2";						//new assignment
-		
+
 		// If this assignment already exists, we should use fcmd 3 to update it.
 		Map tiiresult = this.getAssignment(siteId, taskId);
 		if (tiiresult.get("rcode") != null && tiiresult.get("rcode").equals("85")) {
@@ -1025,156 +1026,68 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			e.printStackTrace();
 		}
 
-		String md5_str = null;
-		if (this.useSourceParameter) {
-			md5_str= aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-			fcmd + fid + gmtime + said + uem + ufn + uid + uln + utp + secretKey;
-		} else {
-			md5_str= aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-			fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-		}
+		//String md5_str = null;
+		//if (this.useSourceParameter) {
+		//	md5_str= aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+		//	fcmd + fid + gmtime + said + uem + ufn + uid + uln + utp + secretKey;
+		//} else {
+		//	md5_str= aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
+		//	fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
+		//}
 
-		String md5;
-		try{
-			md5 = this.getMD5(md5_str);
-		} catch (Exception t) {
-			log.warn("MD5 error creating assignment on turnitin");
-			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
-		}
-
-		HttpsURLConnection connection;
-
-		try {		
-			URL hostURL = new URL(apiURL);
-			if (proxy == null) {
-				connection = (HttpsURLConnection) hostURL.openConnection();
-			} else {
-				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-			}
-
-			
-				connection.setRequestMethod("GET");
-			
-			connection.setDoOutput(true);
-			connection.setDoInput(true);
-
-			log.debug("HTTPS connection made to Turnitin");
-
-			OutputStream outStream = connection.getOutputStream();
-
-			outStream.write("aid=".getBytes("UTF-8"));
-			outStream.write(aid.getBytes("UTF-8"));
-
-			outStream.write("&assign=".getBytes("UTF-8"));
-			outStream.write(assignEnc.getBytes("UTF-8"));
-
-			log.debug("assignid: " + assignid);
-			outStream.write("&assignid=".getBytes("UTF-8"));
-			outStream.write(assignid.getBytes("UTF-8"));
-
-			outStream.write("&cid=".getBytes("UTF-8"));
-			outStream.write(cid.getBytes("UTF-8"));
-
-			outStream.write("&uid=".getBytes("UTF-8"));
-			outStream.write(uid.getBytes("UTF-8"));
-
-			outStream.write("&ctl=".getBytes("UTF-8"));
-			outStream.write(ctl.getBytes("UTF-8"));	
-
-			outStream.write("&diagnostic=".getBytes("UTF-8"));
-			outStream.write(diagnostic.getBytes("UTF-8"));
-
-			outStream.write("&dtdue=".getBytes("UTF-8"));
-			outStream.write(dtdue.getBytes("UTF-8"));
-
-			outStream.write("&dtstart=".getBytes("UTF-8"));
-			outStream.write(dtstart.getBytes("UTF-8"));
-
-			outStream.write("&encrypt=".getBytes("UTF-8"));
-			outStream.write(encrypt.getBytes("UTF-8"));
-
-			outStream.write("&fcmd=".getBytes("UTF-8"));
-			outStream.write(fcmd.getBytes("UTF-8"));
-
-			outStream.write("&fid=".getBytes("UTF-8"));
-			outStream.write(fid.getBytes("UTF-8"));
-
-			outStream.write("&gmtime=".getBytes("UTF-8"));
-			outStream.write(gmtime.getBytes("UTF-8"));
-
-			outStream.write("&s_view_report=".getBytes("UTF-8"));
-			outStream.write(s_view_report.getBytes("UTF-8"));
-			
-			outStream.write("&said=".getBytes("UTF-8"));
-			outStream.write(said.getBytes("UTF-8"));
-
-			outStream.write("&uem=".getBytes("UTF-8"));
-			outStream.write(uem.getBytes("UTF-8"));
-
-			outStream.write("&ufn=".getBytes("UTF-8"));
-			outStream.write(ufn.getBytes("UTF-8"));
-
-			outStream.write("&uln=".getBytes("UTF-8"));
-			outStream.write(uln.getBytes("UTF-8"));
-
-			if (this.useSourceParameter) {
-				outStream.write("&src=".getBytes("UTF-8"));
-				outStream.write("9".getBytes("UTF-8"));
-			} else {
-				outStream.write("&upw=".getBytes("UTF-8"));
-				outStream.write(upw.getBytes("UTF-8"));
-			}
-
-			outStream.write("&utp=".getBytes("UTF-8"));
-			outStream.write(utp.getBytes("UTF-8"));
-
-			outStream.write("&md5=".getBytes("UTF-8"));
-			outStream.write(md5.getBytes("UTF-8"));
-			
-			if (extraAsnnOpts != null) {
-				for (Object key: extraAsnnOpts.keySet()) {
-					if (extraAsnnOpts.get(key) == null) {
-						continue;
-					}
-					outStream.write("&".getBytes("UTF-8"));
-					outStream.write(key.toString().getBytes("UTF-8"));
-					outStream.write("=".getBytes("UTF-8"));
-					outStream.write(extraAsnnOpts.get(key).toString().getBytes("UTF-8"));
-				}
-			}
-
-			outStream.close();
-		} catch (ProtocolException e) {
-			throw new TransientSubmissionException("Assignment creation: ProtocolException", e);
-		} catch (MalformedURLException e) {
-			throw new TransientSubmissionException("Assignment creation: MalformedURLException", e);
-		} catch (IOException e) {
-			throw new TransientSubmissionException("Assignment creation: IOException", e);
-		}
-		
-		BufferedReader in;
-		
-			try {
-				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			} catch (IOException e1) {
-				throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e1);
-			}
-		 
+		//String md5;
+		//try{
+		//	md5 = this.getMD5(md5_str);
+		//} catch (Exception t) {
+		//	log.warn("MD5 error creating assignment on turnitin");
+		//	throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
+		//}
 
 		Document document = null;
-		try {	
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			document = parser.parse(new org.xml.sax.InputSource(in));
+
+
+		Map params = TurnitinAPIUtil.packMap(null, 
+				"aid", aid, 
+				"assign", assignEnc, 
+				"assignid", assignid, 
+				"cid", cid,
+				"uid", uid,
+				"ctl", ctl,	
+				"diagnostic", diagnostic,
+				"dtdue", dtdue,
+				"dtstart", dtstart,
+				"encrypt", encrypt,
+				"fcmd", fcmd,
+				"fid", fid,
+				"gmtime", gmtime,
+				"s_view_report", s_view_report, 
+				"said", said, 
+				"uem", uem, 
+				"ufn", ufn,
+				"uln", uln,
+				"utp", utp
+		);
+
+		if (this.useSourceParameter) {
+			params = TurnitinAPIUtil.packMap(params, "src", "9");
+		} else {
+			params = TurnitinAPIUtil.packMap(params, "upw", upw);
 		}
-		catch (ParserConfigurationException pce){
-			log.error("parser configuration error: " + pce.getMessage());
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", pce);
-		} catch (SAXException e) {
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e);
-		} catch (IOException e) {
-			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", e);
-		} 	
+
+		//outStream.write("&md5=".getBytes("UTF-8"));
+		//outStream.write(md5.getBytes("UTF-8"));
+
+		if (extraAsnnOpts != null) {
+			for (Object key: extraAsnnOpts.keySet()) {
+				if (extraAsnnOpts.get(key) == null) {
+					continue;
+				}
+				params = TurnitinAPIUtil.packMap(params, key.toString(), 
+						extraAsnnOpts.get(key).toString());
+			}
+		}
+
+		document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
 
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
@@ -1187,7 +1100,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
 	}
-	
+
 	private String getTEM(String cid) {
 		if (useSourceParameter) {
 			return cid + "_" + this.aid + "@tiisakai.com";
@@ -1200,7 +1113,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String uid = userId;
 		String cid = siteId;
-		
+
 		String ctl = siteId; 			//class title
 		String fid = "3";
 		String fcmd = "2";
@@ -1253,7 +1166,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		try {
 			URL hostURL;
-	
+
 			hostURL = new URL(apiURL);
 			if (proxy == null) {
 				connection = (HttpsURLConnection) hostURL.openConnection();
@@ -1298,7 +1211,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.write("&dis=".getBytes("UTF-8"));
 			outStream.write(Integer.valueOf(sendNotifications).toString().getBytes("UTF-8"));
-						
+
 			outStream.write("&uem=".getBytes("UTF-8"));
 			outStream.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
 
@@ -1319,7 +1232,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.write("&uid=".getBytes("UTF-8"));
 			outStream.write(uid.getBytes("UTF-8"));
-			
+
 			if (useSourceParameter) {
 				outStream.write("&src=9".getBytes("UTF-8"));
 			}
@@ -1338,7 +1251,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
 		}
 
-		
+
 		try {	
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
@@ -1350,15 +1263,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
 		}
 	}
-	
+
 	/*
 	 * Get the next item that needs to be submitted
 	 *
 	 */
 
-	 private ContentReviewItem getNextItemInSubmissionQueue() {
-		 
-		
+	private ContentReviewItem getNextItemInSubmissionQueue() {
+
+
 		ContentReviewItem searchItem = new ContentReviewItem();
 		searchItem.setContentId(null);
 		searchItem.setStatus(ContentReviewItem.NOT_SUBMITTED_CODE);
@@ -1367,21 +1280,21 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		for (int i =0; i < notSubmittedItems.size(); i++) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(0);
 			//can we get a lock
-			
+
 			if (dao.obtainLock("item." + Long.valueOf(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
-			return  item;
-			
+				return  item;
+
 		}
-		
+
 		searchItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 		notSubmittedItems = dao.findByExample(searchItem);
-		
+
 		//we need the next one whose retry time has not been reached
 		for  (int i =0; i < notSubmittedItems.size(); i++ ) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(i);
 			if (hasReachedRetryTime(item) && dao.obtainLock("item." + Long.valueOf(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
 				return item;
-			
+
 		}
 
 
@@ -1389,33 +1302,33 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	private boolean hasReachedRetryTime(ContentReviewItem item) {
-		
+
 		// has the item reached its next retry time?
 		if (item.getNextRetryTime() == null)
 			item.setNextRetryTime(new Date());
-		
+
 		if (item.getNextRetryTime().after(new Date())) {
 			//we haven't reached the next retry time
 			log.info("next retry time not yet reached for item: " + item.getId());
 			dao.update(item);
 			return false;
 		}
-		
+
 		return true;
-		
+
 	}
-	
+
 	private void releaseLock(ContentReviewItem currentItem) {
-		
+
 		dao.releaseLock("item." + currentItem.getId().toString(), serverConfigurationService.getServerId());
 	}
-	
+
 	public void processQueue() {
 		log.debug("Processing submission queue");
 
-		
+
 		for (ContentReviewItem currentItem = getNextItemInSubmissionQueue(); currentItem != null; currentItem = getNextItemInSubmissionQueue()) {
-			
+
 
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
 
@@ -1435,7 +1348,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
 				dao.update(currentItem);
 			}
-			
+
 			User user;
 
 			try {
@@ -1533,10 +1446,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					dao.update(currentItem);
 					releaseLock(currentItem);
 					continue;
-					
+
 				} 
 			}
-			
+
 			//get all the info for the api call
 			//we do this before connecting so that if there is a problem we can jump out - saves time
 			//these errors should probably be caught when a student is enrolled in a class
@@ -1595,7 +1508,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					log.warn("Unable to decode fileName: " + fileName);
 				}
 
-				
+
 
 				fileName = fileName.replace(' ', '_');
 				log.debug("fileName is :" + fileName);
@@ -1634,13 +1547,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String uid = currentItem.getUserId();
 			String cid = currentItem.getSiteId();
 			String assignid = currentItem.getTaskId();
-			
+
 			// TODO ONC-1292 How to get this, and is it still required with src=9?
 			String tem = getTEM(cid);
 
 			String utp = "1";
 
-			
+
 
 			String assign = getAssignmentTitle(currentItem.getTaskId());;
 			String ctl = currentItem.getSiteId();
@@ -1832,27 +1745,27 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else if (rCode.equals("423")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
-				
+
 				} else if (rCode.equals("301")) {
 					//this took a long time
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					Calendar cal = Calendar.getInstance();
 					cal.set(Calendar.HOUR_OF_DAY, 22);
 					currentItem.setNextRetryTime(cal.getTime());
-					
+
 				}else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
 				currentItem.setLastError("Submission Error: " + rMessage + "(" + rCode + ")");
 				dao.update(currentItem);
-		
+
 			}
 			//release the lock so the reports job can handle it
 			releaseLock(currentItem);
 			getNextItemInSubmissionQueue();
 		}
 
-		
+
 	}
 
 	private String getGMTime() {
@@ -1901,12 +1814,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			checkForReportsBulk();
 		else 
 			checkForReportsIndividual();
-		
+
 	}
-	
-	
-	
-	
+
+
+
+
 	/*
 	 * Fetch reports on a class by class basis
 	 */
@@ -1932,18 +1845,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		ContentReviewItem currentItem;
 		while (listIterator.hasNext()) {
 			currentItem = (ContentReviewItem) listIterator.next();
-			
+
 			// has the item reached its next retry time?
 			if (currentItem.getNextRetryTime() == null)
 				currentItem.setNextRetryTime(new Date());
-			
+
 			if (currentItem.getNextRetryTime().after(new Date())) {
 				//we haven't reached the next retry time
 				log.info("next retry time not yet reached for item: " + currentItem.getId());
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(Long.valueOf(0));
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
@@ -1980,7 +1893,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				} catch (Exception e) {
 					log.error("Unable to look up user: " + currentItem.getUserId() + " for contentItem: " + currentItem.getId(), e);
 				}
-				
+
 				String cid = currentItem.getSiteId();
 				String tem = getTEM(cid);
 
@@ -1993,7 +1906,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String utp = "2";
 
 				//String uid = defaultInstructorId;
-				
+
 				String assignid = currentItem.getTaskId();
 
 				String assign = currentItem.getTaskId();
@@ -2088,7 +2001,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 					out.write("&md5=".getBytes("UTF-8"));
 					out.write(md5.getBytes("UTF-8"));
-					
+
 					if (useSourceParameter) {
 						out.write("&src=9".getBytes("UTF-8"));
 					}
@@ -2204,18 +2117,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		ContentReviewItem currentItem;
 		while (listIterator.hasNext()) {
 			currentItem = (ContentReviewItem) listIterator.next();
-			
+
 			// has the item reached its next retry time?
 			if (currentItem.getNextRetryTime() == null)
 				currentItem.setNextRetryTime(new Date());
-			
+
 			if (currentItem.getNextRetryTime().after(new Date())) {
 				//we haven't reached the next retry time
 				log.info("next retry time not yet reached for item: " + currentItem.getId());
 				dao.update(currentItem);
 				continue;
 			}
-			
+
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(Long.valueOf(0));
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
@@ -2237,201 +2150,201 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			
-				// get the list from turnitin and see if the review is available
-		
 
-				String diagnostic = "0";
-				String encrypt = "0";
-				String fcmd = "2";
-				String fid = "10";
-
-				String cid = currentItem.getSiteId();
-				
-				String tem = getTEM(cid);
-
-				String uem = defaultInstructorEmail;
-				//String ufn = defaultInstructorFName;
-				//String uln = defaultInstructorLName;
-				String ufn = "Sakai";
-				String uln = "Instructor";
-				String utp = "2";
-
-				//String uid = defaultInstructorId;
-				
-				String assignid = currentItem.getTaskId();
-
-				String assign = currentItem.getTaskId();
-				String ctl = currentItem.getSiteId();
-
-				String gmtime = this.getGMTime();
-				String oid = currentItem.getExternalId();
-
-				String md5_str = aid + assign + assignid + cid + ctl
-				+ diagnostic + encrypt + fcmd + fid + gmtime + oid + said
-				+ tem + uem + ufn + /* uid +*/  uln + utp + secretKey;
-
-				String md5;
-				try{
-					md5 = this.getMD5(md5_str);
-				} catch (NoSuchAlgorithmException e) {
-					log.debug("Update failed due to MD5 generation error");
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError("MD5 generation error");
-					dao.update(currentItem);
-					listIterator.remove();
-					break;
-				}
-
-				HttpsURLConnection connection;
-
-				try {
-					URL hostURL = new URL(apiURL);
-					if (proxy == null) {
-						connection = (HttpsURLConnection) hostURL.openConnection();
-					} else {
-						connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-					}
-
-					connection.setRequestMethod("GET");
-					connection.setDoOutput(true);
-					connection.setDoInput(true);
-
-					log.debug("HTTPS connection made to Turnitin");
-
-					OutputStream out = connection.getOutputStream();
-
-					out.write("fid=".getBytes("UTF-8"));
-					out.write(fid.getBytes("UTF-8"));
-
-					out.write("&fcmd=".getBytes("UTF-8"));
-					out.write(fcmd.getBytes("UTF-8"));
-
-					//out.write("&uid=".getBytes("UTF-8"));
-					//out.write(uid.getBytes("UTF-8"));
-
-					out.write("&tem=".getBytes("UTF-8"));
-					out.write(tem.getBytes("UTF-8"));
-
-					out.write("&assign=".getBytes("UTF-8"));
-					out.write(assign.getBytes("UTF-8"));
-
-					out.write("&assignid=".getBytes("UTF-8"));
-					out.write(assignid.getBytes("UTF-8"));
-
-					out.write("&cid=".getBytes("UTF-8"));
-					out.write(cid.getBytes("UTF-8"));
-
-					out.write("&ctl=".getBytes("UTF-8"));
-					out.write(ctl.getBytes("UTF-8"));
-
-					out.write("&encrypt=".getBytes());
-					out.write(encrypt.getBytes("UTF-8"));
-
-					out.write("&aid=".getBytes("UTF-8"));
-					out.write(aid.getBytes("UTF-8"));
-					
-					out.write("&oid=".getBytes("UTF-8"));
-					out.write(oid.getBytes("UTF-8"));
-
-					out.write("&said=".getBytes("UTF-8"));
-					out.write(said.getBytes("UTF-8"));
-
-					out.write("&diagnostic=".getBytes("UTF-8"));
-					out.write(diagnostic.getBytes("UTF-8"));
-
-					out.write("&uem=".getBytes("UTF-8"));
-					out.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
-
-					out.write("&ufn=".getBytes("UTF-8"));
-					out.write(ufn.getBytes("UTF-8"));
-
-					out.write("&uln=".getBytes("UTF-8"));
-					out.write(uln.getBytes("UTF-8"));
-
-					out.write("&utp=".getBytes("UTF-8"));
-					out.write(utp.getBytes("UTF-8"));
-
-					out.write("&gmtime=".getBytes("UTF-8"));
-					out.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
-
-					out.write("&md5=".getBytes("UTF-8"));
-					out.write(md5.getBytes("UTF-8"));
-					
-					if (useSourceParameter) {
-						out.write("&src=9".getBytes("UTF-8"));
-					}
-
-					out.close();
-				} catch (IOException e) {
-					log.debug("Update failed due to IO error: " + e.toString());
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError(e.getMessage());
-					dao.update(currentItem);
-					break;
-				}
-
-				BufferedReader in;
-				try{
-					in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-				} catch (IOException e) {
-					log.debug("Update failed due to IO error: " + e.toString());
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError(e.getMessage());
-					dao.update(currentItem);
-					break;
-				}
-				Document document = null;
-				try{
-					DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-					DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-					document= parser.parse(new InputSource(in));
-
-				} catch (SAXException e1) {
-					log.error("Update failed due to Parsing error: " + e1.getMessage());
-					log.debug(e1.toString());
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError("Parse error: " +e1.getMessage());
-					dao.update(currentItem);
-					//we may as well go on as the document may be in the part of the file that was parsed
-					continue;
-				} catch (IOException e2) {
-					log.warn("Update failed due to IO error: " + e2.getMessage());
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError("IO error " + e2.getMessage());
-					dao.update(currentItem);
-					continue;
-				} catch (ParserConfigurationException pce) {
-					log.error("Parse configuration error: " + pce.getMessage());
-				}
+			// get the list from turnitin and see if the review is available
 
 
-				Element root = document.getDocumentElement();
-				if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
-					log.debug("Report list returned successfully");
+			String diagnostic = "0";
+			String encrypt = "0";
+			String fcmd = "2";
+			String fid = "10";
 
-					NodeList objects = root.getElementsByTagName("object");
-					String objectId;
-					String similarityScore;
-					String overlap = "";
-					log.debug(objects.getLength() + " objects in the returned list");
-					for (int i=0; i<objects.getLength(); i++) {
-						similarityScore = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("similarityScore").item(0).getFirstChild())).getData().trim();
-						objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
-						if (similarityScore.compareTo("-1") != 0) {
-							overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
-							reportTable.put(objectId, Integer.valueOf(overlap));
-						} else {
-							reportTable.put(objectId, Integer.valueOf(-1));
-						}
+			String cid = currentItem.getSiteId();
 
-						log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
-					}
+			String tem = getTEM(cid);
+
+			String uem = defaultInstructorEmail;
+			//String ufn = defaultInstructorFName;
+			//String uln = defaultInstructorLName;
+			String ufn = "Sakai";
+			String uln = "Instructor";
+			String utp = "2";
+
+			//String uid = defaultInstructorId;
+
+			String assignid = currentItem.getTaskId();
+
+			String assign = currentItem.getTaskId();
+			String ctl = currentItem.getSiteId();
+
+			String gmtime = this.getGMTime();
+			String oid = currentItem.getExternalId();
+
+			String md5_str = aid + assign + assignid + cid + ctl
+			+ diagnostic + encrypt + fcmd + fid + gmtime + oid + said
+			+ tem + uem + ufn + /* uid +*/  uln + utp + secretKey;
+
+			String md5;
+			try{
+				md5 = this.getMD5(md5_str);
+			} catch (NoSuchAlgorithmException e) {
+				log.debug("Update failed due to MD5 generation error");
+				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
+				currentItem.setLastError("MD5 generation error");
+				dao.update(currentItem);
+				listIterator.remove();
+				break;
+			}
+
+			HttpsURLConnection connection;
+
+			try {
+				URL hostURL = new URL(apiURL);
+				if (proxy == null) {
+					connection = (HttpsURLConnection) hostURL.openConnection();
 				} else {
-					log.debug("Report list request not successful");
-					log.debug(document.toString());
-
+					connection = (HttpsURLConnection) hostURL.openConnection(proxy);
 				}
+
+				connection.setRequestMethod("GET");
+				connection.setDoOutput(true);
+				connection.setDoInput(true);
+
+				log.debug("HTTPS connection made to Turnitin");
+
+				OutputStream out = connection.getOutputStream();
+
+				out.write("fid=".getBytes("UTF-8"));
+				out.write(fid.getBytes("UTF-8"));
+
+				out.write("&fcmd=".getBytes("UTF-8"));
+				out.write(fcmd.getBytes("UTF-8"));
+
+				//out.write("&uid=".getBytes("UTF-8"));
+				//out.write(uid.getBytes("UTF-8"));
+
+				out.write("&tem=".getBytes("UTF-8"));
+				out.write(tem.getBytes("UTF-8"));
+
+				out.write("&assign=".getBytes("UTF-8"));
+				out.write(assign.getBytes("UTF-8"));
+
+				out.write("&assignid=".getBytes("UTF-8"));
+				out.write(assignid.getBytes("UTF-8"));
+
+				out.write("&cid=".getBytes("UTF-8"));
+				out.write(cid.getBytes("UTF-8"));
+
+				out.write("&ctl=".getBytes("UTF-8"));
+				out.write(ctl.getBytes("UTF-8"));
+
+				out.write("&encrypt=".getBytes());
+				out.write(encrypt.getBytes("UTF-8"));
+
+				out.write("&aid=".getBytes("UTF-8"));
+				out.write(aid.getBytes("UTF-8"));
+
+				out.write("&oid=".getBytes("UTF-8"));
+				out.write(oid.getBytes("UTF-8"));
+
+				out.write("&said=".getBytes("UTF-8"));
+				out.write(said.getBytes("UTF-8"));
+
+				out.write("&diagnostic=".getBytes("UTF-8"));
+				out.write(diagnostic.getBytes("UTF-8"));
+
+				out.write("&uem=".getBytes("UTF-8"));
+				out.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
+
+				out.write("&ufn=".getBytes("UTF-8"));
+				out.write(ufn.getBytes("UTF-8"));
+
+				out.write("&uln=".getBytes("UTF-8"));
+				out.write(uln.getBytes("UTF-8"));
+
+				out.write("&utp=".getBytes("UTF-8"));
+				out.write(utp.getBytes("UTF-8"));
+
+				out.write("&gmtime=".getBytes("UTF-8"));
+				out.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
+
+				out.write("&md5=".getBytes("UTF-8"));
+				out.write(md5.getBytes("UTF-8"));
+
+				if (useSourceParameter) {
+					out.write("&src=9".getBytes("UTF-8"));
+				}
+
+				out.close();
+			} catch (IOException e) {
+				log.debug("Update failed due to IO error: " + e.toString());
+				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setLastError(e.getMessage());
+				dao.update(currentItem);
+				break;
+			}
+
+			BufferedReader in;
+			try{
+				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			} catch (IOException e) {
+				log.debug("Update failed due to IO error: " + e.toString());
+				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setLastError(e.getMessage());
+				dao.update(currentItem);
+				break;
+			}
+			Document document = null;
+			try{
+				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+				document= parser.parse(new InputSource(in));
+
+			} catch (SAXException e1) {
+				log.error("Update failed due to Parsing error: " + e1.getMessage());
+				log.debug(e1.toString());
+				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setLastError("Parse error: " +e1.getMessage());
+				dao.update(currentItem);
+				//we may as well go on as the document may be in the part of the file that was parsed
+				continue;
+			} catch (IOException e2) {
+				log.warn("Update failed due to IO error: " + e2.getMessage());
+				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setLastError("IO error " + e2.getMessage());
+				dao.update(currentItem);
+				continue;
+			} catch (ParserConfigurationException pce) {
+				log.error("Parse configuration error: " + pce.getMessage());
+			}
+
+
+			Element root = document.getDocumentElement();
+			if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
+				log.debug("Report list returned successfully");
+
+				NodeList objects = root.getElementsByTagName("object");
+				String objectId;
+				String similarityScore;
+				String overlap = "";
+				log.debug(objects.getLength() + " objects in the returned list");
+				for (int i=0; i<objects.getLength(); i++) {
+					similarityScore = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("similarityScore").item(0).getFirstChild())).getData().trim();
+					objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
+					if (similarityScore.compareTo("-1") != 0) {
+						overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
+						reportTable.put(objectId, Integer.valueOf(overlap));
+					} else {
+						reportTable.put(objectId, Integer.valueOf(-1));
+					}
+
+					log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
+				}
+			} else {
+				log.debug("Report list request not successful");
+				log.debug(document.toString());
+
+			}
 
 
 			int reportVal;
@@ -2451,10 +2364,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 			}
 		}
-		
+
 	}
-	
-	
+
+
 	// returns null if no valid email exists
 	private String getEmail(User user) {
 		String uem = null;
@@ -2533,7 +2446,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return false;
 	}
 
-	
+
 	//Methods for updating all assignments that exist
 	private void doAssignments() {
 		log.info("About to update all turnitin assignments");
@@ -2555,7 +2468,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			}
 		});
-		
+
 		for (int i = 0; i < objects.size(); i ++) {
 			ContentReviewItem cri = (ContentReviewItem) objects.get(i);
 			try {
@@ -2567,7 +2480,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		}
 	}
-	
+
 	private void updateAssignment(String siteId, String taskId) throws SubmissionException {
 		log.info("updateAssignment(" + siteId +" , " + taskId + ")");
 		//get the assignment reference
@@ -2639,7 +2552,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		try {
 			URL hostURL;
-			
+
 			hostURL = new URL(apiURL);
 			if (proxy == null) {
 				connection = (HttpsURLConnection) hostURL.openConnection();
@@ -2696,7 +2609,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.write("&s_view_report=".getBytes("UTF-8"));
 			outStream.write(s_view_report.getBytes("UTF-8"));
-			
+
 			outStream.write("&said=".getBytes("UTF-8"));
 			outStream.write(said.getBytes("UTF-8"));
 
@@ -2717,7 +2630,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			outStream.write("&md5=".getBytes("UTF-8"));
 			outStream.write(md5.getBytes("UTF-8"));
-			
+
 			if (useSourceParameter) {
 				outStream.write("&src=9".getBytes("UTF-8"));
 			}
@@ -2728,7 +2641,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		} catch (IOException e) {
 			throw new SubmissionException("Assignment creation call to Turnitin API failed", e);
 		}
-	
+
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -2758,7 +2671,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
 	}
-	
+
 	/**
 	 * find the next time this item should be tried
 	 * @param retryCount
@@ -2766,11 +2679,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 	private Date getNextRetryTime(long retryCount) {
 		int offset =5;
-		
+
 		if (retryCount > 9 && retryCount < 20) {
-			
+
 			offset = 10;
-			
+
 		} else if (retryCount > 19 && retryCount < 30) {
 			offset = 20;
 		} else if (retryCount > 29 && retryCount < 40) {
@@ -2782,12 +2695,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		} else if (retryCount > 59) {
 			offset = 220;
 		}
-		
+
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, offset);
 		return cal.getTime();
 	}
-	
+
 	public Map callTurnitinWDefaultsReturnMap(Map<String,Object> parameters) throws TransientSubmissionException, SubmissionException {
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
 	}
@@ -2796,27 +2709,27 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
 	}
-	
+
 	/**
 	 * Gets a first name for a user or generates an initial from the eid
 	 * @param user a sakai user
 	 * @return the first name or at least an initial if possible, "X" if no fn can be made
 	 */
 	private String getUserFirstName(User user) {
-      String ufn = user.getFirstName().trim();
-      if (ufn == null || ufn.equals("")) {
-         boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", true);
-         if (genFN) {
-            String eid = user.getEid();
-            if (eid != null 
-                  && eid.length() > 0) {
-               ufn = eid.substring(0,1);        
-            } else {
-               ufn = "X";
-            }
-         }
-      }
-      return ufn;
+		String ufn = user.getFirstName().trim();
+		if (ufn == null || ufn.equals("")) {
+			boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", true);
+			if (genFN) {
+				String eid = user.getEid();
+				if (eid != null 
+						&& eid.length() > 0) {
+					ufn = eid.substring(0,1);        
+				} else {
+					ufn = "X";
+				}
+			}
+		}
+		return ufn;
 	}
 
 }
