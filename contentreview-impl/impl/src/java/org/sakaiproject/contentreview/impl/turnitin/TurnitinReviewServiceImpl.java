@@ -433,6 +433,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return false;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.sakaiproject.contentreview.service.ContentReviewService#getReviewReportInstructor(java.lang.String)
+	 */
 	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
 		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
 		if (matchingItems.size() == 0) {
