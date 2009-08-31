@@ -124,13 +124,27 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
     # The title should be the Asnn1 title, not the taskid
 
     def testCreateClass(self):
-        """Integration test to flex the TurnitinReviewServiceImpl.createClass
+        """Integration test for TurnitinReviewServiceImpl.createClass
         method."""
         # Does failUnlessRaises not work in Jython 2.2?
         #self.failUnlessRaises(SubmissionException, self.tiireview_serv.createClass, "1")
         #self.tiireview_serv.createClass("1")
         tiiclassid = str(uuid.uuid1())
         self.tiireview_serv.createClass(tiiclassid)
+
+    def testEnrollInClass(self):
+        """Integration Test for TurnitinReviewServiceImpl.enrollInClass
+        TODO Change source code to make this test have better results to 
+        verify against (ie. return the rMessage and rCode for instance)
+        """
+        user_serv = ComponentManager.get("org.sakaiproject.user.api.UserDirectoryService")
+        tiiclassid = str(uuid.uuid1())
+        tiiasnnid = str(uuid.uuid1())
+        tiiemail = str(uuid.uuid1()) + "@sakaiproject.org"
+        self.tiireview_serv.createClass(tiiclassid)
+        self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
+        self.tiireview_serv.enrollInClass(user_serv.getUserId("stud01"), 
+                                        tiiemail, tiiclassid)
 
     """
     Creating and Reading Turnitin Assignments

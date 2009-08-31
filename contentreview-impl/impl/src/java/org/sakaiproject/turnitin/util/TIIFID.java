@@ -10,6 +10,12 @@ public enum TIIFID {
             TIIParam.encrypt, TIIParam.fcmd, TIIParam.fid, TIIParam.gmtime,
             TIIParam.said, TIIParam.uem, TIIParam.ufn, TIIParam.uid, 
             TIIParam.uln, TIIParam.upw, TIIParam.username, TIIParam.utp}),
+    fid3 (3, new TIIParam[] { 
+            TIIParam.cid, TIIParam.ctl, // These two are not in the spec on page48
+            TIIParam.aid, TIIParam.diagnostic, TIIParam.dis, TIIParam.encrypt,
+            TIIParam.fcmd, TIIParam.fid, TIIParam.gmtime, TIIParam.said, 
+            TIIParam.tem, TIIParam.uem, TIIParam.ufn, TIIParam.uid, TIIParam.uln,
+            TIIParam.upw, TIIParam.username, TIIParam.utp}),
     fid4 (4, new TIIParam[] {TIIParam.aid, TIIParam.assign, TIIParam.assignid,
             TIIParam.ced, TIIParam.cid, TIIParam.ctl, TIIParam.diagnostic,
             TIIParam.dis, TIIParam.dtdue, TIIParam.dtstart, TIIParam.encrypt,

@@ -1008,7 +1008,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 	}
 
-	private void enrollInClass(String userId, String uem, String siteId) throws SubmissionException {
+	/**
+	 * Currently public for integration tests. TODO Revisit visibility of
+	 * method.
+	 * 
+	 * @param userId
+	 * @param uem
+	 * @param siteId
+	 * @throws SubmissionException
+	 */
+	public void enrollInClass(String userId, String uem, String siteId) throws SubmissionException, TransientSubmissionException {
 
 		String uid = userId;
 		String cid = siteId;
@@ -1050,117 +1059,42 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String gmtime = this.getGMTime();
 
-		String md5_str = aid + cid + ctl + diagnostic + sendNotifications +  encrypt + fcmd + fid + gmtime + said + tem + uem +
-		ufn + uid + uln + utp + secretKey;
-
-		String md5;
-		try{
-			md5 = this.getMD5(md5_str);
-		} catch (Exception t) {
-			log.warn("MD5 error enrolling student on turnitin");
-			throw new SubmissionException("Cannot generate MD5 hash for Class Enrollment Turnitin API call", t);
-		}
-
-		HttpsURLConnection connection;
-
+		Map params = new HashMap();
 		try {
-			URL hostURL;
-
-			hostURL = new URL(apiURL);
-			if (proxy == null) {
-				connection = (HttpsURLConnection) hostURL.openConnection();
-			} else {
-				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-			}
-
-			connection.setRequestMethod("GET");
-			connection.setDoOutput(true);
-			connection.setDoInput(true);
-
-			log.debug("Connection made to Turnitin");
-
-			OutputStream outStream = connection.getOutputStream();
-
-			outStream.write("fid=".getBytes("UTF-8"));
-			outStream.write(fid.getBytes("UTF-8"));
-
-			outStream.write("&fcmd=".getBytes("UTF-8"));
-			outStream.write(fcmd.getBytes("UTF-8"));
-
-			outStream.write("&cid=".getBytes("UTF-8"));
-			outStream.write(cid.getBytes("UTF-8"));
-
-			outStream.write("&tem=".getBytes());
-			outStream.write(tem.getBytes("UTF-8"));
-
-			outStream.write("&ctl=".getBytes());
-			outStream.write(ctl.getBytes("UTF-8"));
-
-			outStream.write("&encrypt=".getBytes());
-			outStream.write(encrypt.getBytes("UTF-8"));
-
-			outStream.write("&aid=".getBytes("UTF-8"));
-			outStream.write(aid.getBytes("UTF-8"));
-
-			outStream.write("&said=".getBytes("UTF-8"));
-			outStream.write(said.getBytes("UTF-8"));
-
-			outStream.write("&diagnostic=".getBytes("UTF-8"));
-			outStream.write(diagnostic.getBytes("UTF-8"));
-
-			outStream.write("&dis=".getBytes("UTF-8"));
-			outStream.write(Integer.valueOf(sendNotifications).toString().getBytes("UTF-8"));
-
-			outStream.write("&uem=".getBytes("UTF-8"));
-			outStream.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
-
-			outStream.write("&ufn=".getBytes("UTF-8"));
-			outStream.write(ufn.getBytes("UTF-8"));
-
-			outStream.write("&uln=".getBytes("UTF-8"));
-			outStream.write(uln.getBytes("UTF-8"));
-
-			outStream.write("&utp=".getBytes("UTF-8"));
-			outStream.write(utp.getBytes("UTF-8"));
-
-			outStream.write("&gmtime=".getBytes("UTF-8"));
-			outStream.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
-
-			outStream.write("&md5=".getBytes("UTF-8"));
-			outStream.write(md5.getBytes("UTF-8"));
-
-			outStream.write("&uid=".getBytes("UTF-8"));
-			outStream.write(uid.getBytes("UTF-8"));
-
-			if (useSourceParameter) {
-				outStream.write("&src=9".getBytes("UTF-8"));
-			}
-
-			outStream.close();
-		} catch (MalformedURLException e) {
-			throw new SubmissionException("Student Enrollment call to Turnitin failed", e);
-		} catch (IOException e) {
-			throw new SubmissionException("Student Enrollment call to Turnitin failed", e);		
+			params = TurnitinAPIUtil.packMap(null, 
+					"fid", fid,
+					"fcmd", fcmd,
+					"cid", cid,
+					"tem", tem,
+					"ctl", ctl,
+					"encrypt", encrypt,
+					"aid", aid,
+					"said", said,
+					"diagnostic", diagnostic,
+					"dis", Integer.valueOf(sendNotifications).toString(),
+					"uem", uem,
+					"ufn", ufn,
+					"uln", uln,
+					"utp", utp,
+					"gmtime", URLEncoder.encode(gmtime, "UTF-8"),
+					"uid", uid
+			);
+		} catch (java.io.UnsupportedEncodingException e) {
+			throw new SubmissionException("Unable to encode gmttime as UTF-8: " + gmtime, e);
 		}
 
-		BufferedReader in;
-		try {
-			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Exception t) {
-			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
+		if (useSourceParameter) {
+			params = TurnitinAPIUtil.packMap(params, "src", "9");
 		}
 
+		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
 
-		try {	
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			parser.parse(new org.xml.sax.InputSource(in));
-		}
-		catch (ParserConfigurationException pce){
-			log.error("parser configuration error: " + pce.getMessage());
-		} catch (Exception t) {
-			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
-		}
+		Element root = document.getDocumentElement();
+
+		String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
+		String rCode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData();
+		log.debug("Results from enrollInClass with user + " + userId + " and class title: " + ctl + ".\n" +
+				"rCode: " + rCode + " rMessage: " + rMessage);
 	}
 
 	/*
