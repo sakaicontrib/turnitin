@@ -4,6 +4,8 @@ from org.sakaiproject.component.cover import ComponentManager
 #import uuid
 from java.util import HashMap
 from org.sakaiproject.contentreview.exception import SubmissionException
+from org.sakaiproject.contentreview.model import ContentReviewItem
+from java.lang import Thread
 
 class SakaiUuid(object):
     """My Current Jython impl doens't seem to have UUID, so re-implementing it 
@@ -35,7 +37,12 @@ def addExampleAttachment(content=None):
     """Returns a tuple of the Resource ID, and then potentially the actual
     ContentResource object"""
     content_srv = ComponentManager.get("org.sakaiproject.content.api.ContentHostingService")
-    
+    if content == None:
+        payload = lorum_ipsum
+    else:
+        payload = content
+    cres = content_srv.addAttachmentResource("tiitest","tiiintegrationtest",payload, None)
+    return cres.id, cres
 
 def createTestUsers():
     """
@@ -145,6 +152,21 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
         self.tiireview_serv.enrollInClass(user_serv.getUserId("stud01"), 
                                         tiiemail, tiiclassid)
+
+    def testQueueContent(self):
+        """Integration test for ContentReviewService.queueContent"""
+        user_serv = ComponentManager.get("org.sakaiproject.user.api.UserDirectoryService")
+        tiiclassid = str(uuid.uuid1())
+        tiiasnnid = str(uuid.uuid1())
+        tiiemail = str(uuid.uuid1()) + "@sakaiproject.org"
+        userid = user_serv.getUserId("stud01")
+        tiicontentid = addExampleAttachment()[0]
+        self.tiireview_serv.createClass(tiiclassid)
+        self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
+        self.tiireview_serv.enrollInClass(userid, 
+                                        tiiemail, tiiclassid)
+        self.tiireview_serv.queueContent(userid, tiiclassid, tiiasnnid, contentId)
+        
 
     """
     Creating and Reading Turnitin Assignments
@@ -327,9 +349,9 @@ def trySomething():
     tiireview_serv.createAssignment("tii-unit-test",
             tiiasnnid)
     '''
-    pass
+    print addExampleAttachment()
 
-if __name__ == '__main__':
+def doTests():
     becomeUser("inst03")
     tii_suites = []
     for testcase in tii_testcases:
@@ -337,3 +359,7 @@ if __name__ == '__main__':
     alltests = unittest.TestSuite(tii_suites)
     unittest.TextTestRunner(verbosity=2).run(alltests)
     becomeUser("admin")
+
+if __name__ == '__main__':
+    #doTests()
+    trySomething()
