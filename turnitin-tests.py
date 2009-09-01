@@ -165,7 +165,13 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
         self.tiireview_serv.enrollInClass(userid, 
                                         tiiemail, tiiclassid)
-        self.tiireview_serv.queueContent(userid, tiiclassid, tiiasnnid, contentId)
+        self.tiireview_serv.queueContent(userid, tiiclassid, tiiasnnid, tiicontentid)
+        #TODO Do the same thing the quartz job would
+        self.tiireview_serv.processQueue()
+        self.tiireview_serv.checkForReports()
+        status = self.tiireview_serv.getReviewStatus(tiicontentid)
+        self.assert_(status in [ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE, ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE])
+        self.assertNotEqual(status, ContentReviewItem.NOT_SUBMITTED_CODE)
         
 
     """
@@ -361,5 +367,6 @@ def doTests():
     becomeUser("admin")
 
 if __name__ == '__main__':
-    #doTests()
-    trySomething()
+    createTestUsers()
+    doTests()
+    #trySomething()
