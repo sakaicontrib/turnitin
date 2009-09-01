@@ -1657,7 +1657,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * Fetch reports on a class by class basis
 	 */
 	@SuppressWarnings({ "deprecation", "unchecked" })
-	private void checkForReportsBulk() {
+	public void checkForReportsBulk() {
 
 		log.debug("Checking for updated reports from Turnitin in bulk mode");
 
@@ -1747,141 +1747,60 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				String gmtime = this.getGMTime();
 
-				String md5_str = aid + assign + assignid + cid + ctl
-				+ diagnostic + encrypt + fcmd + fid + gmtime + said
-				+ tem + uem + ufn + /* uid + */ uln + utp + secretKey;
+				Map params = new HashMap();
+				try {
+					params = TurnitinAPIUtil.packMap(null, 
+							"fid", fid,
+							"fcmd", fcmd,
+							//"uid", uid,
+							"tem", tem,
+							"assign", assign,
+							"assignid", assignid,
+							"cid", cid,
+							"ctl", ctl,
+							"encrypt", encrypt,
+							"aid", aid,
+							"said", said,
+							"diagnostic", diagnostic,
+							"uem", URLEncoder.encode(uem, "UTF-8"),
+							"ufn", ufn,
+							"uln", uln,
+							"utp", utp,
+							"gmtime", URLEncoder.encode(gmtime, "UTF-8")
+					);
 
-				String md5;
-				try{
-					md5 = this.getMD5(md5_str);
-				} catch (NoSuchAlgorithmException e) {
-					log.debug("Update failed due to MD5 generation error");
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError("MD5 generation error");
+				}
+				catch (java.io.UnsupportedEncodingException e) {
+					log.debug("Unable to encode a URL param as UTF-8: " + e.toString());
+					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+					currentItem.setLastError(e.getMessage());
 					dao.update(currentItem);
-					listIterator.remove();
-					break;
+					break;						
 				}
 
-				HttpsURLConnection connection;
+				if (useSourceParameter) {
+					params = TurnitinAPIUtil.packMap(params, "src", "9");
+				}
+
+				Document document = null;
 
 				try {
-					URL hostURL = new URL(apiURL);
-					if (proxy == null) {
-						connection = (HttpsURLConnection) hostURL.openConnection();
-					} else {
-						connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-					}
-
-					connection.setRequestMethod("GET");
-					connection.setDoOutput(true);
-					connection.setDoInput(true);
-
-					log.debug("HTTPS connection made to Turnitin");
-
-					OutputStream out = connection.getOutputStream();
-
-					out.write("fid=".getBytes("UTF-8"));
-					out.write(fid.getBytes("UTF-8"));
-
-					out.write("&fcmd=".getBytes("UTF-8"));
-					out.write(fcmd.getBytes("UTF-8"));
-
-					//out.write("&uid=".getBytes("UTF-8"));
-					//out.write(uid.getBytes("UTF-8"));
-
-					out.write("&tem=".getBytes("UTF-8"));
-					out.write(tem.getBytes("UTF-8"));
-
-					out.write("&assign=".getBytes("UTF-8"));
-					out.write(assign.getBytes("UTF-8"));
-
-					out.write("&assignid=".getBytes("UTF-8"));
-					out.write(assignid.getBytes("UTF-8"));
-
-					out.write("&cid=".getBytes("UTF-8"));
-					out.write(cid.getBytes("UTF-8"));
-
-					out.write("&ctl=".getBytes("UTF-8"));
-					out.write(ctl.getBytes("UTF-8"));
-
-					out.write("&encrypt=".getBytes());
-					out.write(encrypt.getBytes("UTF-8"));
-
-					out.write("&aid=".getBytes("UTF-8"));
-					out.write(aid.getBytes("UTF-8"));
-
-					out.write("&said=".getBytes("UTF-8"));
-					out.write(said.getBytes("UTF-8"));
-
-					out.write("&diagnostic=".getBytes("UTF-8"));
-					out.write(diagnostic.getBytes("UTF-8"));
-
-					out.write("&uem=".getBytes("UTF-8"));
-					out.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
-
-					out.write("&ufn=".getBytes("UTF-8"));
-					out.write(ufn.getBytes("UTF-8"));
-
-					out.write("&uln=".getBytes("UTF-8"));
-					out.write(uln.getBytes("UTF-8"));
-
-					out.write("&utp=".getBytes("UTF-8"));
-					out.write(utp.getBytes("UTF-8"));
-
-					out.write("&gmtime=".getBytes("UTF-8"));
-					out.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
-
-					out.write("&md5=".getBytes("UTF-8"));
-					out.write(md5.getBytes("UTF-8"));
-
-					if (useSourceParameter) {
-						out.write("&src=9".getBytes("UTF-8"));
-					}
-
-					out.close();
-				} catch (IOException e) {
-					log.debug("Update failed due to IO error: " + e.toString());
+					document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+				}
+				catch (TransientSubmissionException e) {
+					log.debug("Update failed due to TransientSubmissionException error: " + e.toString());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e.getMessage());
 					dao.update(currentItem);
 					break;
 				}
-
-				BufferedReader in;
-				try{
-					in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-				} catch (IOException e) {
-					log.debug("Update failed due to IO error: " + e.toString());
+				catch (SubmissionException e) {
+					log.debug("Update failed due to SubmissionException error: " + e.toString());
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e.getMessage());
 					dao.update(currentItem);
 					break;
 				}
-				Document document = null;
-				try{
-					DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-					DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-					document= parser.parse(new InputSource(in));
-
-				} catch (SAXException e1) {
-					log.error("Update failed due to Parsing error: " + e1.getMessage());
-					log.debug(e1.toString());
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError("Parse error: " +e1.getMessage());
-					dao.update(currentItem);
-					//we may as well go on as the document may be in the part of the file that was parsed
-					continue;
-				} catch (IOException e2) {
-					log.warn("Update failed due to IO error: " + e2.getMessage());
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError("IO error " + e2.getMessage());
-					dao.update(currentItem);
-					continue;
-				} catch (ParserConfigurationException pce) {
-					log.error("Parse configuration error: " + pce.getMessage());
-				}
-
 
 				Element root = document.getDocumentElement();
 				if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
@@ -1930,7 +1849,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 	}
 
-	private void checkForReportsIndividual() {
+	public void checkForReportsIndividual() {
 		log.debug("Checking for updated reports from Turnitin in individual mode");
 
 		// get the list of all items that are waiting for reports

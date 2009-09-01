@@ -6,6 +6,7 @@ from java.util import HashMap
 from org.sakaiproject.contentreview.exception import SubmissionException
 from org.sakaiproject.contentreview.model import ContentReviewItem
 from java.lang import Thread
+from org.apache.commons.logging import LogFactory
 
 class SakaiUuid(object):
     """My Current Jython impl doens't seem to have UUID, so re-implementing it 
@@ -122,6 +123,8 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         self.tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
         self.cachedSourceParameter = self.tiireview_serv.useSourceParameter
         self.tiireview_serv.useSourceParameter = False
+        self.log = LogFactory.getLog("TestTurnitinReviewServiceImpl")
+        self.user_serv = ComponentManager.get("org.sakaiproject.user.api.UserDirectoryService")
         
     def tearDown(self):
         self.tiireview_serv.useSourceParameter = self.cachedSourceParameter
@@ -170,9 +173,41 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         self.tiireview_serv.processQueue()
         self.tiireview_serv.checkForReports()
         status = self.tiireview_serv.getReviewStatus(tiicontentid)
+        self.log.warn("The status is: " + str(status))
         self.assert_(status in [ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE, ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE])
         self.assertNotEqual(status, ContentReviewItem.NOT_SUBMITTED_CODE)
         
+    def enrollAndQueueContentForStudent(self, usereid, tiiclassid, tiiasnnid, tiiemail=None):
+        """Enrolls a user in a class and submits an assignment on their behalf. 
+        Convenience method to ramp up data for processing and bulk tests.
+        Returns the Content Id for the faux assignment they submitted."""
+        if tiiemail == None:
+            tiiemail = str(uuid.uuid1()) + "@sakaiproject.org"
+        userid = self.user_serv.getUserId("stud01")
+        tiicontentid = addExampleAttachment()[0]
+        self.tiireview_serv.enrollInClass(userid, tiiemail, tiiclassid)
+        self.tiireview_serv.queueContent(userid, tiiclassid, tiiasnnid, tiicontentid)
+        return tiicontentid
+        
+    def testCheckForReportsBulk(self):
+        """Test for TurnitinReviewServiceImpl.checkForReportsBulk"""
+        tiiclassid = str(uuid.uuid1())
+        tiiasnnid = str(uuid.uuid1())
+        self.tiireview_serv.createClass(tiiclassid)
+        Thread.sleep(1000)
+        self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
+        
+        tiicontentid = self.enrollAndQueueContentForStudent("stud01", tiiclassid, tiiasnnid)
+        tiicontentid2 = self.enrollAndQueueContentForStudent("stud02", tiiclassid, tiiasnnid)
+        
+        #TODO Do the same thing the quartz job would
+        self.tiireview_serv.processQueue()
+        self.tiireview_serv.checkForReportsBulk()
+        for contentid in [tiicontentid, tiicontentid2]:
+            status = self.tiireview_serv.getReviewStatus(contentid)
+            self.log.warn("The status for " + contentid + " is: " + str(status))
+            self.assert_(status in [ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE, ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE])
+            self.assertNotEqual(status, ContentReviewItem.NOT_SUBMITTED_CODE)
 
     """
     Creating and Reading Turnitin Assignments
@@ -355,7 +390,11 @@ def trySomething():
     tiireview_serv.createAssignment("tii-unit-test",
             tiiasnnid)
     '''
-    print addExampleAttachment()
+    testcase = TestTurnitinReviewServiceImpl()
+    testcase.setUp()
+    testcase.testCheckForReportsBulk()
+    testcase.tearDown()
+    #print addExampleAttachment()
 
 def doTests():
     becomeUser("inst03")
@@ -363,7 +402,7 @@ def doTests():
     for testcase in tii_testcases:
         tii_suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
     alltests = unittest.TestSuite(tii_suites)
-    unittest.TextTestRunner(verbosity=2).run(alltests)
+    unittest.TextTestRunner(verbosity=5).run(alltests)
     becomeUser("admin")
 
 if __name__ == '__main__':
