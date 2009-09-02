@@ -902,6 +902,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//TODO use the 'secret' function to change this to longer
 		cal.add(Calendar.MONTH, 5);
 		String dtdue = dform.format(cal.getTime());
+		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("dtdue")) {
+			dtdue = extraAsnnOpts.get("dtdue").toString();
+			extraAsnnOpts.remove("dtdue");
+		}
 
 		String encrypt = "0";					//encryption flag
 		String fcmd = "2";						//new assignment

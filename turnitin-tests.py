@@ -405,7 +405,29 @@ def doTests():
     unittest.TextTestRunner(verbosity=5).run(alltests)
     becomeUser("admin")
 
+def usage():
+    """Returns usage string. May be different on what's installed in this Sakai 
+    Instances"""
+    return '''
+turnitin runtests
+   - runs tests
+
+turnitin viewasnn siteid taskid
+   - view the information for an assignment with taskid in the site
+'''
+
+def viewAssignment(siteid,taskid):
+    "Spits out the returned XML from the Turnitin View Asnn API Call"
+    tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
+    return tiireview_serv.getAssignment(siteid,taskid)
+
+def main(args):
+    if len(args) > 0 and args[0] == "runtests":
+        doTest()
+    elif len(args) >= 3 and args[0] == "viewasnn":
+        print(viewAssignment(args[1], args[2]))
+    else:
+        print(usage())
+
 if __name__ == '__main__':
-    createTestUsers()
-    doTests()
-    #trySomething()
+    main(sys.argv[1:])
