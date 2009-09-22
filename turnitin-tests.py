@@ -1,3 +1,4 @@
+#from test.test_support import verbosity
 import unittest
 import random
 from org.sakaiproject.component.cover import ComponentManager
@@ -151,8 +152,11 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         tiiclassid = str(uuid.uuid1())
         tiiasnnid = str(uuid.uuid1())
         tiiemail = str(uuid.uuid1()) + "@sakaiproject.org"
+        # SWG TODO Why does this fail if you create the Class first?
         self.tiireview_serv.createClass(tiiclassid)
+        Thread.sleep(1000)
         self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
+        Thread.sleep(1000)
         self.tiireview_serv.enrollInClass(user_serv.getUserId("stud01"), 
                                         tiiemail, tiiclassid)
 
@@ -164,10 +168,13 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         tiiemail = str(uuid.uuid1()) + "@sakaiproject.org"
         userid = user_serv.getUserId("stud01")
         tiicontentid = addExampleAttachment()[0]
-        self.tiireview_serv.createClass(tiiclassid)
+        #
+        #self.tiireview_serv.createClass(tiiclassid)
         self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
+        Thread.sleep(1000)
         self.tiireview_serv.enrollInClass(userid, 
                                         tiiemail, tiiclassid)
+        Thread.sleep(1000)
         self.tiireview_serv.queueContent(userid, tiiclassid, tiiasnnid, tiicontentid)
         #TODO Do the same thing the quartz job would
         self.tiireview_serv.processQueue()
@@ -371,13 +378,25 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         opts = HashMap()
         opts.put('journal_check','1')
         self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        Thread.sleep(1000)
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        Thread.sleep(1000)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
-        
+        Thread.sleep(1000)
         opts.put('journal_check','0')
+        
         self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        Thread.sleep(1000)
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
+        
+    """The following tests below are for ONC-1834: ie. Setting the Due Date on 
+    the Turnitin assignment. We need to test a number of boundary cases. Also,
+    from the comments in the code it looks like you can only set the due date
+    5 months out?
+    """
+    #def testAsnnDueDate(self):
+    #    self.assertFalse(True)
 
 #tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
 tii_testcases = [TestTurnitinReviewServiceImpl]
@@ -405,12 +424,35 @@ def doTests():
     unittest.TextTestRunner(verbosity=5).run(alltests)
     becomeUser("admin")
 
+def doTest(testname):
+    becomeUser("inst03")
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(TestTurnitinReviewServiceImpl(testname))
+    unittest.TextTestRunner().run(test_suite)
+    becomeUser("admin")
+
+def debugTests():
+    becomeUser("inst03")
+    print("Trying to run a test with debug")
+    #test = TestTurnitinReviewServiceImpl()
+    #test.run()
+    tii_suites = []
+    for testcase in tii_testcases:
+        tii_suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
+    alltests = unittest.TestSuite(tii_suites)
+    alltests.debug()
+    #unittest.TextTestRunner(verbosity=5).run(alltests)
+    becomeUser("admin")
+
 def usage():
     """Returns usage string. May be different on what's installed in this Sakai 
     Instances"""
     return '''
 turnitin runtests
    - runs tests
+   
+turnitin runtest testname
+   - run a single named test
 
 turnitin viewasnn siteid taskid
    - view the information for an assignment with taskid in the site
@@ -423,7 +465,11 @@ def viewAssignment(siteid,taskid):
 
 def main(args):
     if len(args) > 0 and args[0] == "runtests":
-        doTest()
+        doTests()
+    elif len(args) > 1 and args[0] == "runtest":
+        doTest(args[1])
+    elif len(args) > 0 and args[0] == "debugtests":
+        debugTests()
     elif len(args) >= 3 and args[0] == "viewasnn":
         print(viewAssignment(args[1], args[2]))
     else:

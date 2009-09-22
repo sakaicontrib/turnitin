@@ -1390,7 +1390,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String utp = "1";
 
-
+			log.warn("Using Emails: tem: " + tem + " uem: " + uem);
 
 			String assign = getAssignmentTitle(currentItem.getTaskId());;
 			String ctl = currentItem.getSiteId();
@@ -1402,6 +1402,69 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			+ ptype + said + tem + uem + ufn + uid + uln + utp
 			+ secretKey;
 
+			Map params = TurnitinAPIUtil.packMap( null,
+				"assignid", assignid,
+				"uid", uid,
+				"cid", cid,
+				"aid", aid,
+				"assign", assign,
+				"ctl", ctl,
+				"diagnostic", diagnostic,
+				"dis", Integer.valueOf(sendNotifications).toString(),
+				"encrypt", encrypt,
+				"fcmd", fcmd,
+				"fid", fid,
+				"gmtime", gmtime,
+				"ptype", ptype,
+				"ptl", ptl,
+				"said", said,
+				"tem", tem,
+				"uem", uem,
+				"ufn", ufn,
+				"uln", uln,
+				"utp", utp,
+				"resource_obj", resource
+			);
+			
+			//outStream.write(encodeParam("assignid", assignid, boundary).getBytes());
+			//outStream.write(encodeParam("uid", uid, boundary).getBytes());
+			//outStream.write(encodeParam("cid", cid, boundary).getBytes());
+			//outStream.write(encodeParam("aid", aid, boundary).getBytes());
+			//outStream.write(encodeParam("assign", assign, boundary).getBytes());
+			//outStream.write(encodeParam("ctl", ctl, boundary).getBytes());
+			//outStream.write(encodeParam("diagnostic", diagnostic, boundary).getBytes());
+			//outStream.write(encodeParam("dis", Integer.valueOf(sendNotifications).toString(), boundary).getBytes());;
+			//outStream.write(encodeParam("encrypt", encrypt, boundary).getBytes());
+			//outStream.write(encodeParam("fcmd", fcmd, boundary).getBytes());
+			//outStream.write(encodeParam("fid", fid, boundary).getBytes());
+			//outStream.write(encodeParam("gmtime", gmtime, boundary).getBytes());
+			//outStream.write(encodeParam("ptype", ptype, boundary).getBytes());
+			//outStream.write(encodeParam("ptl", ptl, boundary).getBytes());
+			//outStream.write(encodeParam("said", said, boundary).getBytes());
+			//outStream.write(encodeParam("tem", tem, boundary).getBytes());
+			//outStream.write(encodeParam("uem", uem, boundary).getBytes());
+			//outStream.write(encodeParam("ufn", ufn, boundary).getBytes());
+			//outStream.write(encodeParam("uln", uln, boundary).getBytes());
+			//outStream.write(encodeParam("utp", utp, boundary).getBytes());
+			//outStream.write(encodeParam("md5", md5, boundary).getBytes());
+			
+			if (useSourceParameter) {
+				params = TurnitinAPIUtil.packMap(params, "src", "9");
+				//outStream.write(encodeParam("src", "9", boundary).getBytes());
+			}
+
+			// put in the actual file
+/*
+			outStream.write(("--" + boundary
+					+ "\r\nContent-Disposition: form-data; name=\"pdata\"; filename=\""
+					+ currentItem.getContentId() + "\"\r\n"
+					+ "Content-Type: " + resource.getContentType()
+					+ "\r\ncontent-transfer-encoding: binary" + "\r\n\r\n")
+					.getBytes());
+
+			outStream.write(resource.getContent());
+	*/		
+			/*
 			String md5;
 			try{
 				md5 = this.getMD5(md5_str);
@@ -1418,7 +1481,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			OutputStream outStream = null;
 
 			HttpsURLConnection connection;
-
+			
 			try {
 
 				URL hostURL = new URL(apiURL);
@@ -1514,8 +1577,28 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				releaseLock(currentItem);
 				continue;
 			}
+			*/
 
 			Document document = null;
+			try {
+				document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy, true);
+			}
+			catch (TransientSubmissionException e) {
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+				currentItem.setLastError("Error Submitting Assignment for Submission: " + e.getMessage() + ". Assume unsuccessful");
+				dao.update(currentItem);
+				releaseLock(currentItem);
+				continue;
+			}
+			catch (SubmissionException e) {
+				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+				currentItem.setLastError("Error Submitting Assignment for Submission: " + e.getMessage() + ". Assume unsuccessful");
+				dao.update(currentItem);
+				releaseLock(currentItem);
+				continue;
+			}
+			
+			/*
 			try {	
 				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
@@ -1540,7 +1623,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				releaseLock(currentItem);
 				continue;
 			}
-
+*/
 
 			Element root = document.getDocumentElement();
 

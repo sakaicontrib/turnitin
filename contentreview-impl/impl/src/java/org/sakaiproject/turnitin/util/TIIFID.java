@@ -22,6 +22,13 @@ public enum TIIFID {
             TIIParam.fcmd, TIIParam.fid, TIIParam.gmtime, TIIParam.newassign,
             TIIParam.said, TIIParam.uem, TIIParam.ufn, TIIParam.uid, 
             TIIParam.uln, TIIParam.upw, TIIParam.username, TIIParam.utp}),
+    fid5 (5, new TIIParam[] {
+            TIIParam.aid, TIIParam.assign, TIIParam.assignid, TIIParam.cid,
+            TIIParam.ctl, TIIParam.diagnostic, TIIParam.dis, TIIParam.encrypt,
+            TIIParam.fcmd, TIIParam.fid, TIIParam.gmtime, TIIParam.pfn, 
+            TIIParam.pln, TIIParam.ptl, TIIParam.ptype, TIIParam.said,
+            TIIParam.tem, TIIParam.uem, TIIParam.ufn, TIIParam.uid, TIIParam.uln,
+            TIIParam.username, TIIParam.utp}),
     fid10 (10, new TIIParam[] {TIIParam.aid, TIIParam.assign, TIIParam.assignid,
             TIIParam.cid, TIIParam.ctl, TIIParam.diagnostic, TIIParam.dis, 
             TIIParam.encrypt, TIIParam.fcmd, TIIParam.fid, TIIParam.gmtime,
