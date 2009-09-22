@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -2013,7 +2012,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 
 	//Methods for updating all assignments that exist
-	private void doAssignments() {
+	public void doAssignments() {
 		log.info("About to update all turnitin assignments");
 		String statement = "Select siteid,taskid from CONTENTREVIEW_ITEM group by siteid,taskid";
 		Object[] fields = new Object[0];
@@ -2046,7 +2045,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 	}
 
-	private void updateAssignment(String siteId, String taskId) throws SubmissionException {
+	public void updateAssignment(String siteId, String taskId) throws SubmissionException {
 		log.info("updateAssignment(" + siteId +" , " + taskId + ")");
 		//get the assignment reference
 		String taskTitle = getAssignmentTitle(taskId);
@@ -2113,119 +2112,44 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
 		}
 
-		HttpsURLConnection connection;
-
-		try {
-			URL hostURL;
-
-			hostURL = new URL(apiURL);
-			if (proxy == null) {
-				connection = (HttpsURLConnection) hostURL.openConnection();
-			} else {
-				connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-			}
-
-			connection.setRequestMethod("GET");
-			connection.setDoOutput(true);
-			connection.setDoInput(true);
-
-			log.debug("HTTPS connection made to Turnitin");
-
-			OutputStream outStream = connection.getOutputStream();
-
-			outStream.write("aid=".getBytes("UTF-8"));
-			outStream.write(aid.getBytes("UTF-8"));
-
-			outStream.write("&assign=".getBytes("UTF-8"));
-			outStream.write(assignEnc.getBytes("UTF-8"));
-
-			outStream.write("&assignid=".getBytes("UTF-8"));
-			outStream.write(assignid.getBytes("UTF-8"));
-
-			outStream.write("&cid=".getBytes("UTF-8"));
-			outStream.write(cid.getBytes("UTF-8"));
-
-			outStream.write("&uid=".getBytes("UTF-8"));
-			outStream.write(uid.getBytes("UTF-8"));
-
-			outStream.write("&ctl=".getBytes("UTF-8"));
-			outStream.write(ctl.getBytes("UTF-8"));	
-
-			outStream.write("&diagnostic=".getBytes("UTF-8"));
-			outStream.write(diagnostic.getBytes("UTF-8"));
-
-			outStream.write("&dtdue=".getBytes("UTF-8"));
-			outStream.write(dtdue.getBytes("UTF-8"));
-
-			outStream.write("&dtstart=".getBytes("UTF-8"));
-			outStream.write(dtstart.getBytes("UTF-8"));
-
-			outStream.write("&encrypt=".getBytes("UTF-8"));
-			outStream.write(encrypt.getBytes("UTF-8"));
-
-			outStream.write("&fcmd=".getBytes("UTF-8"));
-			outStream.write(fcmd.getBytes("UTF-8"));
-
-			outStream.write("&fid=".getBytes("UTF-8"));
-			outStream.write(fid.getBytes("UTF-8"));
-
-			outStream.write("&gmtime=".getBytes("UTF-8"));
-			outStream.write(gmtime.getBytes("UTF-8"));
-
-			outStream.write("&s_view_report=".getBytes("UTF-8"));
-			outStream.write(s_view_report.getBytes("UTF-8"));
-
-			outStream.write("&said=".getBytes("UTF-8"));
-			outStream.write(said.getBytes("UTF-8"));
-
-			outStream.write("&uem=".getBytes("UTF-8"));
-			outStream.write(uem.getBytes("UTF-8"));
-
-			outStream.write("&ufn=".getBytes("UTF-8"));
-			outStream.write(ufn.getBytes("UTF-8"));
-
-			outStream.write("&uln=".getBytes("UTF-8"));
-			outStream.write(uln.getBytes("UTF-8"));
-
-			outStream.write("&upw=".getBytes("UTF-8"));
-			outStream.write(upw.getBytes("UTF-8"));
-
-			outStream.write("&utp=".getBytes("UTF-8"));
-			outStream.write(utp.getBytes("UTF-8"));
-
-			outStream.write("&md5=".getBytes("UTF-8"));
-			outStream.write(md5.getBytes("UTF-8"));
-
-			if (useSourceParameter) {
-				outStream.write("&src=9".getBytes("UTF-8"));
-			}
-
-			outStream.close();
-		} catch (MalformedURLException e) {
-			throw new SubmissionException("Assignment creation call to Turnitin API failed", e);
-		} catch (IOException e) {
-			throw new SubmissionException("Assignment creation call to Turnitin API failed", e);
-		}
-
-		BufferedReader in;
-		try {
-			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-		} catch (Exception t) {
-			throw new SubmissionException ("Cannot get Turnitin response. Assuming call was unsuccessful", t);
+		Map params = TurnitinAPIUtil.packMap(null, 
+				"aid", aid,
+				"assign", assignEnc,
+				"assignid", assignid,
+				"cid", cid,
+				"uid", uid,
+				"ctl", ctl,
+				"diagnostic", diagnostic,
+				"dtdue", dtdue,
+				"dtstart", dtstart,
+				"encrypt", encrypt,
+				"fcmd", fcmd,
+				"fid", fid,
+				"gmtime", gmtime,
+				"s_view_report", s_view_report,
+				"said", said,
+				"uem", uem,
+				"ufn", ufn,
+				"uln", uln,
+				"upw", upw,
+				"utp", utp
+		);
+		
+		if (useSourceParameter) {
+			params = TurnitinAPIUtil.packMap(params, "src", "9");
 		}
 
 		Document document = null;
-		try {	
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			document = parser.parse(new org.xml.sax.InputSource(in));
+		
+		try {
+			document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
 		}
-		catch (ParserConfigurationException pce){
-			log.error("parser configuration error: " + pce.getMessage());
-			throw new SubmissionException("parser configuration error", pce);
-		} catch (Exception t) {
-			throw new SubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
-		}		
+		catch (TransientSubmissionException tse) {
+			log.error("Error on API call in updateAssignment siteid: " + siteId + " taskid: " + taskId, tse);
+		}
+		catch (SubmissionException se) {
+			log.error("Error on API call in updateAssignment siteid: " + siteId + " taskid: " + taskId, se);
+		}
 
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();

@@ -410,6 +410,28 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
         tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
         
+    def testUpdateAssignment(self):
+        """TurnitinReviewServiceImpl.updateAssignment
+        
+        TODO: I think this is suppose to actually test updating the due date.
+        I believe the occasional running of doAssignments is to get around the
+        5 month due date limitation."""
+        tiiasnnid = "/unittests/asnnupdate/"+str(uuid.uuid1())
+        opts = HashMap()
+        opts.put('journal_check','1')
+        self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        Thread.sleep(1000)
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        Thread.sleep(1000)
+        self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
+        Thread.sleep(1000)
+        
+        self.tiireview_serv.updateAssignment("tii-unit-test", tiiasnnid)
+        Thread.sleep(1000)
+        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
+        
+        
     """The following tests below are for ONC-1834: ie. Setting the Due Date on 
     the Turnitin assignment. We need to test a number of boundary cases. Also,
     from the comments in the code it looks like you can only set the due date
