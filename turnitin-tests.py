@@ -215,6 +215,26 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
             self.log.warn("The status for " + contentid + " is: " + str(status))
             self.assert_(status in [ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE, ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE])
             self.assertNotEqual(status, ContentReviewItem.NOT_SUBMITTED_CODE)
+            
+    def testCheckForReportsIndividual(self):
+        """Test for TurnitinReviewServiceImpl.checkForReportsIndividual"""
+        tiiclassid = str(uuid.uuid1())
+        tiiasnnid = str(uuid.uuid1())
+        self.tiireview_serv.createClass(tiiclassid)
+        Thread.sleep(1000)
+        self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
+        
+        tiicontentid = self.enrollAndQueueContentForStudent("stud01", tiiclassid, tiiasnnid)
+        tiicontentid2 = self.enrollAndQueueContentForStudent("stud02", tiiclassid, tiiasnnid)
+        
+        #TODO Do the same thing the quartz job would
+        self.tiireview_serv.processQueue()
+        self.tiireview_serv.checkForReportsIndividual()
+        for contentid in [tiicontentid, tiicontentid2]:
+            status = self.tiireview_serv.getReviewStatus(contentid)
+            self.log.warn("The status for " + contentid + " is: " + str(status))
+            self.assert_(status in [ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE, ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE])
+            self.assertNotEqual(status, ContentReviewItem.NOT_SUBMITTED_CODE)
 
     """
     Creating and Reading Turnitin Assignments

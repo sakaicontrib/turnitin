@@ -262,8 +262,6 @@ public class TurnitinAPIUtil {
 
 						outStream.write(resource.getContent());
 						outStream.write("\r\n".getBytes("UTF-8"));
-
-						//outStream.write(("--" + boundary).getBytes());
 					}
 					else {
 						outStream.write(encodeParam(sortedkeys.get(i),parameters.get(sortedkeys.get(i)).toString(), boundary).getBytes());

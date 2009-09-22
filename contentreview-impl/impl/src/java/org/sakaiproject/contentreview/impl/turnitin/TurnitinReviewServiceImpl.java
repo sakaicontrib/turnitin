@@ -1134,7 +1134,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		}
 
-
 		return null;
 	}
 
@@ -1156,19 +1155,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	private void releaseLock(ContentReviewItem currentItem) {
-
 		dao.releaseLock("item." + currentItem.getId().toString(), serverConfigurationService.getServerId());
 	}
 
 	public void processQueue() {
 		log.debug("Processing submission queue");
 
-
 		for (ContentReviewItem currentItem = getNextItemInSubmissionQueue(); currentItem != null; currentItem = getNextItemInSubmissionQueue()) {
 
-
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
-
 
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(Long.valueOf(0));
@@ -1292,8 +1287,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			//these errors should probably be caught when a student is enrolled in a class
 			//but we check again here to be sure
 
-
-
 			String diagnostic = "0";
 			String encrypt = "0";
 			String fcmd = "2";
@@ -1344,8 +1337,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				catch (IllegalArgumentException eae) {
 					log.warn("Unable to decode fileName: " + fileName);
 				}
-
-
 
 				fileName = fileName.replace(' ', '_');
 				log.debug("fileName is :" + fileName);
@@ -1403,181 +1394,33 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			+ secretKey;
 
 			Map params = TurnitinAPIUtil.packMap( null,
-				"assignid", assignid,
-				"uid", uid,
-				"cid", cid,
-				"aid", aid,
-				"assign", assign,
-				"ctl", ctl,
-				"diagnostic", diagnostic,
-				"dis", Integer.valueOf(sendNotifications).toString(),
-				"encrypt", encrypt,
-				"fcmd", fcmd,
-				"fid", fid,
-				"gmtime", gmtime,
-				"ptype", ptype,
-				"ptl", ptl,
-				"said", said,
-				"tem", tem,
-				"uem", uem,
-				"ufn", ufn,
-				"uln", uln,
-				"utp", utp,
-				"resource_obj", resource
+					"assignid", assignid,
+					"uid", uid,
+					"cid", cid,
+					"aid", aid,
+					"assign", assign,
+					"ctl", ctl,
+					"diagnostic", diagnostic,
+					"dis", Integer.valueOf(sendNotifications).toString(),
+					"encrypt", encrypt,
+					"fcmd", fcmd,
+					"fid", fid,
+					"gmtime", gmtime,
+					"ptype", ptype,
+					"ptl", ptl,
+					"said", said,
+					"tem", tem,
+					"uem", uem,
+					"ufn", ufn,
+					"uln", uln,
+					"utp", utp,
+					"resource_obj", resource
 			);
-			
-			//outStream.write(encodeParam("assignid", assignid, boundary).getBytes());
-			//outStream.write(encodeParam("uid", uid, boundary).getBytes());
-			//outStream.write(encodeParam("cid", cid, boundary).getBytes());
-			//outStream.write(encodeParam("aid", aid, boundary).getBytes());
-			//outStream.write(encodeParam("assign", assign, boundary).getBytes());
-			//outStream.write(encodeParam("ctl", ctl, boundary).getBytes());
-			//outStream.write(encodeParam("diagnostic", diagnostic, boundary).getBytes());
-			//outStream.write(encodeParam("dis", Integer.valueOf(sendNotifications).toString(), boundary).getBytes());;
-			//outStream.write(encodeParam("encrypt", encrypt, boundary).getBytes());
-			//outStream.write(encodeParam("fcmd", fcmd, boundary).getBytes());
-			//outStream.write(encodeParam("fid", fid, boundary).getBytes());
-			//outStream.write(encodeParam("gmtime", gmtime, boundary).getBytes());
-			//outStream.write(encodeParam("ptype", ptype, boundary).getBytes());
-			//outStream.write(encodeParam("ptl", ptl, boundary).getBytes());
-			//outStream.write(encodeParam("said", said, boundary).getBytes());
-			//outStream.write(encodeParam("tem", tem, boundary).getBytes());
-			//outStream.write(encodeParam("uem", uem, boundary).getBytes());
-			//outStream.write(encodeParam("ufn", ufn, boundary).getBytes());
-			//outStream.write(encodeParam("uln", uln, boundary).getBytes());
-			//outStream.write(encodeParam("utp", utp, boundary).getBytes());
-			//outStream.write(encodeParam("md5", md5, boundary).getBytes());
-			
+
 			if (useSourceParameter) {
 				params = TurnitinAPIUtil.packMap(params, "src", "9");
 				//outStream.write(encodeParam("src", "9", boundary).getBytes());
 			}
-
-			// put in the actual file
-/*
-			outStream.write(("--" + boundary
-					+ "\r\nContent-Disposition: form-data; name=\"pdata\"; filename=\""
-					+ currentItem.getContentId() + "\"\r\n"
-					+ "Content-Type: " + resource.getContentType()
-					+ "\r\ncontent-transfer-encoding: binary" + "\r\n\r\n")
-					.getBytes());
-
-			outStream.write(resource.getContent());
-	*/		
-			/*
-			String md5;
-			try{
-				md5 = this.getMD5(md5_str);
-			} catch (NoSuchAlgorithmException e) {
-				log.debug("Submission attempt failed due to MD5 generation error");
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("MD5 error");
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
-			}
-
-			String boundary = "";
-			OutputStream outStream = null;
-
-			HttpsURLConnection connection;
-			
-			try {
-
-				URL hostURL = new URL(apiURL);
-				if (proxy == null) {
-					connection = (HttpsURLConnection) hostURL.openConnection();
-				} else {
-					connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-				}
-
-				connection.setRequestMethod("POST");
-				connection.setDoOutput(true);
-				connection.setDoInput(true);
-
-				Random rand = new Random();
-				//make up a boundary that should be unique
-				boundary = Long.toString(rand.nextLong(), 26)
-				+ Long.toString(rand.nextLong(), 26)
-				+ Long.toString(rand.nextLong(), 26);
-
-				// set up the connection to use multipart/form-data
-				connection.setRequestProperty("Content-Type","multipart/form-data; boundary=" + boundary);
-
-				log.debug("HTTPS connection made to Turnitin");
-
-				outStream = connection.getOutputStream();
-
-				// connection.connect();
-				outStream.write(encodeParam("assignid", assignid, boundary).getBytes());
-				outStream.write(encodeParam("uid", uid, boundary).getBytes());
-				outStream.write(encodeParam("cid", cid, boundary).getBytes());
-				outStream.write(encodeParam("aid", aid, boundary).getBytes());
-				outStream.write(encodeParam("assign", assign, boundary).getBytes());
-				outStream.write(encodeParam("ctl", ctl, boundary).getBytes());
-				outStream.write(encodeParam("diagnostic", diagnostic, boundary).getBytes());
-				outStream.write(encodeParam("dis", Integer.valueOf(sendNotifications).toString(), boundary).getBytes());;
-				outStream.write(encodeParam("encrypt", encrypt, boundary).getBytes());
-				outStream.write(encodeParam("fcmd", fcmd, boundary).getBytes());
-				outStream.write(encodeParam("fid", fid, boundary).getBytes());
-				outStream.write(encodeParam("gmtime", gmtime, boundary).getBytes());
-				outStream.write(encodeParam("ptype", ptype, boundary).getBytes());
-				outStream.write(encodeParam("ptl", ptl, boundary).getBytes());
-				outStream.write(encodeParam("said", said, boundary).getBytes());
-				outStream.write(encodeParam("tem", tem, boundary).getBytes());
-				outStream.write(encodeParam("uem", uem, boundary).getBytes());
-				outStream.write(encodeParam("ufn", ufn, boundary).getBytes());
-				outStream.write(encodeParam("uln", uln, boundary).getBytes());
-				outStream.write(encodeParam("utp", utp, boundary).getBytes());
-				outStream.write(encodeParam("md5", md5, boundary).getBytes());
-				if (useSourceParameter) {
-					outStream.write(encodeParam("src", "9", boundary).getBytes());
-				}
-
-				// put in the actual file
-
-				outStream.write(("--" + boundary
-						+ "\r\nContent-Disposition: form-data; name=\"pdata\"; filename=\""
-						+ currentItem.getContentId() + "\"\r\n"
-						+ "Content-Type: " + resource.getContentType()
-						+ "\r\ncontent-transfer-encoding: binary" + "\r\n\r\n")
-						.getBytes());
-
-				outStream.write(resource.getContent());
-				outStream.write("\r\n".getBytes("UTF-8"));
-
-				outStream.write(("--" + boundary + "--").getBytes());
-
-				outStream.close();
-			} catch (IOException e1) {
-				log.warn("Submission failed due to IO error: " + e1.toString());
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("Submission Error:" + e1.toString());
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
-			} 
-			catch (ServerOverloadException e3) {
-				log.warn("Submission failed due to server error: " + e3.toString());
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("Submission Error:" + e3.toString());
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
-			}
-
-			BufferedReader in;
-			try {
-				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			} catch (IOException e1) {
-				log.warn("Unable to determine Submission status due to response IO error: " + e1.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("Submission Error:" + e1.getMessage());
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
-			}
-			*/
 
 			Document document = null;
 			try {
@@ -1597,33 +1440,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				releaseLock(currentItem);
 				continue;
 			}
-			
-			/*
-			try {	
-				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-				document = parser.parse(new org.xml.sax.InputSource(in));
-			}
-			catch (ParserConfigurationException pce){
-				log.error("parser configuration error: " + pce.getMessage());
-			}
-			catch (SAXException se) {
-				log.error("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("Unable to determine Submission status due to response parsing error: " + se.getMessage() + ". Assume unsuccessful");
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
-
-			} catch (IOException e) {
-				log.warn("Unable to determine Submission status due to response IO error: " + e.getMessage() + ". Assume unsuccessful");
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("Submission Error:" + e.getMessage());
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				continue;
-			}
-*/
 
 			Element root = document.getDocumentElement();
 
@@ -1656,7 +1472,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					dao.update(currentItem);
 				}
-
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 
@@ -1989,9 +1804,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-
 			// get the list from turnitin and see if the review is available
-
 
 			String diagnostic = "0";
 			String encrypt = "0";
@@ -2019,144 +1832,59 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String gmtime = this.getGMTime();
 			String oid = currentItem.getExternalId();
 
-			String md5_str = aid + assign + assignid + cid + ctl
-			+ diagnostic + encrypt + fcmd + fid + gmtime + oid + said
-			+ tem + uem + ufn + /* uid +*/  uln + utp + secretKey;
-
-			String md5;
-			try{
-				md5 = this.getMD5(md5_str);
-			} catch (NoSuchAlgorithmException e) {
-				log.debug("Update failed due to MD5 generation error");
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError("MD5 generation error");
-				dao.update(currentItem);
-				listIterator.remove();
-				break;
-			}
-
-			HttpsURLConnection connection;
+			Map params = new HashMap();
 
 			try {
-				URL hostURL = new URL(apiURL);
-				if (proxy == null) {
-					connection = (HttpsURLConnection) hostURL.openConnection();
-				} else {
-					connection = (HttpsURLConnection) hostURL.openConnection(proxy);
-				}
-
-				connection.setRequestMethod("GET");
-				connection.setDoOutput(true);
-				connection.setDoInput(true);
-
-				log.debug("HTTPS connection made to Turnitin");
-
-				OutputStream out = connection.getOutputStream();
-
-				out.write("fid=".getBytes("UTF-8"));
-				out.write(fid.getBytes("UTF-8"));
-
-				out.write("&fcmd=".getBytes("UTF-8"));
-				out.write(fcmd.getBytes("UTF-8"));
-
-				//out.write("&uid=".getBytes("UTF-8"));
-				//out.write(uid.getBytes("UTF-8"));
-
-				out.write("&tem=".getBytes("UTF-8"));
-				out.write(tem.getBytes("UTF-8"));
-
-				out.write("&assign=".getBytes("UTF-8"));
-				out.write(assign.getBytes("UTF-8"));
-
-				out.write("&assignid=".getBytes("UTF-8"));
-				out.write(assignid.getBytes("UTF-8"));
-
-				out.write("&cid=".getBytes("UTF-8"));
-				out.write(cid.getBytes("UTF-8"));
-
-				out.write("&ctl=".getBytes("UTF-8"));
-				out.write(ctl.getBytes("UTF-8"));
-
-				out.write("&encrypt=".getBytes());
-				out.write(encrypt.getBytes("UTF-8"));
-
-				out.write("&aid=".getBytes("UTF-8"));
-				out.write(aid.getBytes("UTF-8"));
-
-				out.write("&oid=".getBytes("UTF-8"));
-				out.write(oid.getBytes("UTF-8"));
-
-				out.write("&said=".getBytes("UTF-8"));
-				out.write(said.getBytes("UTF-8"));
-
-				out.write("&diagnostic=".getBytes("UTF-8"));
-				out.write(diagnostic.getBytes("UTF-8"));
-
-				out.write("&uem=".getBytes("UTF-8"));
-				out.write(URLEncoder.encode(uem, "UTF-8").getBytes("UTF-8"));
-
-				out.write("&ufn=".getBytes("UTF-8"));
-				out.write(ufn.getBytes("UTF-8"));
-
-				out.write("&uln=".getBytes("UTF-8"));
-				out.write(uln.getBytes("UTF-8"));
-
-				out.write("&utp=".getBytes("UTF-8"));
-				out.write(utp.getBytes("UTF-8"));
-
-				out.write("&gmtime=".getBytes("UTF-8"));
-				out.write(URLEncoder.encode(gmtime, "UTF-8").getBytes("UTF-8"));
-
-				out.write("&md5=".getBytes("UTF-8"));
-				out.write(md5.getBytes("UTF-8"));
-
-				if (useSourceParameter) {
-					out.write("&src=9".getBytes("UTF-8"));
-				}
-
-				out.close();
-			} catch (IOException e) {
-				log.debug("Update failed due to IO error: " + e.toString());
+				params = TurnitinAPIUtil.packMap(null,
+						"fid", fid,
+						"fcmd", fcmd,
+						"tem", tem,
+						"assign", assign,
+						"assignid", assignid,
+						"cid", cid,
+						"ctl", ctl,
+						"encrypt", encrypt,
+						"aid", aid,
+						"oid", oid,
+						"said", said,
+						"diagnostic", diagnostic,
+						"uem", URLEncoder.encode(uem, "UTF-8"),
+						"ufn", ufn,
+						"uln", uln,
+						"utp", utp,
+						"gmtime", URLEncoder.encode(gmtime, "UTF-8")
+				);
+			}
+			catch (java.io.UnsupportedEncodingException e) {
+				log.debug("Unable to encode a URL param as UTF-8: " + e.toString());
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError(e.getMessage());
 				dao.update(currentItem);
-				break;
+				break;						
 			}
 
-			BufferedReader in;
-			try{
-				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			} catch (IOException e) {
-				log.debug("Update failed due to IO error: " + e.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError(e.getMessage());
-				dao.update(currentItem);
-				break;
+			if (useSourceParameter) {
+				params = TurnitinAPIUtil.packMap(params, "src", "9");
 			}
+
 			Document document = null;
-			try{
-				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-				document= parser.parse(new InputSource(in));
-
-			} catch (SAXException e1) {
-				log.error("Update failed due to Parsing error: " + e1.getMessage());
-				log.debug(e1.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError("Parse error: " +e1.getMessage());
-				dao.update(currentItem);
-				//we may as well go on as the document may be in the part of the file that was parsed
-				continue;
-			} catch (IOException e2) {
-				log.warn("Update failed due to IO error: " + e2.getMessage());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError("IO error " + e2.getMessage());
-				dao.update(currentItem);
-				continue;
-			} catch (ParserConfigurationException pce) {
-				log.error("Parse configuration error: " + pce.getMessage());
+			try {
+				document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
 			}
-
+			catch (TransientSubmissionException e) {
+				log.debug("Fid10fcmd2 failed due to TransientSubmissionException error: " + e.toString());
+				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setLastError(e.getMessage());
+				dao.update(currentItem);
+				break;
+			}
+			catch (SubmissionException e) {
+				log.debug("Fid10fcmd2 failed due to SubmissionException error: " + e.toString());
+				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+				currentItem.setLastError(e.getMessage());
+				dao.update(currentItem);
+				break;
+			}
 
 			Element root = document.getDocumentElement();
 			if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
@@ -2182,9 +1910,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} else {
 				log.debug("Report list request not successful");
 				log.debug(document.toString());
-
 			}
-
 
 			int reportVal;
 			// check if the report value is now there (there may have been a
