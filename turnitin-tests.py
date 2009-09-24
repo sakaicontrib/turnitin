@@ -236,6 +236,30 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
             self.assert_(status in [ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE, ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE])
             self.assertNotEqual(status, ContentReviewItem.NOT_SUBMITTED_CODE)
 
+    def testGetReviewReportInstructor(self):
+        """Test URLS from ContentReviewService.getReviewReportInstructor"""
+        """tiiclassid = str(uuid.uuid1())
+        tiiasnnid = str(uuid.uuid1())
+        self.tiireview_serv.createClass(tiiclassid)
+        Thread.sleep(1000)
+        self.tiireview_serv.createAssignment(tiiclassid, tiiasnnid )
+        
+        tiicontentid = self.enrollAndQueueContentForStudent("stud01", tiiclassid, tiiasnnid)
+        tiicontentid2 = self.enrollAndQueueContentForStudent("stud02", tiiclassid, tiiasnnid)
+        
+        #TODO Do the same thing the quartz job would
+        self.tiireview_serv.processQueue()
+        self.tiireview_serv.checkForReports()
+        for contentid in [tiicontentid, tiicontentid2]:
+            reviewURL = self.tiireview_serv.getReviewReportInstructor(contentid)
+            self.log.warn("THE REVIEW URL: " + reviewURL)
+        #    status = self.tiireview_serv.getReviewStatus(contentid)
+        #    #self.log.warn("The status for " + contentid + " is: " + str(status))
+        #    self.assert_(status in [ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE, ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE])
+        #    self.assertNotEqual(status, ContentReviewItem.NOT_SUBMITTED_CODE)
+        """
+        pass
+
     """
     Creating and Reading Turnitin Assignments
 
@@ -443,7 +467,7 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
 #tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
 tii_testcases = [TestTurnitinReviewServiceImpl]
 
-def trySomething():
+def trySomething(*args):
     '''tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
     tiiasnnid = "/unittests/nothere/asdfaasdfsafd"
     tiireview_serv.createAssignment("tii-unit-test",
@@ -451,11 +475,17 @@ def trySomething():
     tiireview_serv.createAssignment("tii-unit-test",
             tiiasnnid)
     '''
-    testcase = TestTurnitinReviewServiceImpl()
-    testcase.setUp()
-    testcase.testCheckForReportsBulk()
-    testcase.tearDown()
-    #print addExampleAttachment()
+    content_id = "/attachment/27eb8fe5-10c0-4f70-9b8c-8031e0e6b851/Assignment2/fc263898-89ef-496c-b8ec-21e4d8c0e0f2/A2IT3_V4.pdf"
+    tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
+    #tiireview_serv.checkForReports()
+    reviewURL = tiireview_serv.getReviewReportInstructor(content_id)
+    print("Instructor URL")
+    print(reviewURL)
+    print("Student URL")
+    studentReviewURL = tiireview_serv.getReviewReportStudent(content_id)
+    print(studentReviewURL)
+    
+    
 
 def doTests():
     becomeUser("inst03")
@@ -514,6 +544,8 @@ def main(args):
         debugTests()
     elif len(args) >= 3 and args[0] == "viewasnn":
         print(viewAssignment(args[1], args[2]))
+    elif len(args) > 0 and args[0] == "proto":
+        trySomething(*args[1:])
     else:
         print(usage())
 

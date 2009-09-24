@@ -170,6 +170,39 @@ public class TurnitinAPIUtil {
 			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
 		return callTurnitinReturnDocument(apiURL, parameters, secretKey, proxy, false);
 	}
+	
+	public static String buildTurnitinURL(String apiURL, Map<String,Object> parameters, String secretKey) {
+		if (!parameters.containsKey("fid")) {
+			throw new IllegalArgumentException("You must to include a fid in the parameters");
+		}
+		
+		parameters.put("gmtime", getGMTime());
+		
+		List<String> sortedkeys = new ArrayList<String>();
+		sortedkeys.addAll(parameters.keySet());
+
+		String md5 = buildTurnitinMD5(parameters, secretKey, sortedkeys);
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append(apiURL);
+		
+		sb.append(sortedkeys.get(0));
+		sb.append("=");
+		sb.append(parameters.get(sortedkeys.get(0)));
+		
+		for (int i = 1; i < sortedkeys.size(); i++) {
+			sb.append("&");
+			sb.append(sortedkeys.get(i));
+			sb.append("=");
+			sb.append(parameters.get(sortedkeys.get(i)));
+		}
+		
+		sb.append("&");
+		sb.append("md5=");
+		sb.append(md5);
+		
+		return sb.toString();
+	}
 
 	public static Document callTurnitinReturnDocument(String apiURL, Map<String,Object> parameters, 
 			String secretKey, Proxy proxy, boolean isMultipart) throws TransientSubmissionException, SubmissionException {
@@ -201,8 +234,6 @@ public class TurnitinAPIUtil {
 			throw new IllegalArgumentException("You must to include a fid in the parameters");
 		}
 
-		TIIFID fid = TIIFID.getFid(Integer.parseInt((String) parameters.get("fid")));
-
 		//if (!parameters.containsKey("gmttime")) {
 		parameters.put("gmtime", getGMTime());
 		//}
@@ -210,25 +241,7 @@ public class TurnitinAPIUtil {
 		List<String> sortedkeys = new ArrayList<String>();
 		sortedkeys.addAll(parameters.keySet());
 
-		Collections.sort(sortedkeys);
-
-
-		StringBuilder md5sb = new StringBuilder();
-		for (int i = 0; i < sortedkeys.size(); i++) {
-			if (fid.includeParamInMD5(sortedkeys.get(i))) {
-				md5sb.append(parameters.get(sortedkeys.get(i)));
-			}
-		}
-
-		md5sb.append(secretKey);
-
-		String md5;
-		try{
-			md5 = getMD5(md5sb.toString());
-		} catch (NoSuchAlgorithmException t) {
-			log.warn("MD5 error creating class on turnitin");
-			throw new SubmissionException("Cannot generate MD5 hash for Turnitin API call", t);
-		}
+		String md5 = buildTurnitinMD5(parameters, secretKey, sortedkeys);
 
 		HttpsURLConnection connection;
 		String boundary = "";
@@ -295,6 +308,32 @@ public class TurnitinAPIUtil {
 
 		return togo;
 
+	}
+
+	private static String buildTurnitinMD5(Map<String, Object> parameters,
+			String secretKey, List<String> sortedkeys)
+			 {
+		
+		TIIFID fid = TIIFID.getFid(Integer.parseInt((String) parameters.get("fid")));
+		Collections.sort(sortedkeys);
+
+		StringBuilder md5sb = new StringBuilder();
+		for (int i = 0; i < sortedkeys.size(); i++) {
+			if (fid.includeParamInMD5(sortedkeys.get(i))) {
+				md5sb.append(parameters.get(sortedkeys.get(i)));
+			}
+		}
+
+		md5sb.append(secretKey);
+
+		String md5;
+		try{
+			md5 = getMD5(md5sb.toString());
+		} catch (NoSuchAlgorithmException t) {
+			log.warn("MD5 error creating class on turnitin");
+			throw new RuntimeException("Cannot generate MD5 hash for Turnitin API call", t);
+		}
+		return md5;
 	}
 
 	private static String encodeParam(String name, String value, String boundary) {

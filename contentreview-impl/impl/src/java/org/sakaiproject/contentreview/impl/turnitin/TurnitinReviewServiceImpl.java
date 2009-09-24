@@ -472,7 +472,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp;
 		String uid;
 
-
 		uem = getProvisionerEmail();
 		ufn = getProvisionerFName();
 		uln = getProvisionerLName();
@@ -480,74 +479,31 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		uid = getProvisionerUserID();
 
 		String gmtime = getGMTime();
-
-		// note that these vars must be ordered alphabetically according to
-		// their names with secretKey last
-		String md5_str = aid + assignid + cid + diagnostic + encrypt + fcmd + fid + gmtime + oid
-		+ said + uem + ufn + uid + uln + utp + secretKey;
-
-		String md5;
-		try {
-			md5 = getMD5(md5_str);
-		} catch (NoSuchAlgorithmException t) {
-			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
-		}
-
-		String reportURL = apiURL;
-
-		reportURL += "fid=";
-		reportURL += fid;
-
-		reportURL += "&fcmd=";
-		reportURL += fcmd;
-
-		reportURL += "&assignid=";
-		reportURL += assignid;
-
-		reportURL += "&uid=";
-		reportURL += uid;
-
-		reportURL += "&cid=";
-		reportURL += cid;
-
-		reportURL += "&encrypt=";
-		reportURL += encrypt;
-
-		reportURL += "&aid=";
-		reportURL += aid;
-
-		reportURL += "&said=";
-		reportURL += said;
-
-		reportURL += "&diagnostic=";
-		reportURL += diagnostic;
-
-		reportURL += "&oid=";
-		reportURL += oid;
-
-		reportURL += "&uem=";
-		reportURL += uem;
-
-		reportURL += "&ufn=";
-		reportURL += ufn;
-
-		reportURL += "&uln=";
-		reportURL += uln;
-
-		reportURL += "&utp=";
-		reportURL += utp;
-
-		reportURL += "&gmtime=";
-		reportURL += gmtime;
-
-		reportURL += "&md5=";
-		reportURL += md5;
-
+		
+		Map params = TurnitinAPIUtil.packMap(null, 
+				"fid", fid,
+				"fcmd", fcmd,
+				"assignid", assignid,
+				"uid", uid,
+				"cid", cid,
+				"encrypt", encrypt,
+				"aid", aid,
+				"said", said,
+				"diagnostic", diagnostic,
+				"oid", oid,
+				"uem", uem,
+				"ufn", ufn,
+				"uln", uln,
+				"utp", utp,
+				"gmtime", gmtime
+				
+		);
+		
 		if (useSourceParameter) {
-			reportURL += "&src=9";
+			params = TurnitinAPIUtil.packMap(params, "src", "9");
 		}
 
-		return reportURL;
+		return TurnitinAPIUtil.buildTurnitinURL(apiURL, params, secretKey);
 	}
 
 	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
@@ -595,77 +551,34 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		uid = item.getUserId();
 		utp = "1";
 
-
-
 		String gmtime = getGMTime();
 
-		// note that these vars must be ordered alphabetically according to
-		// their names with secretKey last
-		String md5_str = aid + assignid + cid + diagnostic + encrypt + fcmd + fid + gmtime + oid
-		+ said + uem + ufn + uid + uln + utp + secretKey;
-
-		String md5;
-		try {
-			md5 = getMD5(md5_str);
-		} catch (NoSuchAlgorithmException t) {
-			throw new ReportException("Cannot create MD5 hash of data for Turnitin API call to retrieve report", t);
+		Map params = TurnitinAPIUtil.packMap(null, 
+				"fid", fid,
+				"fcmd", fcmd,
+				"assignid", assignid,
+				"uid", uid,
+				"cid", cid,
+				"encrypt", encrypt,
+				"aid", aid,
+				"said", said,
+				"diagnostic", diagnostic,
+				"oid", oid,
+				"uem", uem,
+				"ufn", ufn,
+				"uln", uln,
+				"utp", utp,
+				"gmtime", gmtime
+				
+		);
+		
+		if (useSourceParameter) {
+			params = TurnitinAPIUtil.packMap(params, "src", "9");
 		}
-
+		
 		String reportURL = apiURL;
 
-		reportURL += "fid=";
-		reportURL += fid;
-
-		reportURL += "&fcmd=";
-		reportURL += fcmd;
-
-		reportURL += "&assignid=";
-		reportURL += assignid;
-
-		reportURL += "&uid=";
-		reportURL += uid;
-
-		reportURL += "&cid=";
-		reportURL += cid;
-
-		reportURL += "&encrypt=";
-		reportURL += encrypt;
-
-		reportURL += "&aid=";
-		reportURL += aid;
-
-		reportURL += "&said=";
-		reportURL += said;
-
-		reportURL += "&diagnostic=";
-		reportURL += diagnostic;
-
-		reportURL += "&oid=";
-		reportURL += oid;
-
-		reportURL += "&uem=";
-		reportURL += uem;
-
-		reportURL += "&ufn=";
-		reportURL += ufn;
-
-		reportURL += "&uln=";
-		reportURL += uln;
-
-		reportURL += "&utp=";
-		reportURL += utp;
-
-		reportURL += "&gmtime=";
-		reportURL += gmtime;
-
-		reportURL += "&md5=";
-		reportURL += md5;
-
-		if (useSourceParameter) {
-			reportURL += "&src=9";
-		}
-
-		return reportURL;
+		return TurnitinAPIUtil.buildTurnitinURL(apiURL, params, secretKey);
 	}
 
 	public String getReviewReport(String contentId)
@@ -1387,11 +1300,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String gmtime = this.getGMTime();
 
-			String md5_str = aid + assign + assignid + cid + ctl
-			+ diagnostic + sendNotifications + encrypt + fcmd + fid + gmtime + ptl
-			+ ptype + said + tem + uem + ufn + uid + uln + utp
-			+ secretKey;
-
 			Map params = TurnitinAPIUtil.packMap( null,
 					"assignid", assignid,
 					"uid", uid,
@@ -1517,32 +1425,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return gmtime;
 	}
 
-	private String getMD5(String md5_string) throws NoSuchAlgorithmException {
-
-		MessageDigest md = MessageDigest.getInstance("MD5");
-
-		md.update(md5_string.getBytes());
-
-		// convert the binary md5 hash into hex
-		String md5 = "";
-		byte[] b_arr = md.digest();
-
-		for (int i = 0; i < b_arr.length; i++) {
-			// convert the high nibble
-			byte b = b_arr[i];
-			b >>>= 4;
-			b &= 0x0f; // this clears the top half of the byte
-			md5 += Integer.toHexString(b);
-
-			// convert the low nibble
-			b = b_arr[i];
-			b &= 0x0F;
-			md5 += Integer.toHexString(b);
-		}
-
-		return md5;
-	}
-
 	public void checkForReports() {
 		if (serverConfigurationService.getBoolean("turnitin.getReportsBulk", true))
 			checkForReportsBulk();
@@ -1550,9 +1432,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			checkForReportsIndividual();
 
 	}
-
-
-
 
 	/*
 	 * Fetch reports on a class by class basis
@@ -2099,17 +1978,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-		}
-
-		String md5_str  = aid + assignEnc + assignid + cid + ctl + diagnostic + dtdue + dtstart + encrypt +
-		fcmd + fid + gmtime + said + uem + ufn + uid + uln + upw + utp + secretKey;
-
-		String md5;
-		try{
-			md5 = this.getMD5(md5_str);
-		} catch (Exception t) {
-			log.warn("MD5 error creating assignment on turnitin");
-			throw new SubmissionException("Could not generate MD5 hash for \"Create Assignment\" Turnitin API call");
 		}
 
 		Map params = TurnitinAPIUtil.packMap(null, 
