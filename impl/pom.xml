@@ -25,13 +25,13 @@
 
         <!-- Content Review dependencies -->
         <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-contentreview-model-api</artifactId>
+            <groupId>org.sakaiproject.contentreview</groupId>
+            <artifactId>contentreview-model-api</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-contentreview-service-api</artifactId>
+            <groupId>org.sakaiproject.contentreview</groupId>
+            <artifactId>contentreview-service-api</artifactId>
         </dependency>
 
         <dependency>
@@ -68,8 +68,7 @@
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
-            <version>1.3.1</version>
-        </dependency>
+         </dependency>
 
         <!-- JDOM dependencies -->
         <dependency>
@@ -102,17 +101,17 @@
         </dependency>
 
         <dependency>
-            <groupId>org.sakaiproject</groupId>
+            <groupId>org.sakaiproject.common</groupId>
             <artifactId>sakai-common-edu-person-api</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.sakaiproject</groupId>
+            <groupId>org.sakaiproject.common</groupId>
             <artifactId>sakai-common-manager-api</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.sakaiproject</groupId>
+            <groupId>org.sakaiproject.common</groupId>
             <artifactId>sakai-common-type-api</artifactId>
         </dependency>
 
@@ -120,8 +119,7 @@
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <version>1.1</version>
-            <scope>provided</scope>
+             <scope>provided</scope>
         </dependency>
 		<dependency>
 			<groupId>org.apache.poi</groupId>
