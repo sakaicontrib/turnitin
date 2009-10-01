@@ -466,17 +466,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String cid = item.getSiteId();
 		String assignid = defaultAssignId + item.getSiteId();
 
-		String uem;
-		String ufn;
-		String uln;
-		String utp;
-		String uid;
-
-		uem = getProvisionerEmail();
-		ufn = getProvisionerFName();
-		uln = getProvisionerLName();
-		utp = "2";
-		uid = getProvisionerUserID();
+		String uem = getProvisionerEmail();
+		String ufn = getProvisionerFName();
+		String uln = getProvisionerLName();
+		String utp = "2";
+		String uid = getProvisionerUserID();
 
 		String gmtime = getGMTime();
 		
@@ -496,7 +490,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"uln", uln,
 				"utp", utp,
 				"gmtime", gmtime
-				
 		);
 		
 		if (useSourceParameter) {
@@ -537,19 +530,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String cid = item.getSiteId();
 		String assignid = defaultAssignId + item.getSiteId();
 
-		String uem;
-		String ufn;
-		String uln;
-		String utp;
-		String uid;
-
-
 		User user = userDirectoryService.getCurrentUser();
-		uem = user.getEmail();
-		ufn = getUserFirstName(user);
-		uln = user.getLastName();
-		uid = item.getUserId();
-		utp = "1";
+		String uem = user.getEmail();
+		String ufn = getUserFirstName(user);
+		String uln = user.getLastName();
+		String uid = item.getUserId();
+		String utp = "1";
 
 		String gmtime = getGMTime();
 
