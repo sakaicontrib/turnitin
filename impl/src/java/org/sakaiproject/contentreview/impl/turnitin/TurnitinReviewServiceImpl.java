@@ -461,8 +461,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String oid = item.getExternalId();
 		String fid = "6";
 		String fcmd = "1";
-		String encrypt = "0";
-		String diagnostic = "0";
 		String cid = item.getSiteId();
 		String assignid = defaultAssignId + item.getSiteId();
 
@@ -473,26 +471,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String uid = getProvisionerUserID();
 
 		
-		Map params = TurnitinAPIUtil.packMap(null, 
+		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 				"fid", fid,
 				"fcmd", fcmd,
 				"assignid", assignid,
 				"uid", uid,
 				"cid", cid,
-				"encrypt", encrypt,
-				"aid", aid,
-				"said", said,
-				"diagnostic", diagnostic,
 				"oid", oid,
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
 				"utp", utp
 		);
-		
-		if (useSourceParameter) {
-			params = TurnitinAPIUtil.packMap(params, "src", "9");
-		}
 
 		return TurnitinAPIUtil.buildTurnitinURL(apiURL, params, secretKey);
 	}
@@ -523,8 +513,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String oid = item.getExternalId();
 		String fid = "6";
 		String fcmd = "1";
-		String encrypt = "0";
-		String diagnostic = "0";
 		String cid = item.getSiteId();
 		String assignid = defaultAssignId + item.getSiteId();
 
@@ -535,27 +523,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String uid = item.getUserId();
 		String utp = "1";
 
-		Map params = TurnitinAPIUtil.packMap(null, 
+		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 				"fid", fid,
 				"fcmd", fcmd,
 				"assignid", assignid,
 				"uid", uid,
 				"cid", cid,
-				"encrypt", encrypt,
-				"aid", aid,
-				"said", said,
-				"diagnostic", diagnostic,
 				"oid", oid,
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
 				"utp", utp
 		);
-		
-		if (useSourceParameter) {
-			params = TurnitinAPIUtil.packMap(params, "src", "9");
-		}
-		
+
 		String reportURL = apiURL;
 
 		return TurnitinAPIUtil.buildTurnitinURL(apiURL, params, secretKey);
@@ -592,9 +572,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		log.debug("Creating class for site: " + siteId);
 
 		String cpw = defaultClassPassword;
-		String ctl = siteId;
-		String diagnostic = "0";
-		String encrypt = "0";	
+		String ctl = siteId;	
 		String fcmd = "2";
 		String fid = "2";
 		String uem = defaultInstructorEmail;
@@ -607,26 +585,20 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		Document document = null;
 
-		Map params = TurnitinAPIUtil.packMap(null,
+		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
 				"uid", uid,
 				"cid", cid,
-				"aid", aid,
 				"cpw", cpw,
 				"ctl", ctl,
-				"diagnostic", diagnostic,
-				"encrypt", encrypt,
 				"fcmd", fcmd,
 				"fid", fid,
-				"said", said,
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
 				"utp", utp
 		);
 
-		if (useSourceParameter) {
-			params = TurnitinAPIUtil.packMap(params, "src", "9");
-		} else {
+		if (!useSourceParameter) {
 			params = TurnitinAPIUtil.packMap(params, "upw", upw);
 		}
 
@@ -708,14 +680,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	@SuppressWarnings("unchecked")
 	public Map getAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
 		String taskTitle = getAssignmentTitle(taskId);
-		String diagnostic = "0"; //0 = off; 1 = on
 
-		Map params = TurnitinAPIUtil.packMap(null,
-				"aid", aid, "assign", taskTitle, "assignid", taskId,
+		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
+				"assign", taskTitle, "assignid", taskId,
 				"cid", siteId, "uid", this.getProvisionerUserID(), "ctl", siteId,
-				"diagnostic", "0", "encrypt", "0",
 				"fcmd", "7", "fid", "4",
-				"said", said,
 				"uem", this.getProvisionerEmail(), "ufn", this.getProvisionerFName(), "uln", this.getProvisionerLName(),
 				"utp", "2" ); // "upw", defaultInstructorPassword,
 
@@ -757,6 +726,32 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return defaultInstructorId;
 		}
 	}
+	
+	/**
+	 * Get's a Map of TII options that are the same for every one of these
+	 * calls. Things like encrpyt and diagnostic.
+	 * 
+	 * This can be used as well for changing things dynamically and testing.
+	 * 
+	 * @return
+	 */
+	private Map getBaseTIIOptions() {
+		String diagnostic = "0"; //0 = off; 1 = on
+		String encrypt = "0"; //encryption flag
+		
+		Map togo = TurnitinAPIUtil.packMap(null, 
+			"diagnostic", diagnostic,
+			"encrypt", encrypt,
+			"said", said,
+			"aid", aid
+		);
+		
+		if (useSourceParameter) {
+			togo.put("src", "9");
+		}
+		
+		return togo;
+	}
 
 	/**
 	 * Creates or Updates an Assignment
@@ -773,8 +768,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//get the assignment reference
 		String taskTitle = getAssignmentTitle(taskId);
 		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
-
-		String diagnostic = "0"; //0 = off; 1 = on
 
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
 		dform.applyPattern("yyyyMMdd");
@@ -796,7 +789,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			extraAsnnOpts.remove("dtdue");
 		}
 
-		String encrypt = "0";					//encryption flag
 		String fcmd = "2";						//new assignment
 
 		// If this assignment already exists, we should use fcmd 3 to update it.
@@ -840,30 +832,24 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		Document document = null;
 
-		Map params = TurnitinAPIUtil.packMap(null, 
-				"aid", aid, 
+		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 				"assign", assignEnc, 
 				"assignid", assignid, 
 				"cid", cid,
 				"uid", uid,
-				"ctl", ctl,	
-				"diagnostic", diagnostic,
+				"ctl", ctl,
 				"dtdue", dtdue,
 				"dtstart", dtstart,
-				"encrypt", encrypt,
 				"fcmd", fcmd,
 				"fid", fid,
-				"s_view_report", s_view_report, 
-				"said", said, 
+				"s_view_report", s_view_report,
 				"uem", uem, 
 				"ufn", ufn,
 				"uln", uln,
 				"utp", utp
 		);
 
-		if (this.useSourceParameter) {
-			params = TurnitinAPIUtil.packMap(params, "src", "9");
-		} else {
+		if (!this.useSourceParameter) {
 			params = TurnitinAPIUtil.packMap(params, "upw", upw);
 		}
 
@@ -916,8 +902,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String ctl = siteId; 			//class title
 		String fid = "3";
 		String fcmd = "2";
-		String encrypt = "0";
-		String diagnostic = "0";
 		String tem = getTEM(cid);
 
 		User user;
@@ -949,16 +933,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp = "1";
 
 		Map params = new HashMap();
-		params = TurnitinAPIUtil.packMap(null, 
+		params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 				"fid", fid,
 				"fcmd", fcmd,
 				"cid", cid,
 				"tem", tem,
 				"ctl", ctl,
-				"encrypt", encrypt,
-				"aid", aid,
-				"said", said,
-				"diagnostic", diagnostic,
 				"dis", Integer.valueOf(sendNotifications).toString(),
 				"uem", uem,
 				"ufn", ufn,
@@ -966,10 +946,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp,
 				"uid", uid
 		);
-
-		if (useSourceParameter) {
-			params = TurnitinAPIUtil.packMap(params, "src", "9");
-		}
 
 		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
 
@@ -1167,8 +1143,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			//these errors should probably be caught when a student is enrolled in a class
 			//but we check again here to be sure
 
-			String diagnostic = "0";
-			String encrypt = "0";
 			String fcmd = "2";
 			String fid = "5";
 
@@ -1269,21 +1243,17 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String assign = getAssignmentTitle(currentItem.getTaskId());;
 			String ctl = currentItem.getSiteId();
 
-			Map params = TurnitinAPIUtil.packMap( null,
+			Map params = TurnitinAPIUtil.packMap( getBaseTIIOptions(),
 					"assignid", assignid,
 					"uid", uid,
 					"cid", cid,
-					"aid", aid,
 					"assign", assign,
 					"ctl", ctl,
-					"diagnostic", diagnostic,
 					"dis", Integer.valueOf(sendNotifications).toString(),
-					"encrypt", encrypt,
 					"fcmd", fcmd,
 					"fid", fid,
 					"ptype", ptype,
 					"ptl", ptl,
-					"said", said,
 					"tem", tem,
 					"uem", uem,
 					"ufn", ufn,
@@ -1291,11 +1261,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					"utp", utp,
 					"resource_obj", resource
 			);
-
-			if (useSourceParameter) {
-				params = TurnitinAPIUtil.packMap(params, "src", "9");
-				//outStream.write(encodeParam("src", "9", boundary).getBytes());
-			}
 
 			Document document = null;
 			try {
@@ -1383,7 +1348,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			checkForReportsBulk();
 		else 
 			checkForReportsIndividual();
-
 	}
 
 	/*
@@ -1449,8 +1413,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				log.debug("Attempting to update hashtable with reports for site " + currentItem.getSiteId());
 
-				String diagnostic = "0";
-				String encrypt = "0";
 				String fcmd = "2";
 				String fid = "10";
 
@@ -1480,7 +1442,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				Map params = new HashMap();
 				try {
-					params = TurnitinAPIUtil.packMap(null, 
+					params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 							"fid", fid,
 							"fcmd", fcmd,
 							//"uid", uid,
@@ -1489,10 +1451,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							"assignid", assignid,
 							"cid", cid,
 							"ctl", ctl,
-							"encrypt", encrypt,
-							"aid", aid,
-							"said", said,
-							"diagnostic", diagnostic,
 							"uem", URLEncoder.encode(uem, "UTF-8"),
 							"ufn", ufn,
 							"uln", uln,
@@ -1506,10 +1464,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setLastError(e.getMessage());
 					dao.update(currentItem);
 					break;						
-				}
-
-				if (useSourceParameter) {
-					params = TurnitinAPIUtil.packMap(params, "src", "9");
 				}
 
 				Document document = null;
@@ -1634,8 +1588,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			// get the list from turnitin and see if the review is available
 
-			String diagnostic = "0";
-			String encrypt = "0";
 			String fcmd = "2";
 			String fid = "10";
 
@@ -1662,7 +1614,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			Map params = new HashMap();
 
 			try {
-				params = TurnitinAPIUtil.packMap(null,
+				params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
 						"fid", fid,
 						"fcmd", fcmd,
 						"tem", tem,
@@ -1670,11 +1622,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						"assignid", assignid,
 						"cid", cid,
 						"ctl", ctl,
-						"encrypt", encrypt,
-						"aid", aid,
 						"oid", oid,
-						"said", said,
-						"diagnostic", diagnostic,
 						"uem", URLEncoder.encode(uem, "UTF-8"),
 						"ufn", ufn,
 						"uln", uln,
@@ -1687,10 +1635,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setLastError(e.getMessage());
 				dao.update(currentItem);
 				break;						
-			}
-
-			if (useSourceParameter) {
-				params = TurnitinAPIUtil.packMap(params, "src", "9");
 			}
 
 			Document document = null;
@@ -1878,8 +1822,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String taskTitle = getAssignmentTitle(taskId);
 		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
 
-		String diagnostic = "0"; //0 = off; 1 = on
-
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
 		dform.applyPattern("yyyyMMdd");
 		Calendar cal = Calendar.getInstance();
@@ -1896,7 +1838,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		cal.add(Calendar.MONTH, 5);
 		String dtdue = dform.format(cal.getTime());
 
-		String encrypt = "0";					//encryption flag
 		String fcmd = "3";						//new assignment
 		String fid = "4";						//function id
 		String uem = defaultInstructorEmail;
@@ -1927,31 +1868,23 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			e.printStackTrace();
 		}
 
-		Map params = TurnitinAPIUtil.packMap(null, 
-				"aid", aid,
+		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
 				"assign", assignEnc,
 				"assignid", assignid,
 				"cid", cid,
 				"uid", uid,
 				"ctl", ctl,
-				"diagnostic", diagnostic,
 				"dtdue", dtdue,
 				"dtstart", dtstart,
-				"encrypt", encrypt,
 				"fcmd", fcmd,
 				"fid", fid,
 				"s_view_report", s_view_report,
-				"said", said,
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
 				"upw", upw,
 				"utp", utp
 		);
-		
-		if (useSourceParameter) {
-			params = TurnitinAPIUtil.packMap(params, "src", "9");
-		}
 
 		Document document = null;
 		
