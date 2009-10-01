@@ -472,7 +472,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp = "2";
 		String uid = getProvisionerUserID();
 
-		String gmtime = getGMTime();
 		
 		Map params = TurnitinAPIUtil.packMap(null, 
 				"fid", fid,
@@ -488,8 +487,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
-				"utp", utp,
-				"gmtime", gmtime
+				"utp", utp
 		);
 		
 		if (useSourceParameter) {
@@ -537,8 +535,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String uid = item.getUserId();
 		String utp = "1";
 
-		String gmtime = getGMTime();
-
 		Map params = TurnitinAPIUtil.packMap(null, 
 				"fid", fid,
 				"fcmd", fcmd,
@@ -553,9 +549,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
-				"utp", utp,
-				"gmtime", gmtime
-				
+				"utp", utp
 		);
 		
 		if (useSourceParameter) {
@@ -611,8 +605,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String cid = siteId;
 		String uid = defaultInstructorId;
 
-		String gmtime = this.getGMTime();
-
 		Document document = null;
 
 		Map params = TurnitinAPIUtil.packMap(null,
@@ -625,7 +617,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"encrypt", encrypt,
 				"fcmd", fcmd,
 				"fid", fid,
-				"gmtime", gmtime,
 				"said", said,
 				"uem", uem,
 				"ufn", ufn,
@@ -723,7 +714,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"aid", aid, "assign", taskTitle, "assignid", taskId,
 				"cid", siteId, "uid", this.getProvisionerUserID(), "ctl", siteId,
 				"diagnostic", "0", "encrypt", "0",
-				"fcmd", "7", "fid", "4", "gmtime", getGMTime(),
+				"fcmd", "7", "fid", "4",
 				"said", said,
 				"uem", this.getProvisionerEmail(), "ufn", this.getProvisionerFName(), "uln", this.getProvisionerLName(),
 				"utp", "2" ); // "upw", defaultInstructorPassword,
@@ -832,7 +823,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String assign = taskTitle;
 		String ctl = siteId;
 
-		String gmtime = getGMTime();
 		String assignEnc = assign;
 		try {
 			if (assign.contains("&")) {
@@ -863,7 +853,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"encrypt", encrypt,
 				"fcmd", fcmd,
 				"fid", fid,
-				"gmtime", gmtime,
 				"s_view_report", s_view_report, 
 				"said", said, 
 				"uem", uem, 
@@ -959,31 +948,24 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String utp = "1";
 
-		String gmtime = this.getGMTime();
-
 		Map params = new HashMap();
-		try {
-			params = TurnitinAPIUtil.packMap(null, 
-					"fid", fid,
-					"fcmd", fcmd,
-					"cid", cid,
-					"tem", tem,
-					"ctl", ctl,
-					"encrypt", encrypt,
-					"aid", aid,
-					"said", said,
-					"diagnostic", diagnostic,
-					"dis", Integer.valueOf(sendNotifications).toString(),
-					"uem", uem,
-					"ufn", ufn,
-					"uln", uln,
-					"utp", utp,
-					"gmtime", URLEncoder.encode(gmtime, "UTF-8"),
-					"uid", uid
-			);
-		} catch (java.io.UnsupportedEncodingException e) {
-			throw new SubmissionException("Unable to encode gmttime as UTF-8: " + gmtime, e);
-		}
+		params = TurnitinAPIUtil.packMap(null, 
+				"fid", fid,
+				"fcmd", fcmd,
+				"cid", cid,
+				"tem", tem,
+				"ctl", ctl,
+				"encrypt", encrypt,
+				"aid", aid,
+				"said", said,
+				"diagnostic", diagnostic,
+				"dis", Integer.valueOf(sendNotifications).toString(),
+				"uem", uem,
+				"ufn", ufn,
+				"uln", uln,
+				"utp", utp,
+				"uid", uid
+		);
 
 		if (useSourceParameter) {
 			params = TurnitinAPIUtil.packMap(params, "src", "9");
@@ -1287,8 +1269,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String assign = getAssignmentTitle(currentItem.getTaskId());;
 			String ctl = currentItem.getSiteId();
 
-			String gmtime = this.getGMTime();
-
 			Map params = TurnitinAPIUtil.packMap( null,
 					"assignid", assignid,
 					"uid", uid,
@@ -1301,7 +1281,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					"encrypt", encrypt,
 					"fcmd", fcmd,
 					"fid", fid,
-					"gmtime", gmtime,
 					"ptype", ptype,
 					"ptl", ptl,
 					"said", said,
@@ -1397,21 +1376,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 
-	}
-
-	private String getGMTime() {
-		// calculate function2 data
-		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat
-				.getDateInstance());
-		dform.applyPattern("yyyyMMddHH");
-		dform.setTimeZone(TimeZone.getTimeZone("GMT"));
-		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-
-		String gmtime = dform.format(cal.getTime());
-		gmtime += Integer.toString(((int) Math.floor((double) cal
-				.get(Calendar.MINUTE) / 10)));
-
-		return gmtime;
 	}
 
 	public void checkForReports() {
@@ -1514,8 +1478,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String assign = currentItem.getTaskId();
 				String ctl = currentItem.getSiteId();
 
-				String gmtime = this.getGMTime();
-
 				Map params = new HashMap();
 				try {
 					params = TurnitinAPIUtil.packMap(null, 
@@ -1534,8 +1496,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							"uem", URLEncoder.encode(uem, "UTF-8"),
 							"ufn", ufn,
 							"uln", uln,
-							"utp", utp,
-							"gmtime", URLEncoder.encode(gmtime, "UTF-8")
+							"utp", utp
 					);
 
 				}
@@ -1696,7 +1657,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String assign = currentItem.getTaskId();
 			String ctl = currentItem.getSiteId();
 
-			String gmtime = this.getGMTime();
 			String oid = currentItem.getExternalId();
 
 			Map params = new HashMap();
@@ -1718,8 +1678,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						"uem", URLEncoder.encode(uem, "UTF-8"),
 						"ufn", ufn,
 						"uln", uln,
-						"utp", utp,
-						"gmtime", URLEncoder.encode(gmtime, "UTF-8")
+						"utp", utp
 				);
 			}
 			catch (java.io.UnsupportedEncodingException e) {
@@ -1953,7 +1912,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String assign = taskTitle;
 		String ctl = siteId;
 
-		String gmtime = getGMTime();
 		String assignEnc = assign;
 		try {
 			if (assign.contains("&")) {
@@ -1982,7 +1940,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"encrypt", encrypt,
 				"fcmd", fcmd,
 				"fid", fid,
-				"gmtime", gmtime,
 				"s_view_report", s_view_report,
 				"said", said,
 				"uem", uem,
