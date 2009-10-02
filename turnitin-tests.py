@@ -118,12 +118,13 @@ class TestTurnitinSourceSakai(unittest.TestCase):
     def testExample(self):
         pass 
 
-class TestTurnitinReviewServiceImpl(unittest.TestCase):
+
+class BaseTurnitinReviewServiceImpl(unittest.TestCase):
 
     def setUp(self):
         self.tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
         self.cachedSourceParameter = self.tiireview_serv.useSourceParameter
-        self.tiireview_serv.useSourceParameter = False
+        self.tiireview_serv.useSourceParameter = self.useSourceParameter
         self.log = LogFactory.getLog("TestTurnitinReviewServiceImpl")
         self.user_serv = ComponentManager.get("org.sakaiproject.user.api.UserDirectoryService")
         
@@ -464,8 +465,14 @@ class TestTurnitinReviewServiceImpl(unittest.TestCase):
     #def testAsnnDueDate(self):
     #    self.assertFalse(True)
 
+class Src9TurnitinReviewServiceImpl(BaseTurnitinReviewServiceImpl):
+    useSourceParameter = True
+
+class DefaultInstructorTurnitinReviewServiceImpl(BaseTurnitinReviewServiceImpl):
+    useSourceParameter = False
+
 #tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
-tii_testcases = [TestTurnitinReviewServiceImpl]
+tii_testcases = [Src9TurnitinReviewServiceImpl]
 
 def trySomething(*args):
     '''tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
