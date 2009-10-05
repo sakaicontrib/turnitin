@@ -120,6 +120,13 @@ class TestTurnitinSourceSakai(unittest.TestCase):
 
 
 class BaseTurnitinReviewServiceImpl(unittest.TestCase):
+    """
+    Some lessons learned.  We have to use unique siteId's for testing. This is
+    because it's not transparent to convert a src9 site back and forth, so we
+    have to use unique sites/classes/cids/ctls when doing testing since these
+    tests are meant to be reused for both src9 and defaultInstructor
+    testing.
+    """
 
     def setUp(self):
         self.tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
@@ -271,9 +278,10 @@ class BaseTurnitinReviewServiceImpl(unittest.TestCase):
     def testCreateAssignment(self):
         """General test to create a basic assignment"""
         tiiasnnid = "/unittests/"+str(uuid.uuid1())
-        self.tiireview_serv.createAssignment("tii-unit-test",tiiasnnid)
+        tiisiteid = str(uuid.uuid1())
+        self.tiireview_serv.createAssignment(tiisiteid,tiiasnnid)
 
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['assign']),str(tiiasnnid))
 
     """
@@ -472,7 +480,7 @@ class DefaultInstructorTurnitinReviewServiceImpl(BaseTurnitinReviewServiceImpl):
     useSourceParameter = False
 
 #tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
-tii_testcases = [Src9TurnitinReviewServiceImpl]
+tii_testcases = [DefaultInstructorTurnitinReviewServiceImpl]     #DefaultInstructorTurnitinReviewServiceImpl] #, Src9TurnitinReviewServiceImpl]
 
 def trySomething(*args):
     '''tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
@@ -494,7 +502,7 @@ def trySomething(*args):
     
     
 
-def doTests():
+def runTests():
     becomeUser("inst03")
     tii_suites = []
     for testcase in tii_testcases:
@@ -503,12 +511,19 @@ def doTests():
     unittest.TextTestRunner(verbosity=5).run(alltests)
     becomeUser("admin")
 
-def doTest(testname):
+def runTest(testname):
     becomeUser("inst03")
     test_suite = unittest.TestSuite()
-    test_suite.addTest(TestTurnitinReviewServiceImpl(testname))
+    test_suite.addTest(Src9TurnitinReviewServiceImpl(testname))
     unittest.TextTestRunner().run(test_suite)
     becomeUser("admin")
+    
+def showTests():
+    for testcase in tii_testcases:
+        print(testcase)
+        for attr in dir(testcase):
+            if attr.startswith("test"):
+                print("  %s" % (attr))
 
 def debugTests():
     becomeUser("inst03")
@@ -533,8 +548,12 @@ turnitin runtests
 turnitin runtest testname
    - run a single named test
 
+turnitin showtests
+   - show all available tests
+
 turnitin viewasnn siteid taskid
    - view the information for an assignment with taskid in the site
+   
 '''
 
 def viewAssignment(siteid,taskid):
@@ -544,9 +563,11 @@ def viewAssignment(siteid,taskid):
 
 def main(args):
     if len(args) > 0 and args[0] == "runtests":
-        doTests()
+        runTests()
+    elif len(args) > 0 and args[0] == "showtests":
+        showTests()
     elif len(args) > 1 and args[0] == "runtest":
-        doTest(args[1])
+        runTest(args[1])
     elif len(args) > 0 and args[0] == "debugtests":
         debugTests()
     elif len(args) >= 3 and args[0] == "viewasnn":
