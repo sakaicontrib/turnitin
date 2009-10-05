@@ -53,6 +53,8 @@ import uk.org.ponder.streamutil.StreamCopyUtil;
  */
 public class TurnitinAPIUtil {
 	private static final Log log = LogFactory.getLog(TurnitinAPIUtil.class);
+	
+	private static final Log apiTraceLog = LogFactory.getLog("org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace");
 
 	private static String encodeSakaiTitles(String assignTitle) {
 		String assignEnc = assignTitle;
@@ -229,6 +231,8 @@ public class TurnitinAPIUtil {
 	public static InputStream callTurnitinReturnInputStream(String apiURL, Map<String,Object> parameters, 
 			String secretKey, Proxy proxy, boolean isMultipart) throws TransientSubmissionException, SubmissionException {
 		InputStream togo = null;
+		
+		StringBuilder apiDebugSB = new StringBuilder();
 
 		if (!parameters.containsKey("fid")) {
 			throw new IllegalArgumentException("You must to include a fid in the parameters");
@@ -286,13 +290,31 @@ public class TurnitinAPIUtil {
 			else {
 				writeBytesToOutputStream(outStream, sortedkeys.get(0),"=",
 						parameters.get(sortedkeys.get(0)).toString());
+				if (apiTraceLog.isDebugEnabled()) {
+					apiDebugSB.append("Starting TII CALL:\n");
+					apiDebugSB.append(sortedkeys.get(0));
+					apiDebugSB.append(" = ");
+					apiDebugSB.append(parameters.get(sortedkeys.get(0)).toString());
+					apiDebugSB.append("\n");
+				}
 
 				for (int i = 1; i < sortedkeys.size(); i++) {
 					writeBytesToOutputStream(outStream, "&", sortedkeys.get(i), "=", 
 							parameters.get(sortedkeys.get(i)).toString());
+					if (apiTraceLog.isDebugEnabled()) {
+						apiDebugSB.append(sortedkeys.get(i));
+						apiDebugSB.append(" = ");
+						apiDebugSB.append(parameters.get(sortedkeys.get(i)).toString());
+						apiDebugSB.append("\n");
+					}
 				}
 
 				writeBytesToOutputStream(outStream, "&md5=", md5);
+				if (apiTraceLog.isDebugEnabled()) {
+					apiDebugSB.append("md5 = ");
+					apiDebugSB.append(md5);
+					apiTraceLog.debug(apiDebugSB.toString());
+				}
 			}
 
 			outStream.close();
