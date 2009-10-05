@@ -579,7 +579,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String ufn = defaultInstructorFName;
 		String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
-		String upw = defaultInstructorPassword;
+		/* String upw = defaultInstructorPassword; */
 		String cid = siteId;
 		String uid = defaultInstructorId;
 
@@ -599,7 +599,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		);
 
 		if (!useSourceParameter) {
-			params = TurnitinAPIUtil.packMap(params, "upw", upw);
+			/* params = TurnitinAPIUtil.packMap(params, "upw", upw); */
 		}
 
 		document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
@@ -728,6 +728,34 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 	
 	/**
+	 * This will return a map of the information for the instructor such as 
+	 * uem, username, ufn, etc. If the system is configured to use src9 
+	 * provisioning, this will draw information from the current thread based
+	 * user. Otherwise it will use the default Instructor information that has
+	 * been configured for the system.
+	 * 
+	 * @return
+	 */
+	private Map getInstructorInfo() {
+		Map togo = new HashMap();
+		if (useSourceParameter) {
+			User curUser = userDirectoryService.getCurrentUser();
+			togo.put("uem", curUser.getEmail());
+			togo.put("ufn", curUser.getFirstName());
+			togo.put("uln", curUser.getLastName());
+			togo.put("uid", curUser.getId());
+			togo.put("username", curUser.getDisplayName());
+		}
+		else {
+			togo.put("uem", defaultInstructorEmail);
+			togo.put("ufn", defaultInstructorFName);
+			togo.put("uln", defaultInstructorLName);
+			togo.put("uid", defaultInstructorId);
+		}
+		return togo;
+	}
+	
+	/**
 	 * Get's a Map of TII options that are the same for every one of these
 	 * calls. Things like encrpyt and diagnostic.
 	 * 
@@ -755,6 +783,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	/**
 	 * Creates or Updates an Assignment
+	 * 
+	 * This method will look at the current user or default instructor for it's
+	 * user information.
+	 * 
 	 * 
 	 * @param siteId
 	 * @param taskId
@@ -798,11 +830,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		String fid = "4";						//function id
-		String uem = this.getProvisionerEmail(); // defaultInstructorEmail;
-		String ufn = this.getProvisionerFName(); // defaultInstructorFName;
-		String uln = this.getProvisionerLName(); // defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
-		String upw = defaultInstructorPassword;
+		// String upw = defaultInstructorPassword;  TODO Is the upw actually 
+		// required at all? It says optional in the API.
 		String s_view_report = "1";
 		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("s_view_report")) {
 			s_view_report = extraAsnnOpts.get("s_view_report").toString();
@@ -810,21 +840,25 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		String cid = siteId;
-		String uid = defaultInstructorId;
+		//String uid = defaultInstructorId;
 		String assignid = taskId;
 		String assign = taskTitle;
 		String ctl = siteId;
 
+		/* TODO SWG
+		 * I'm not sure why this is encoding n's to & rather than just 
+		 * encoding all parameters using urlencode, but I'm hesitant to change 
+		 * without more knowledge to avoid introducing bugs with pre-existing
+		 * data.
+		 */
 		String assignEnc = assign;
 		try {
 			if (assign.contains("&")) {
 				//log.debug("replacing & in assingment title");
 				assign = assign.replace('&', 'n');
-
 			}
 			assignEnc = assign;
 			log.debug("Assign title is " + assignEnc);
-
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -836,22 +870,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"assign", assignEnc, 
 				"assignid", assignid, 
 				"cid", cid,
-				"uid", uid,
 				"ctl", ctl,
 				"dtdue", dtdue,
 				"dtstart", dtstart,
 				"fcmd", fcmd,
 				"fid", fid,
 				"s_view_report", s_view_report,
-				"uem", uem, 
-				"ufn", ufn,
-				"uln", uln,
 				"utp", utp
 		);
-
-		if (!this.useSourceParameter) {
-			params = TurnitinAPIUtil.packMap(params, "upw", upw);
-		}
+		
+		params.putAll(getInstructorInfo());
 
 		if (extraAsnnOpts != null) {
 			for (Object key: extraAsnnOpts.keySet()) {
@@ -961,9 +989,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * Get the next item that needs to be submitted
 	 *
 	 */
-
 	private ContentReviewItem getNextItemInSubmissionQueue() {
-
 
 		ContentReviewItem searchItem = new ContentReviewItem();
 		searchItem.setContentId(null);
@@ -1429,7 +1455,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				//String uem = defaultInstructorEmail;
 				//String ufn = defaultInstructorFName;
 				//String uln = defaultInstructorLName;
-				String ufn = "Sakai";
+				String ufn = "Sakai";  // This should only be this username for src9 I believe
 				String uln = "Instructor";
 				String utp = "2";
 
@@ -1844,7 +1870,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String ufn = defaultInstructorFName;
 		String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
-		String upw = defaultInstructorPassword;
+		/* String upw = defaultInstructorPassword; */
 		String s_view_report = "1";
 
 		String cid = siteId;
@@ -1882,7 +1908,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
-				"upw", upw,
+				/* "upw", upw, */
 				"utp", utp
 		);
 
@@ -1937,14 +1963,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return cal.getTime();
 	}
 
-	public Map callTurnitinWDefaultsReturnMap(Map<String,Object> parameters) throws TransientSubmissionException, SubmissionException {
-		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
-	}
+	//public Map callTurnitinWDefaultsReturnMap(Map<String,Object> parameters) throws TransientSubmissionException, SubmissionException {
+//		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
+//	}
 
-	public Map callTurnitinReturnMap(String apiURL, Map<String,Object> parameters, 
-			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
-		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
-	}
+	//public Map callTurnitinReturnMap(String apiURL, Map<String,Object> parameters, 
+	//		String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
+	//	return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, parameters, secretKey, proxy);
+	//}
 
 	/**
 	 * Gets a first name for a user or generates an initial from the eid
