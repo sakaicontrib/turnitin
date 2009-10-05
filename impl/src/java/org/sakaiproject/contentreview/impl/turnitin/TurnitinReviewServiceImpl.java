@@ -677,17 +677,26 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		createAssignment(siteId, taskId, null);
 	}
 
+	/**
+	 * Works by fetching the Instructor User info based on defaults or current
+	 * user.
+	 * 
+	 * @param siteId
+	 * @param taskId
+	 * @return
+	 * @throws SubmissionException
+	 * @throws TransientSubmissionException
+	 */
 	@SuppressWarnings("unchecked")
 	public Map getAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
 		String taskTitle = getAssignmentTitle(taskId);
 
 		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
-				"assign", taskTitle, "assignid", taskId,
-				"cid", siteId, "uid", this.getProvisionerUserID(), "ctl", siteId,
-				"fcmd", "7", "fid", "4",
-				"uem", this.getProvisionerEmail(), "ufn", this.getProvisionerFName(), "uln", this.getProvisionerLName(),
-				"utp", "2" ); // "upw", defaultInstructorPassword,
+			"assign", taskTitle, "assignid", taskId, "cid", siteId, "ctl", siteId,
+			"fcmd", "7", "fid", "4", "utp", "2" ); // "upw", defaultInstructorPassword,
 
+		params.putAll(getInstructorInfo());
+		
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
 	}
 
@@ -840,7 +849,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		String cid = siteId;
-		//String uid = defaultInstructorId;
 		String assignid = taskId;
 		String assign = taskTitle;
 		String ctl = siteId;
