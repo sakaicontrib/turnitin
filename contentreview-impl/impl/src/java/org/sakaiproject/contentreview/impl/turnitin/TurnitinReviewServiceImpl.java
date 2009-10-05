@@ -432,8 +432,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.sakaiproject.contentreview.service.ContentReviewService#getReviewReportInstructor(java.lang.String)
+	
+	/** 
+	 * This uses the default Instructor information or current user.
+	 * 
+	 * @see org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl#getReviewReportInstructor(java.lang.String)
 	 */
 	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
 		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
@@ -455,7 +458,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new ReportException("Report not available: " + item.getStatus());
 		}
 
-
 		// report is available - generate the URL to display
 
 		String oid = item.getExternalId();
@@ -463,26 +465,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String fcmd = "1";
 		String cid = item.getSiteId();
 		String assignid = defaultAssignId + item.getSiteId();
-
-		String uem = getProvisionerEmail();
-		String ufn = getProvisionerFName();
-		String uln = getProvisionerLName();
 		String utp = "2";
-		String uid = getProvisionerUserID();
 
-		
 		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 				"fid", fid,
 				"fcmd", fcmd,
 				"assignid", assignid,
-				"uid", uid,
 				"cid", cid,
 				"oid", oid,
-				"uem", uem,
-				"ufn", ufn,
-				"uln", uln,
 				"utp", utp
 		);
+		
+		params.putAll(getInstructorInfo());
 
 		return TurnitinAPIUtil.buildTurnitinURL(apiURL, params, secretKey);
 	}
@@ -745,6 +739,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * 
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	private Map getInstructorInfo() {
 		Map togo = new HashMap();
 		if (useSourceParameter) {
