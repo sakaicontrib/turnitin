@@ -301,19 +301,18 @@ class BaseTurnitinReviewServiceImpl(unittest.TestCase):
         opts = HashMap()
         opts.put('s_view_report','1')
         tiiasnnid = "/unittests/studcanviewreport/"+str(uuid.uuid1())
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        tiisiteid = str(uuid.uuid1())
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
 
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['sviewreports']),str('1'))
 
         # Test that Students cannot view the report
         opts.put('s_view_report','0')
         tiiasnnid = "/unittests/studcannotviewreport/"+str(uuid.uuid1())
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
 
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['sviewreports']),str('0'))
 
     def testCheckAgainstStudentRepository(self):
@@ -324,21 +323,20 @@ class BaseTurnitinReviewServiceImpl(unittest.TestCase):
         """
         opts = HashMap()
         tiiasnnid = "/unittests/usestudentrepo/"+str(uuid.uuid1())
+        tiisiteid = str(uuid.uuid1())
         # Test creating an assignment that checks against student repos
         opts.put('s_paper_check','1')
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
 
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchpapers']),str('1'))
 
         # Test creating an assignment that does not check against student repos
         tiiasnnid = "/unittests/nostudentrepo/"+str(uuid.uuid1())
         opts.put('s_paper_check','0')
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
         
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchpapers']),str('0'))
 
     def testCheckAgainstInternetRepository(self):
@@ -350,20 +348,19 @@ class BaseTurnitinReviewServiceImpl(unittest.TestCase):
         opts = HashMap()
         opts.put('internet_check','1')
         tiiasnnid = "/unittests/useinternet/"+str(uuid.uuid1())
+        tiisiteid = str(uuid.uuid1())
         # Test creating an assignment checked against the Internet
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
         
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchinternet']),str('1'))
 
         # Test creating an assignment not checked against the Internet
         opts.put('internet_check','0')
         tiiasnnid = "/unittests/useinternet/"+str(uuid.uuid1())
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
         
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchinternet']),str('0'))
 
     def testCheckAgainstJournalsRepository(self):
@@ -375,20 +372,19 @@ class BaseTurnitinReviewServiceImpl(unittest.TestCase):
         opts = HashMap()
         opts.put('journal_check','1')
         tiiasnnid = "/unittests/usejournals/"+str(uuid.uuid1())
+        tiisiteid = str(uuid.uuid1())
         # Test creating an assignment checked against Journals
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
 
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
 
         # Test creating an assignment checked against Journals
         opts.put('journal_check','0')
         tiiasnnid = "/unittests/nojournals/"+str(uuid.uuid1())
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
         
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
 
     def testCheckAgainstInstitutionRepository(self):
@@ -400,19 +396,18 @@ class BaseTurnitinReviewServiceImpl(unittest.TestCase):
         opts = HashMap()
         opts.put('institution_check','1')
         tiiasnnid = "/unittests/useinstitution/"+str(uuid.uuid1())
+        tiisiteid = str(uuid.uuid1())
         # Test creating an assignment checked against Journals
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchinstitution']),str('1'))
 
         # Test creating an assignment checked against Journals
         opts.put('institution_check','0')
         tiiasnnid = "/unittests/noinstitution/"+str(uuid.uuid1())
-        self.tiireview_serv.createAssignment("tii-unit-test",
-            tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
          
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchinstitution']),str('0'))
         
     def testGetNonExistantAssignment(self):
@@ -428,19 +423,20 @@ class BaseTurnitinReviewServiceImpl(unittest.TestCase):
         updated and saved.
         """
         tiiasnnid = "/unittests/asnnupdate/"+str(uuid.uuid1())
+        tiisiteid = str(uuid.uuid1())
         opts = HashMap()
         opts.put('journal_check','1')
-        self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
         Thread.sleep(1000)
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         Thread.sleep(1000)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
         Thread.sleep(1000)
         opts.put('journal_check','0')
         
-        self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
         Thread.sleep(1000)
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('0'))
         
     def testUpdateAssignment(self):
@@ -450,18 +446,19 @@ class BaseTurnitinReviewServiceImpl(unittest.TestCase):
         I believe the occasional running of doAssignments is to get around the
         5 month due date limitation."""
         tiiasnnid = "/unittests/asnnupdate/"+str(uuid.uuid1())
+        tiisiteid = str(uuid.uuid1())
         opts = HashMap()
         opts.put('journal_check','1')
-        self.tiireview_serv.createAssignment("tii-unit-test", tiiasnnid, opts)
+        self.tiireview_serv.createAssignment(tiisiteid, tiiasnnid, opts)
         Thread.sleep(1000)
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         Thread.sleep(1000)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
         Thread.sleep(1000)
         
-        self.tiireview_serv.updateAssignment("tii-unit-test", tiiasnnid)
+        self.tiireview_serv.updateAssignment(tiisiteid, tiiasnnid)
         Thread.sleep(1000)
-        tiiresult = self.tiireview_serv.getAssignment("tii-unit-test", tiiasnnid)
+        tiiresult = self.tiireview_serv.getAssignment(tiisiteid, tiiasnnid)
         self.assertEquals(str(tiiresult['object']['searchjournals']),str('1'))
         
         
@@ -480,7 +477,7 @@ class DefaultInstructorTurnitinReviewServiceImpl(BaseTurnitinReviewServiceImpl):
     useSourceParameter = False
 
 #tii_testcases = [TestTurnitinSourceSakai, TestTurnitinSourceSakai, TestTurnitinReviewServiceImpl, TestAssignment2Requirements]
-tii_testcases = [DefaultInstructorTurnitinReviewServiceImpl]     #DefaultInstructorTurnitinReviewServiceImpl] #, Src9TurnitinReviewServiceImpl]
+tii_testcases = [Src9TurnitinReviewServiceImpl]     #DefaultInstructorTurnitinReviewServiceImpl] #, Src9TurnitinReviewServiceImpl]
 
 def trySomething(*args):
     '''tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
@@ -554,6 +551,8 @@ turnitin showtests
 turnitin viewasnn siteid taskid
    - view the information for an assignment with taskid in the site
    
+turnitin processqueue
+turnitin checkforreports
 '''
 
 def viewAssignment(siteid,taskid):
@@ -561,11 +560,23 @@ def viewAssignment(siteid,taskid):
     tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
     return tiireview_serv.getAssignment(siteid,taskid)
 
+def processQueue():
+    tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
+    tiireview_serv.processQueue()
+
+def checkForReports():
+    tiireview_serv = ComponentManager.get("org.sakaiproject.contentreview.service.ContentReviewService")
+    tiireview_serv.checkForReports()
+
 def main(args):
     if len(args) > 0 and args[0] == "runtests":
         runTests()
     elif len(args) > 0 and args[0] == "showtests":
         showTests()
+    elif len(args) > 0 and args[0] == "processqueue":
+        processQueue()
+    elif len(args) > 0 and args[0] == "checkforreports":
+        checkForReports()
     elif len(args) > 1 and args[0] == "runtest":
         runTest(args[1])
     elif len(args) > 0 and args[0] == "debugtests":
