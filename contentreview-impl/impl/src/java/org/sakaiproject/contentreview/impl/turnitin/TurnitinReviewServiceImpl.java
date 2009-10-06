@@ -694,42 +694,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
 	}
 
-	private String getProvisionerEmail() {
-		if (this.useSourceParameter) {
-			return userDirectoryService.getCurrentUser().getEmail();
-		}
-		else {
-			return defaultInstructorEmail;
-		}
-	}
-
-	private String getProvisionerFName() {
-		if (this.useSourceParameter) {
-			return userDirectoryService.getCurrentUser().getFirstName();
-		}
-		else {
-			return defaultInstructorFName;
-		}
-	}
-
-	private String getProvisionerLName() {
-		if (this.useSourceParameter) {
-			return userDirectoryService.getCurrentUser().getLastName();
-		}
-		else {
-			return defaultInstructorLName;
-		}
-	}
-
-	private String getProvisionerUserID() {
-		if (this.useSourceParameter) {
-			return userDirectoryService.getCurrentUser().getId();
-		}
-		else {
-			return defaultInstructorId;
-		}
-	}
-	
 	/**
 	 * This will return a map of the information for the instructor such as 
 	 * uem, username, ufn, etc. If the system is configured to use src9 
