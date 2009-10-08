@@ -322,7 +322,8 @@ public class TurnitinAPIUtil {
 			togo = connection.getInputStream();
 		}
 		catch (IOException t) {
-			throw new TransientSubmissionException("Class creation call to Turnitin API failed", t);
+			log.error("IOException making turnitin call.", t);
+			throw new TransientSubmissionException("IOException making turnitin call.", t);
 		}
 		catch (ServerOverloadException t) {
 			throw new TransientSubmissionException("Unable to submit the content data from ContentHosting", t);
