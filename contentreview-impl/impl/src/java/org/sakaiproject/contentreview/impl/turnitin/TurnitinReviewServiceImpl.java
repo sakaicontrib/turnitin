@@ -1426,7 +1426,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String uln = "Instructor";
 				String utp = "2";
 
-				//String uid = defaultInstructorId;
+				String uid = defaultInstructorId;
 
 				String assignid = currentItem.getTaskId();
 
@@ -1438,7 +1438,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 							"fid", fid,
 							"fcmd", fcmd,
-							//"uid", uid,
+							"uid", uid,
 							"tem", tem,
 							"assign", assign,
 							"assignid", assignid,
