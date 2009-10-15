@@ -1459,10 +1459,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					break;						
 				}
 
-				Document document = null;
-
+				Map tiireturn = null;
 				try {
-					document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+					tiireturn  = TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
 				}
 				catch (TransientSubmissionException e) {
 					log.debug("Update failed due to TransientSubmissionException error: " + e.toString());
@@ -1479,31 +1478,26 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					break;
 				}
 
-				Element root = document.getDocumentElement();
-				if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
+				if (tiireturn.containsKey("rcode") && tiireturn.get("rcode").toString().trim().compareTo("72") == 0) {
 					log.debug("Report list returned successfully");
-
-					NodeList objects = root.getElementsByTagName("object");
+					List objects = (List) tiireturn.get("object");
 					String objectId;
 					String similarityScore;
 					String overlap = "";
-					log.debug(objects.getLength() + " objects in the returned list");
-					for (int i=0; i<objects.getLength(); i++) {
-						similarityScore = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("similarityScore").item(0).getFirstChild())).getData().trim();
-						objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
+					log.debug(objects.size() + " objects in the returned list");
+					for (int i=0; i<objects.size(); i++) {
+						similarityScore = ((Map) (objects.get(i))).get("similarityScore").toString().trim();
+						objectId = ((Map) (objects.get(i))).get("objectID").toString().trim();
 						if (similarityScore.compareTo("-1") != 0) {
-							overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
+							overlap = ((Map) (objects.get(i))).get("overlap").toString().trim();
 							reportTable.put(objectId, Integer.valueOf(overlap));
 						} else {
 							reportTable.put(objectId, Integer.valueOf(-1));
 						}
-
 						log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
 					}
 				} else {
-					log.debug("Report list request not successful");
-					log.debug(document.toString());
-
+					log.debug("Report list request not successful. Return payload is: " + tiireturn);
 				}
 			}
 
