@@ -1434,7 +1434,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String ctl = currentItem.getSiteId();
 
 				Map params = new HashMap();
-				try {
+				//try {
 					params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 							"fid", fid,
 							"fcmd", fcmd,
@@ -1444,12 +1444,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							"assignid", assignid,
 							"cid", cid,
 							"ctl", ctl,
-							"uem", URLEncoder.encode(uem, "UTF-8"),
+							"uem", uem,
 							"ufn", ufn,
 							"uln", uln,
 							"utp", utp
 					);
-
+/*
 				}
 				catch (java.io.UnsupportedEncodingException e) {
 					log.debug("Unable to encode a URL param as UTF-8: " + e.toString());
@@ -1458,7 +1458,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					dao.update(currentItem);
 					break;						
 				}
-
+*/
 				Document document = null;
 
 				try {
@@ -1502,7 +1502,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					}
 				} else {
 					log.debug("Report list request not successful");
-					log.debug(document.toString());
+					log.debug(document.getTextContent());
 
 				}
 			}
