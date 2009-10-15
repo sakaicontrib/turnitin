@@ -162,11 +162,13 @@ public class TurnitinAPIUtil {
 
 	public static Map callTurnitinReturnMap(String apiURL, Map<String,Object> parameters, 
 			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException 
-			{
+	{
 		InputStream inputStream = callTurnitinReturnInputStream(apiURL, parameters, secretKey, proxy, false);
 		XMLTranscoder xmlt = new XMLTranscoder();
-		return xmlt.decode(StreamCopyUtil.streamToString(inputStream));
-			}
+		Map togo = xmlt.decode(StreamCopyUtil.streamToString(inputStream));
+		apiTraceLog.debug("Turnitin Result Payload: " + togo);
+		return togo;
+	}
 
 	public static Document callTurnitinReturnDocument(String apiURL, Map<String,Object> parameters, 
 			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
