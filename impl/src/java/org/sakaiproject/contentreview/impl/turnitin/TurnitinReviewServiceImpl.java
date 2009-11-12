@@ -775,26 +775,67 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//set this to yesterday so we avoid timezine probelms etc
 		cal.add(Calendar.DAY_OF_MONTH, -1);
 		String dtstart = dform.format(cal.getTime());
+		String today = dtstart;
 
 
 		//set the due dates for the assignments to be in 5 month's time
 		//turnitin automatically sets each class end date to 6 months after it is created
 		//the assignment end date must be on or before the class end date
 
+		String fcmd = "2";                                            //new assignment
+		boolean asnnExists = false;
+		// If this assignment already exists, we should use fcmd 3 to update it.
+		Map tiiresult = this.getAssignment(siteId, taskId);
+		if (tiiresult.get("rcode") != null && tiiresult.get("rcode").equals("85")) {
+		    fcmd = "3";
+		    asnnExists = true;
+		}
+		
+		/* Some notes about start and due dates. This information is
+		 * accurate as of Nov 12, 2009 and was determined by testing 
+		 * and experimentation with some Sash scripts.
+		 * 
+		 * A turnitin due date, must be after the start date. This makes
+		 * sense and follows the logic in both Assignments 1 and 2.
+		 * 
+		 * When *creating* a new Turnitin Assignment, the start date 
+		 * must be todays date or later.  The format for dates only 
+		 * includes the day, and not any specific times. I believe that,
+		 * in order to make up for time zone differences between your
+		 * location and the turnitin cloud, it can be basically the
+		 * current day anywhere currently, with some slack. For instance
+		 * I can create an assignment for yesterday, but not for 2 days
+		 * ago. Doing so causes an error.
+		 * 
+		 * However!  For an existing turnitin assignment, you appear to
+		 * have the liberty of changing the start date to sometime in 
+		 * the past. You can also change an assignment to have a due
+		 * date in the past as long as it is still after the start date.
+		 * 
+		 * So, to avoid errors when syncing information, or adding 
+		 * turnitin support to new or existing assignments we will:
+		 * 
+		 * 1. If the assignment already exists we'll just save it.
+		 * 
+		 * 2. If the assignment does not exist, we will save it once using 
+		 * todays date for the start and due date, and then save it again with
+		 * the proper dates to ensure we're all tidied up and in line.
+		 * 
+		 * Also, with our current class creation, due dates can be 5 
+		 * years out, but not further. This seems a bit lower priortity,
+		 * but we still should figure out an appropriate way to deal 
+		 * with it if it does happen.
+		 * 
+		 */
+		  
+		 
+		
 		//TODO use the 'secret' function to change this to longer
 		cal.add(Calendar.MONTH, 5);
 		String dtdue = dform.format(cal.getTime());
 		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("dtdue")) {
 			dtdue = extraAsnnOpts.get("dtdue").toString();
 			extraAsnnOpts.remove("dtdue");
-		}
-
-		String fcmd = "2";						//new assignment
-
-		// If this assignment already exists, we should use fcmd 3 to update it.
-		Map tiiresult = this.getAssignment(siteId, taskId);
-		if (tiiresult.get("rcode") != null && tiiresult.get("rcode").equals("85")) {
-			fcmd = "3";
 		}
 
 		String fid = "4";						//function id
@@ -831,7 +872,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			e.printStackTrace();
 		}
 
-		Document document = null;
+		
 
 		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 				"assign", assignEnc, 
@@ -840,7 +881,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"ctl", ctl,
 				"dtdue", dtdue,
 				"dtstart", dtstart,
-				"fcmd", fcmd,
+				"fcmd", "3",
 				"fid", fid,
 				"s_view_report", s_view_report,
 				"utp", utp
@@ -858,7 +899,32 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 		}
 
-		document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+		if (!asnnExists) {
+			Map firstparams = new HashMap();
+			firstparams.putAll(params);
+			firstparams.put("dtstart", today);
+			firstparams.put("dtdue", today);
+			firstparams.put("fcmd", "2");
+			Document firstSaveDocument = 
+				TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, firstparams, secretKey, proxy);
+			Element root = firstSaveDocument.getDocumentElement();
+			int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
+			if ((rcode > 0 && rcode < 100) || rcode == 419) {
+				log.debug("Create FirstDate Assignment successful");	
+				log.debug("tii returned " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			} else {
+				log.debug("FirstDate Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+				//log.debug(root);
+				throw new TransientSubmissionException("FirstDate Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			}
+			// TODO FIXME -sgithens This is for real. For some reason the 
+			// Turnitin cloud doesn't seem to update fast enough all the time
+			// for back to back calls.
+			try {Thread.sleep(1000);} catch (Exception e) { log.error("Unable to sleep, while waiting for the turnitin cloud to sync", e); }
+
+		}
+
+		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
 
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
