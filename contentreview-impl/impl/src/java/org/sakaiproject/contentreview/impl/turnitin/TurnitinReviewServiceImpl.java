@@ -38,6 +38,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -1414,6 +1415,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 	@SuppressWarnings({ "deprecation", "unchecked" })
 	public void checkForReportsBulk() {
+		
+		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
+		dform.applyPattern("yyyyMMdd");
 
 		log.debug("Checking for updated reports from Turnitin in bulk mode");
 
@@ -1454,11 +1458,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				dao.update(currentItem);
 				continue;
 			} else {
-				long l = currentItem.getRetryCount().longValue();
-				l++;
-				currentItem.setRetryCount(Long.valueOf(l));
-				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
-				dao.update(currentItem);
+				log.info("Still have retries left, continuing. ItemID: " + currentItem.getId());
+				// Moving down to check for report generate speed.
+				//long l = currentItem.getRetryCount().longValue();
+				//l++;
+				//currentItem.setRetryCount(Long.valueOf(l));
+				//currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+				//dao.update(currentItem);
 			}
 
 			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
@@ -1498,7 +1504,51 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				String assign = currentItem.getTaskId();
 				String ctl = currentItem.getSiteId();
-
+				
+				// TODO FIXME Current sgithens 
+				// Move the update setRetryAttempts to here, and first call and
+				// check the assignment from TII to see if the generate until
+				// due is enabled. In that case we don't want to waste retry
+				// attempts and should just continue.
+				try {
+					// TODO FIXME This is broken at the moment because we need
+					// to have a userid, but this is assuming it's coming from
+					// the thread, but we're in a quartz job.
+					Map curasnn = getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					
+					if (curasnn.containsKey("object")) {
+						Map curasnnobj = (Map) curasnn.get("object");
+						String reportGenSpeed = (String) curasnnobj.get("report_gen_speed");
+						String duedate = (String) curasnnobj.get("dtdue");
+						Date duedateObj = null;
+						try {
+							if (duedate != null) {
+								duedateObj = dform.parse(duedate);
+							} 
+						} catch (ParseException pe) {
+							log.warn("Unable to parse turnitin dtdue: " + duedate, pe);
+						}
+						if (reportGenSpeed != null && duedateObj != null &&
+							reportGenSpeed.equals("2") && duedateObj.after(new Date())) {
+							log.info("Report generate speed is 2, skipping for now. ItemID: " + currentItem.getId());
+							continue;
+						}
+						else {
+							log.info("Incrementing retry count for currentItem: " + currentItem.getId());
+							long l = currentItem.getRetryCount().longValue();
+							l++;
+							currentItem.setRetryCount(Long.valueOf(l));
+							currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+							dao.update(currentItem);
+						}
+					}
+				} catch (SubmissionException e) {
+					log.error("Unable to check the report gen speed of the asnn for item: " + currentItem.getId(), e);
+				} catch (TransientSubmissionException e) {
+					log.error("Unable to check the report gen speed of the asnn for item: " + currentItem.getId(), e);
+				}
+				
+				
 				Map params = new HashMap();
 				//try {
 					params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
