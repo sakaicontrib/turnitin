@@ -1514,16 +1514,30 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					// TODO FIXME This is broken at the moment because we need
 					// to have a userid, but this is assuming it's coming from
 					// the thread, but we're in a quartz job.
-					Map curasnn = getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					//Map curasnn = getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+					// TODO FIXME Parameterize getAssignment method to take user information
+					Map getAsnnParams = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
+							"assign", getAssignmentTitle(currentItem.getTaskId()), "assignid", currentItem.getTaskId(), "cid", currentItem.getSiteId(), "ctl", currentItem.getSiteId(),
+							"fcmd", "7", "fid", "4", "utp", "2" );
+					getAsnnParams.put("uem", uem);
+					getAsnnParams.put("ufn", ufn);
+					getAsnnParams.put("uln", uln);
+					getAsnnParams.put("uid", uid);
+					getAsnnParams.put("username", utp);
+									
+					
+					Map curasnn = TurnitinAPIUtil.callTurnitinReturnMap(apiURL, getAsnnParams, secretKey, proxy);
 					
 					if (curasnn.containsKey("object")) {
 						Map curasnnobj = (Map) curasnn.get("object");
-						String reportGenSpeed = (String) curasnnobj.get("report_gen_speed");
+						String reportGenSpeed = (String) curasnnobj.get("generate");
 						String duedate = (String) curasnnobj.get("dtdue");
+						SimpleDateFormat retform = ((SimpleDateFormat) DateFormat.getDateInstance());
+						retform.applyPattern("yyyy-MM-dd");
 						Date duedateObj = null;
 						try {
 							if (duedate != null) {
-								duedateObj = dform.parse(duedate);
+								duedateObj = retform.parse(duedate);
 							} 
 						} catch (ParseException pe) {
 							log.warn("Unable to parse turnitin dtdue: " + duedate, pe);
