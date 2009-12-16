@@ -269,6 +269,9 @@ public class TurnitinAPIUtil {
 			OutputStream outStream = connection.getOutputStream();
 
 			if (isMultipart) {
+				if (apiTraceLog.isDebugEnabled()) {
+					apiDebugSB.append("Starting Multipart TII CALL:\n");
+				}
 				for (int i = 0; i < sortedkeys.size(); i++) {
 					if (parameters.get(sortedkeys.get(i)) instanceof ContentResource) {
 						ContentResource resource = (ContentResource) parameters.get(sortedkeys.get(i));
@@ -281,13 +284,29 @@ public class TurnitinAPIUtil {
 
 						outStream.write(resource.getContent());
 						outStream.write("\r\n".getBytes("UTF-8"));
+						if (apiTraceLog.isDebugEnabled()) {
+							apiDebugSB.append(sortedkeys.get(i));
+							apiDebugSB.append(" = ContentHostingResource: ");
+							apiDebugSB.append(resource.getId());
+						}
 					}
 					else {
+						if (apiTraceLog.isDebugEnabled()) {
+							apiDebugSB.append(sortedkeys.get(i));
+							apiDebugSB.append(" = ");
+							apiDebugSB.append(parameters.get(sortedkeys.get(i)).toString());
+						}
 						outStream.write(encodeParam(sortedkeys.get(i),parameters.get(sortedkeys.get(i)).toString(), boundary).getBytes());
 					}
 				}
 				outStream.write(encodeParam("md5",md5, boundary).getBytes());
 				outStream.write(("--" + boundary + "--").getBytes());
+				
+				if (apiTraceLog.isDebugEnabled()) {
+					apiDebugSB.append("md5 = ");
+					apiDebugSB.append(md5);
+					apiTraceLog.debug(apiDebugSB.toString());
+				}
 			}
 			else {
 				writeBytesToOutputStream(outStream, sortedkeys.get(0),"=",
