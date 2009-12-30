@@ -10,6 +10,13 @@
 
 	<!-- Bring in the hibernate related beans -->
 	<import resource="spring-hibernate.xml" />
+	
+	<bean id="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator"
+		class="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator"
+		init-method="init">
+		<property name="serverConfigurationService"
+			ref="org.sakaiproject.component.api.ServerConfigurationService" />
+	</bean>
 
 	<!-- create a logic bean, give it the dao from above and some sakai services -->
 	<bean
@@ -35,10 +42,10 @@
 		</property>
 		<property name="siteAdvisor"
 			ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" />
-		<property name="securityService"
-			ref="org.sakaiproject.authz.api.SecurityService" />
 		<property name="sqlService"
 			ref="org.sakaiproject.db.api.SqlService" />
+		<property name="turnitinContentValidator"
+			ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator" />
 	</bean>
 
 	<bean
