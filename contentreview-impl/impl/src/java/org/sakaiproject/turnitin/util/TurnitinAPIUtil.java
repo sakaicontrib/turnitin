@@ -180,6 +180,11 @@ public class TurnitinAPIUtil {
 			throw new IllegalArgumentException("You must to include a fid in the parameters");
 		}
 		
+		StringBuilder apiDebugSB = new StringBuilder();
+		if (apiTraceLog.isDebugEnabled()) {
+			apiDebugSB.append("Starting URL TII Construction:\n");
+		}
+		
 		parameters.put("gmtime", getGMTime());
 		
 		List<String> sortedkeys = new ArrayList<String>();
@@ -189,21 +194,43 @@ public class TurnitinAPIUtil {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(apiURL);
+		if (apiTraceLog.isDebugEnabled()) {
+			apiDebugSB.append("The TII Base URL is:\n");
+			apiDebugSB.append(apiURL);
+		}
 		
 		sb.append(sortedkeys.get(0));
 		sb.append("=");
 		sb.append(parameters.get(sortedkeys.get(0)));
+		if (apiTraceLog.isDebugEnabled()) {
+			apiDebugSB.append(sortedkeys.get(0));
+			apiDebugSB.append("=");
+			apiDebugSB.append(parameters.get(sortedkeys.get(0)));
+			apiDebugSB.append("\n");
+		}
 		
 		for (int i = 1; i < sortedkeys.size(); i++) {
 			sb.append("&");
 			sb.append(sortedkeys.get(i));
 			sb.append("=");
 			sb.append(parameters.get(sortedkeys.get(i)));
+			if (apiTraceLog.isDebugEnabled()) {
+				apiDebugSB.append(sortedkeys.get(i));
+				apiDebugSB.append(" = ");
+				apiDebugSB.append(parameters.get(sortedkeys.get(i)));
+				apiDebugSB.append("\n");
+			}
 		}
 		
 		sb.append("&");
 		sb.append("md5=");
 		sb.append(md5);
+		if (apiTraceLog.isDebugEnabled()) {
+			apiDebugSB.append("md5 = ");
+			apiDebugSB.append(md5);
+			apiDebugSB.append("\n");
+			apiTraceLog.debug(apiDebugSB.toString());
+		}
 		
 		return sb.toString();
 	}
@@ -288,6 +315,7 @@ public class TurnitinAPIUtil {
 							apiDebugSB.append(sortedkeys.get(i));
 							apiDebugSB.append(" = ContentHostingResource: ");
 							apiDebugSB.append(resource.getId());
+							apiDebugSB.append("\n");
 						}
 					}
 					else {
@@ -295,6 +323,7 @@ public class TurnitinAPIUtil {
 							apiDebugSB.append(sortedkeys.get(i));
 							apiDebugSB.append(" = ");
 							apiDebugSB.append(parameters.get(sortedkeys.get(i)).toString());
+							apiDebugSB.append("\n");
 						}
 						outStream.write(encodeParam(sortedkeys.get(i),parameters.get(sortedkeys.get(i)).toString(), boundary).getBytes());
 					}
@@ -305,6 +334,7 @@ public class TurnitinAPIUtil {
 				if (apiTraceLog.isDebugEnabled()) {
 					apiDebugSB.append("md5 = ");
 					apiDebugSB.append(md5);
+					apiDebugSB.append("\n");
 					apiTraceLog.debug(apiDebugSB.toString());
 				}
 			}
