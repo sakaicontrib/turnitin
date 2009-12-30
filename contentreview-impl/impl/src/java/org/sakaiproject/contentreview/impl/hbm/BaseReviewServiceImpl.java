@@ -40,7 +40,7 @@ import org.sakaiproject.site.api.Site;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.user.api.UserDirectoryService;
 
-public class BaseReviewServiceImpl implements ContentReviewService {
+public abstract class BaseReviewServiceImpl implements ContentReviewService {
 
 	private String defaultAssignmentName = null;
 
@@ -275,8 +275,7 @@ public class BaseReviewServiceImpl implements ContentReviewService {
 	}
 
 	public boolean isAcceptableContent(ContentResource resource) {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("This is not yet implemented");
 	}
 
 	public void processQueue() {
