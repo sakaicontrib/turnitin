@@ -96,8 +96,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-scheduler-api</artifactId>
+            <groupId>org.sakaiproject.scheduler</groupId>
+            <artifactId>scheduler-api</artifactId>
         </dependency>
 
         <dependency>
