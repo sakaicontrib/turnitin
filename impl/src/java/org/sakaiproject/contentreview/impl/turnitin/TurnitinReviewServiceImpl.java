@@ -94,10 +94,10 @@ import org.xml.sax.SAXException;
 
 public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
-
 	private static final Log log = LogFactory
 	.getLog(TurnitinReviewServiceImpl.class);
 
+	public static final String TURNITIN_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
 	private static final String SERVICE_NAME="Turnitin";
 
@@ -646,7 +646,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
 
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
-		dform.applyPattern("yyyyMMdd");
+		dform.applyPattern(TURNITIN_DATETIME_FORMAT);
 		Calendar cal = Calendar.getInstance();
 		//set this to yesterday so we avoid timezine probelms etc
 		cal.add(Calendar.DAY_OF_MONTH, -1);
@@ -1292,7 +1292,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public void checkForReportsBulk() {
 		
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
-		dform.applyPattern("yyyyMMdd");
+		dform.applyPattern(TURNITIN_DATETIME_FORMAT);
 
 		log.debug("Checking for updated reports from Turnitin in bulk mode");
 
@@ -1408,7 +1408,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						String reportGenSpeed = (String) curasnnobj.get("generate");
 						String duedate = (String) curasnnobj.get("dtdue");
 						SimpleDateFormat retform = ((SimpleDateFormat) DateFormat.getDateInstance());
-						retform.applyPattern("yyyy-MM-dd");
+						retform.applyPattern(TURNITIN_DATETIME_FORMAT);
 						Date duedateObj = null;
 						try {
 							if (duedate != null) {
@@ -1821,7 +1821,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
 
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
-		dform.applyPattern("yyyyMMdd");
+		dform.applyPattern(TURNITIN_DATETIME_FORMAT);
 		Calendar cal = Calendar.getInstance();
 		//set this to yesterday so we avoid timezpne problems etc
 		cal.add(Calendar.DAY_OF_MONTH, -1);
