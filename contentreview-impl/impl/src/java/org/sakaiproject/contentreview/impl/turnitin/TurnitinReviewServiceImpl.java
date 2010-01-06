@@ -125,6 +125,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	private boolean useSourceParameter = false;
 
+	private int turnitinConnTimeout = 0; // Default to 0, no timeout.
+	
 	public boolean isUseSourceParameter() {
 		return useSourceParameter;
 	}
@@ -277,6 +279,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
 				doAssignments();
 		}
+		
+		turnitinConnTimeout = serverConfigurationService.getInt("turnitin.networkTimeout", 0);
 
 	}
 
@@ -472,7 +476,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			/* params = TurnitinAPIUtil.packMap(params, "upw", upw); */
 		}
 
-		document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+		document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 
 		Element root = document.getDocumentElement();
 		String rcode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim();
@@ -567,7 +571,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		params.putAll(getInstructorInfo());
 		
-		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, proxy);
+		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 	}
 
 	/**
@@ -782,7 +786,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			firstparams.put("dtdue", today);
 			firstparams.put("fcmd", "2");
 			Document firstSaveDocument = 
-				TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, firstparams, secretKey, proxy);
+				TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, firstparams, secretKey, turnitinConnTimeout, proxy);
 			Element root = firstSaveDocument.getDocumentElement();
 			int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
 			if ((rcode > 0 && rcode < 100) || rcode == 419) {
@@ -800,7 +804,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		}
 
-		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
@@ -884,7 +888,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"uid", uid
 		);
 
-		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 
 		Element root = document.getDocumentElement();
 
@@ -1199,7 +1203,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			Document document = null;
 			try {
-				document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy, true);
+				document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy, true);
 			}
 			catch (TransientSubmissionException e) {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
@@ -1401,7 +1405,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					getAsnnParams.put("username", utp);
 									
 					
-					Map curasnn = TurnitinAPIUtil.callTurnitinReturnMap(apiURL, getAsnnParams, secretKey, proxy);
+					Map curasnn = TurnitinAPIUtil.callTurnitinReturnMap(apiURL, getAsnnParams, secretKey, turnitinConnTimeout, proxy);
 					
 					if (curasnn.containsKey("object")) {
 						Map curasnnobj = (Map) curasnn.get("object");
@@ -1467,7 +1471,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				Document document = null;
 
 				try {
-					document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+					document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 				}
 				catch (TransientSubmissionException e) {
 					log.debug("Update failed due to TransientSubmissionException error: " + e.toString());
@@ -1637,7 +1641,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			Document document = null;
 			try {
-				document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+				document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 			}
 			catch (TransientSubmissionException e) {
 				log.debug("Fid10fcmd2 failed due to TransientSubmissionException error: " + e.toString());
@@ -1887,7 +1891,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		Document document = null;
 		
 		try {
-			document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, proxy);
+			document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 		}
 		catch (TransientSubmissionException tse) {
 			log.error("Error on API call in updateAssignment siteid: " + siteId + " taskid: " + taskId, tse);
