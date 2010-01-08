@@ -78,7 +78,7 @@ public class TurnitinAPIUtil {
 		+ name + "\"\r\n\r\n" + value + "\r\n";
 	}
 
-	private static HttpsURLConnection fetchConnection(String apiURL, Proxy proxy)
+	private static HttpsURLConnection fetchConnection(String apiURL, int timeout, Proxy proxy)
 	throws MalformedURLException, IOException, ProtocolException {
 		HttpsURLConnection connection;
 		URL hostURL = new URL(apiURL);
@@ -92,9 +92,11 @@ public class TurnitinAPIUtil {
 		// resource body. ( You can see this in Webscarab or some other HTTP
 		// interceptor.
 		connection.setRequestMethod("GET"); 
-
+		connection.setConnectTimeout(timeout);
+		connection.setReadTimeout(timeout);
 		connection.setDoOutput(true);
 		connection.setDoInput(true);
+
 		return connection;
 	}
 
@@ -161,9 +163,9 @@ public class TurnitinAPIUtil {
 	}
 
 	public static Map callTurnitinReturnMap(String apiURL, Map<String,Object> parameters, 
-			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException 
+			String secretKey, int timeout, Proxy proxy) throws TransientSubmissionException, SubmissionException 
 	{
-		InputStream inputStream = callTurnitinReturnInputStream(apiURL, parameters, secretKey, proxy, false);
+		InputStream inputStream = callTurnitinReturnInputStream(apiURL, parameters, secretKey, timeout, proxy, false);
 		XMLTranscoder xmlt = new XMLTranscoder();
 		Map togo = xmlt.decode(StreamCopyUtil.streamToString(inputStream));
 		apiTraceLog.debug("Turnitin Result Payload: " + togo);
@@ -171,13 +173,18 @@ public class TurnitinAPIUtil {
 	}
 
 	public static Document callTurnitinReturnDocument(String apiURL, Map<String,Object> parameters, 
-			String secretKey, Proxy proxy) throws TransientSubmissionException, SubmissionException {
-		return callTurnitinReturnDocument(apiURL, parameters, secretKey, proxy, false);
+			String secretKey, int timeout, Proxy proxy) throws TransientSubmissionException, SubmissionException {
+		return callTurnitinReturnDocument(apiURL, parameters, secretKey, timeout, proxy, false);
 	}
 	
 	public static String buildTurnitinURL(String apiURL, Map<String,Object> parameters, String secretKey) {
 		if (!parameters.containsKey("fid")) {
 			throw new IllegalArgumentException("You must to include a fid in the parameters");
+		}
+		
+		StringBuilder apiDebugSB = new StringBuilder();
+		if (apiTraceLog.isDebugEnabled()) {
+			apiDebugSB.append("Starting URL TII Construction:\n");
 		}
 		
 		parameters.put("gmtime", getGMTime());
@@ -189,28 +196,50 @@ public class TurnitinAPIUtil {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(apiURL);
+		if (apiTraceLog.isDebugEnabled()) {
+			apiDebugSB.append("The TII Base URL is:\n");
+			apiDebugSB.append(apiURL);
+		}
 		
 		sb.append(sortedkeys.get(0));
 		sb.append("=");
 		sb.append(parameters.get(sortedkeys.get(0)));
+		if (apiTraceLog.isDebugEnabled()) {
+			apiDebugSB.append(sortedkeys.get(0));
+			apiDebugSB.append("=");
+			apiDebugSB.append(parameters.get(sortedkeys.get(0)));
+			apiDebugSB.append("\n");
+		}
 		
 		for (int i = 1; i < sortedkeys.size(); i++) {
 			sb.append("&");
 			sb.append(sortedkeys.get(i));
 			sb.append("=");
 			sb.append(parameters.get(sortedkeys.get(i)));
+			if (apiTraceLog.isDebugEnabled()) {
+				apiDebugSB.append(sortedkeys.get(i));
+				apiDebugSB.append(" = ");
+				apiDebugSB.append(parameters.get(sortedkeys.get(i)));
+				apiDebugSB.append("\n");
+			}
 		}
 		
 		sb.append("&");
 		sb.append("md5=");
 		sb.append(md5);
+		if (apiTraceLog.isDebugEnabled()) {
+			apiDebugSB.append("md5 = ");
+			apiDebugSB.append(md5);
+			apiDebugSB.append("\n");
+			apiTraceLog.debug(apiDebugSB.toString());
+		}
 		
 		return sb.toString();
 	}
 
 	public static Document callTurnitinReturnDocument(String apiURL, Map<String,Object> parameters, 
-			String secretKey, Proxy proxy, boolean isMultipart) throws TransientSubmissionException, SubmissionException {
-		InputStream inputStream = callTurnitinReturnInputStream(apiURL, parameters, secretKey, proxy, isMultipart);
+			String secretKey, int timeout, Proxy proxy, boolean isMultipart) throws TransientSubmissionException, SubmissionException {
+		InputStream inputStream = callTurnitinReturnInputStream(apiURL, parameters, secretKey, timeout, proxy, isMultipart);
 
 		BufferedReader in;
 		in = new BufferedReader(new InputStreamReader(inputStream));
@@ -231,7 +260,7 @@ public class TurnitinAPIUtil {
 	}
 
 	public static InputStream callTurnitinReturnInputStream(String apiURL, Map<String,Object> parameters, 
-			String secretKey, Proxy proxy, boolean isMultipart) throws TransientSubmissionException, SubmissionException {
+			String secretKey, int timeout, Proxy proxy, boolean isMultipart) throws TransientSubmissionException, SubmissionException {
 		InputStream togo = null;
 		
 		StringBuilder apiDebugSB = new StringBuilder();
@@ -252,7 +281,7 @@ public class TurnitinAPIUtil {
 		HttpsURLConnection connection;
 		String boundary = "";
 		try {
-			connection = fetchConnection(apiURL, proxy);
+			connection = fetchConnection(apiURL, timeout, proxy);
 
 			if (isMultipart) {
 				Random rand = new Random();
@@ -269,6 +298,9 @@ public class TurnitinAPIUtil {
 			OutputStream outStream = connection.getOutputStream();
 
 			if (isMultipart) {
+				if (apiTraceLog.isDebugEnabled()) {
+					apiDebugSB.append("Starting Multipart TII CALL:\n");
+				}
 				for (int i = 0; i < sortedkeys.size(); i++) {
 					if (parameters.get(sortedkeys.get(i)) instanceof ContentResource) {
 						ContentResource resource = (ContentResource) parameters.get(sortedkeys.get(i));
@@ -281,13 +313,32 @@ public class TurnitinAPIUtil {
 
 						outStream.write(resource.getContent());
 						outStream.write("\r\n".getBytes("UTF-8"));
+						if (apiTraceLog.isDebugEnabled()) {
+							apiDebugSB.append(sortedkeys.get(i));
+							apiDebugSB.append(" = ContentHostingResource: ");
+							apiDebugSB.append(resource.getId());
+							apiDebugSB.append("\n");
+						}
 					}
 					else {
+						if (apiTraceLog.isDebugEnabled()) {
+							apiDebugSB.append(sortedkeys.get(i));
+							apiDebugSB.append(" = ");
+							apiDebugSB.append(parameters.get(sortedkeys.get(i)).toString());
+							apiDebugSB.append("\n");
+						}
 						outStream.write(encodeParam(sortedkeys.get(i),parameters.get(sortedkeys.get(i)).toString(), boundary).getBytes());
 					}
 				}
 				outStream.write(encodeParam("md5",md5, boundary).getBytes());
 				outStream.write(("--" + boundary + "--").getBytes());
+				
+				if (apiTraceLog.isDebugEnabled()) {
+					apiDebugSB.append("md5 = ");
+					apiDebugSB.append(md5);
+					apiDebugSB.append("\n");
+					apiTraceLog.debug(apiDebugSB.toString());
+				}
 			}
 			else {
 				writeBytesToOutputStream(outStream, sortedkeys.get(0),"=",
