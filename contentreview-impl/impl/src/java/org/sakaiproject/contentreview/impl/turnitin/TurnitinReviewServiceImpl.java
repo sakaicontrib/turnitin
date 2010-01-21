@@ -47,6 +47,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TimeZone;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -81,6 +82,8 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.ServerOverloadException;
 import org.sakaiproject.exception.TypeException;
+import org.sakaiproject.site.api.Site;
+import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
@@ -196,6 +199,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public void setUserDirectoryService(UserDirectoryService userDirectoryService) {
 		super.setUserDirectoryService(userDirectoryService);
 		this.userDirectoryService = userDirectoryService;
+	}
+	
+	private SiteService siteService;
+	public void setSiteService(SiteService siteService) {
+		this.siteService = siteService;
 	}
 
 	private SqlService sqlService;
@@ -356,7 +364,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp
 		);
 		
-		params.putAll(getInstructorInfo());
+		params.putAll(getInstructorInfo(item.getSiteId()));
 
 		return TurnitinAPIUtil.buildTurnitinURL(apiURL, params, secretKey);
 	}
@@ -569,7 +577,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			"assign", taskTitle, "assignid", taskId, "cid", siteId, "ctl", siteId,
 			"fcmd", "7", "fid", "4", "utp", "2" ); // "upw", defaultInstructorPassword,
 
-		params.putAll(getInstructorInfo());
+		params.putAll(getInstructorInfo(siteId));
 		
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 	}
@@ -584,7 +592,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Map getInstructorInfo() {
+	private Map getInstructorInfo(String siteId) {
+		/*
 		Map togo = new HashMap();
 		if (useSourceParameter) {
 			User curUser = userDirectoryService.getCurrentUser();
@@ -600,6 +609,45 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			togo.put("uln", defaultInstructorLName);
 			togo.put("uid", defaultInstructorId);
 		}
+		return togo;
+		*/
+		String INST_ROLE = "section.role.instructor";
+		User inst = null;
+		try {
+			Site site = siteService.getSite(siteId);
+			User user = userDirectoryService.getCurrentUser();
+			
+			if (site.isAllowed(user.getId(), INST_ROLE)) {
+				inst = user;
+			}
+			else {
+				Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
+				if (instIds.size() > 0) {
+					inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
+				}
+			}
+		} catch (IdUnusedException e) {
+			log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
+		} catch (UserNotDefinedException e) {
+			log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
+		}
+		
+		Map togo = new HashMap();
+		if (inst == null) {
+			//togo.put("uem", defaultInstructorEmail);
+			//togo.put("ufn", defaultInstructorFName);
+			//togo.put("uln", defaultInstructorLName);
+			//togo.put("uid", defaultInstructorId);
+			log.error("Instructor is null in getAbsoluteInstructorInfo");
+		}
+		else {
+			togo.put("uem", inst.getEmail());
+			togo.put("ufn", inst.getFirstName());
+			togo.put("uln", inst.getLastName());
+			togo.put("uid", inst.getId());
+			togo.put("username", inst.getDisplayName());
+		}
+		
 		return togo;
 	}
 	
@@ -767,7 +815,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp
 		);
 		
-		params.putAll(getInstructorInfo());
+		params.putAll(getInstructorInfo(siteId));
 
 		if (extraAsnnOpts != null) {
 			for (Object key: extraAsnnOpts.keySet()) {
