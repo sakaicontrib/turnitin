@@ -46,6 +46,7 @@
 			ref="org.sakaiproject.db.api.SqlService" />
 		<property name="turnitinContentValidator"
 			ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator" />
+		<property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
 	</bean>
 
 	<bean
