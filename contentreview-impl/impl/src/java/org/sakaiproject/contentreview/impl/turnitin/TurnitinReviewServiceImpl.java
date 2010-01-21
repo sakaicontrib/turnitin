@@ -457,28 +457,30 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String ctl = siteId;	
 		String fcmd = "2";
 		String fid = "2";
-		String uem = defaultInstructorEmail;
-		String ufn = defaultInstructorFName;
-		String uln = defaultInstructorLName;
+		//String uem = defaultInstructorEmail;
+		//String ufn = defaultInstructorFName;
+		//String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
 		/* String upw = defaultInstructorPassword; */
 		String cid = siteId;
-		String uid = defaultInstructorId;
+		//String uid = defaultInstructorId;
 
 		Document document = null;
 
 		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
-				"uid", uid,
+				//"uid", uid,
 				"cid", cid,
 				"cpw", cpw,
 				"ctl", ctl,
 				"fcmd", fcmd,
 				"fid", fid,
-				"uem", uem,
-				"ufn", ufn,
-				"uln", uln,
+				//"uem", uem,
+				//"ufn", ufn,
+				//"uln", uln,
 				"utp", utp
 		);
+		
+		params.putAll(getInstructorInfo(siteId));
 
 		if (!useSourceParameter) {
 			/* params = TurnitinAPIUtil.packMap(params, "upw", upw); */
@@ -1331,10 +1333,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	public void checkForReports() {
-		if (serverConfigurationService.getBoolean("turnitin.getReportsBulk", true))
+		//if (serverConfigurationService.getBoolean("turnitin.getReportsBulk", true))
 			checkForReportsBulk();
-		else 
-			checkForReportsIndividual();
+		//else 
+		//	checkForReportsIndividual();
 	}
 
 	/*
@@ -1417,15 +1419,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String cid = currentItem.getSiteId();
 				String tem = getTEM(cid);
 
-				String uem = getTEM(cid);
+				//String uem = getTEM(cid);
 				//String uem = defaultInstructorEmail;
 				//String ufn = defaultInstructorFName;
 				//String uln = defaultInstructorLName;
-				String ufn = "Sakai";  // This should only be this username for src9 I believe
-				String uln = "Instructor";
+				//String ufn = "Sakai";  // This should only be this username for src9 I believe
+				//String uln = "Instructor";
 				String utp = "2";
 
-				String uid = defaultInstructorId;
+				//String uid = defaultInstructorId;
 
 				String assignid = currentItem.getTaskId();
 
@@ -1446,12 +1448,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					Map getAsnnParams = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
 							"assign", getAssignmentTitle(currentItem.getTaskId()), "assignid", currentItem.getTaskId(), "cid", currentItem.getSiteId(), "ctl", currentItem.getSiteId(),
 							"fcmd", "7", "fid", "4", "utp", "2" );
-					getAsnnParams.put("uem", uem);
-					getAsnnParams.put("ufn", ufn);
-					getAsnnParams.put("uln", uln);
-					getAsnnParams.put("uid", uid);
-					getAsnnParams.put("username", utp);
-									
+					//getAsnnParams.put("uem", uem);
+					//getAsnnParams.put("ufn", ufn);
+					//getAsnnParams.put("uln", uln);
+					//getAsnnParams.put("uid", uid);
+					//getAsnnParams.put("username", utp);
+					getAsnnParams.putAll(getInstructorInfo(currentItem.getSiteId()));				
 					
 					Map curasnn = TurnitinAPIUtil.callTurnitinReturnMap(apiURL, getAsnnParams, secretKey, turnitinConnTimeout, proxy);
 					
@@ -1495,17 +1497,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
 							"fid", fid,
 							"fcmd", fcmd,
-							"uid", uid,
+							//"uid", uid,
 							"tem", tem,
 							"assign", assign,
 							"assignid", assignid,
 							"cid", cid,
 							"ctl", ctl,
-							"uem", uem,
-							"ufn", ufn,
-							"uln", uln,
+							//"uem", uem,
+							//"ufn", ufn,
+							//"uln", uln,
 							"utp", utp
 					);
+					params.putAll(getInstructorInfo(currentItem.getSiteId()));
 /*
 				}
 				catch (java.io.UnsupportedEncodingException e) {
@@ -1582,7 +1585,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 		}
 	}
-
+/*
 	public void checkForReportsIndividual() {
 		log.debug("Checking for updated reports from Turnitin in individual mode");
 
@@ -1645,11 +1648,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String tem = getTEM(cid);
 
-			String uem = defaultInstructorEmail;
+			//String uem = defaultInstructorEmail;
 			//String ufn = defaultInstructorFName;
 			//String uln = defaultInstructorLName;
-			String ufn = "Sakai";
-			String uln = "Instructor";
+			//String ufn = "Sakai";
+			//String uln = "Instructor";
 			String utp = "2";
 
 			//String uid = defaultInstructorId;
@@ -1673,9 +1676,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						"cid", cid,
 						"ctl", ctl,
 						"oid", oid,
-						"uem", URLEncoder.encode(uem, "UTF-8"),
-						"ufn", ufn,
-						"uln", uln,
+						//"uem", URLEncoder.encode(uem, "UTF-8"),
+						//"ufn", ufn,
+						//"uln", uln,
 						"utp", utp
 				);
 			}
@@ -1751,7 +1754,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 	}
-
+*/
 
 	// returns null if no valid email exists
 	private String getEmail(User user) {
@@ -1890,15 +1893,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String fcmd = "3";						//new assignment
 		String fid = "4";						//function id
-		String uem = defaultInstructorEmail;
-		String ufn = defaultInstructorFName;
-		String uln = defaultInstructorLName;
+		//String uem = defaultInstructorEmail;
+		//String ufn = defaultInstructorFName;
+		//String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
 		/* String upw = defaultInstructorPassword; */
 		String s_view_report = "1";
 
 		String cid = siteId;
-		String uid = defaultInstructorId;
+		//String uid = defaultInstructorId;
 		String assignid = taskId;
 		String assign = taskTitle;
 		String ctl = siteId;
@@ -1922,19 +1925,21 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"assign", assignEnc,
 				"assignid", assignid,
 				"cid", cid,
-				"uid", uid,
+				//"uid", uid,
 				"ctl", ctl,
 				"dtdue", dtdue,
 				"dtstart", dtstart,
 				"fcmd", fcmd,
 				"fid", fid,
 				"s_view_report", s_view_report,
-				"uem", uem,
-				"ufn", ufn,
-				"uln", uln,
+				//"uem", uem,
+				//"ufn", ufn,
+				//"uln", uln,
 				/* "upw", upw, */
 				"utp", utp
 		);
+		
+		params.putAll(getInstructorInfo(siteId));
 
 		Document document = null;
 		
