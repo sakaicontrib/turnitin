@@ -407,10 +407,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 		ResourceProperties resourceProperties = resource.getProperties();
 		String fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
-		String extension = fileName.substring(fileName.lastIndexOf("."));
-		log.debug("file has an extension of " + extension);
-		if (extension.equals(".doc") || extension.equals(".docx") || ".rtf".equals(extension)) {
-			return true;
+		if (fileName.indexOf(".") > 0) {
+			String extension = fileName.substring(fileName.lastIndexOf("."));
+			log.debug("file has an extension of " + extension);
+			if (extension.equals(".doc") || extension.equals(".docx") || ".rtf".equals(extension)) {
+				return true;
+			}
 		}
 		
 		return false;
