@@ -1678,7 +1678,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String gmtime = dform.format(cal.getTime());
 		gmtime += Integer.toString(((int) Math.floor((double) cal
 				.get(Calendar.MINUTE) / 10)));
-
+		log.debug("GMTIME is: " + gmtime);
 		return gmtime;
 	}
 
