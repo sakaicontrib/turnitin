@@ -54,12 +54,9 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.hpsf.DocumentSummaryInformation;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.poifs.filesystem.POIFSDocument;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.jdom.output.XMLOutputter;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.assignment.api.Assignment;
@@ -1015,7 +1012,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("Create Assignment successful");	
 			log.debug("tii returned " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		} else {
-			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			log.warn("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 			//log.debug(root);
 			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
@@ -1241,7 +1238,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			
 
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
-
+			total++;
 
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(Long.valueOf(0));
@@ -1665,7 +1662,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 
 				if (rMessage.equals("User password does not match user email") 
-						|| "1001".equals(rCode) || "".equals(rMessage) || "413".equals(rCode) || "1025".equals(rCode)) {
+						|| "1001".equals(rCode) || "".equals(rMessage) || "413".equals(rCode) || "1025".equals(rCode) || "208".equals(rCode)) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 				} else if (rCode.equals("423")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
@@ -1680,6 +1677,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
+				log.warn("Subission failed with a core of " + rCode + ": " + rMessage);
 				currentItem.setLastError("Submission Error: " + rMessage + "(" + rCode + ")");
 				dao.update(currentItem);
 				errors++;
@@ -1689,7 +1687,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			releaseLock(currentItem);
 			getNextItemInSubmissionQueue();
 		}
-	log.info("Queue run completed " + total + " items submitted " + errors + ", " + success + " successes");
+	log.info("Queue run completed " + total + " items submitted, " + errors + " errors, " + success + " successes");
 		
 	}
 
