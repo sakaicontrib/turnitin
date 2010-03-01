@@ -1495,9 +1495,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String boundary = "";
 			OutputStream outStream = null;
-
+			
 			HttpsURLConnection connection;
 
+			long startTime = System.currentTimeMillis();
 			try {
 
 				URL hostURL = new URL(apiURL);
@@ -1627,7 +1628,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
 			String rCode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData();
-
+			long timeDone = System.currentTimeMillis() - startTime;
 			if (rCode == null)
 				rCode = "";
 			else
@@ -1648,6 +1649,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setLastError(null);
 					currentItem.setDateSubmitted(new Date());
 					dao.update(currentItem);
+					log.info("Item " + currentItem.getIconUrl() + " successfuly submitted in " + timeDone + "ms external id: " + externalId);
 					success++;
 				} else {
 					log.warn("invalid external id");
@@ -1659,7 +1661,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				
 
 			} else {
-				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
+				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + " submission took" + timeDone + "ms");
 
 				if (rMessage.equals("User password does not match user email") 
 						|| "1001".equals(rCode) || "".equals(rMessage) || "413".equals(rCode) || "1025".equals(rCode) || "208".equals(rCode)) {
@@ -1668,11 +1670,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				
 				} else if (rCode.equals("301")) {
+					log.warn("got a gmtTims submission failure after " + timeDone + "ms. gmttime submitted was:" + gmtime);
 					//this took a long time
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					if (timeDone > (100*60*10)) {
 					Calendar cal = Calendar.getInstance();
 					cal.set(Calendar.HOUR_OF_DAY, 22);
 					currentItem.setNextRetryTime(cal.getTime());
+					} else {
+						currentItem.setNextRetryTime(getNextRetryTime(currentItem.getRetryCount()));
+					}
 					
 				}else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
@@ -1702,7 +1709,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String gmtime = dform.format(cal.getTime());
 		gmtime += Integer.toString(((int) Math.floor((double) cal
 				.get(Calendar.MINUTE) / 10)));
-		log.info("GMTIME is: " + gmtime);
+		log.debug("GMTIME is: " + gmtime);
 		return gmtime;
 	}
 
