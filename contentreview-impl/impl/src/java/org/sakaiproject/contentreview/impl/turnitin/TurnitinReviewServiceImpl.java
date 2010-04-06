@@ -1649,7 +1649,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setLastError(null);
 					currentItem.setDateSubmitted(new Date());
 					dao.update(currentItem);
-					log.info("Item " + currentItem.getIconUrl() + " successfuly submitted in " + timeDone + "ms external id: " + externalId);
+					log.info("Item " + currentItem.getId() + " successfuly submitted in " + timeDone + "ms external id: " + externalId);
 					success++;
 				} else {
 					log.warn("invalid external id");
@@ -1684,7 +1684,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
-				log.warn("Subission failed with a core of " + rCode + ": " + rMessage);
+				log.warn("Submission failed with a core of " + rCode + ": " + rMessage);
 				currentItem.setLastError("Submission Error: " + rMessage + "(" + rCode + ")");
 				dao.update(currentItem);
 				errors++;
