@@ -315,6 +315,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		 * application/msword
 		 * application/postscript
 		 */
+		
+		/** 
+		 * Resource must not be zero length
+		 */
+		if (resource.getContentLength() <= 0) {
+			return false;
+		}
 
 		String mime = resource.getContentType();
 		log.debug("Got a content type of " + mime);
