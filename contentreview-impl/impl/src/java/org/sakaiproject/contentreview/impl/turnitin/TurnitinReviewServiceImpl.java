@@ -127,7 +127,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	private Long maxRetry = null;
 
-	private int TII_MAX_FILE_SIZE = 10995116;
+	private int TII_MAX_FILE_SIZE = 21990232;
 
 	// Proxy if set
 	private Proxy proxy = null; 
