@@ -1188,7 +1188,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		searchItem.setContentId(null);
 		searchItem.setStatus(ContentReviewItem.NOT_SUBMITTED_CODE);
 
-		List notSubmittedItems = dao.findByExample(searchItem);
+		List<ContentReviewItem> notSubmittedItems = dao.findByExample(searchItem);
 		for (int i =0; i < notSubmittedItems.size(); i++) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(0);
 			//can we get a lock
