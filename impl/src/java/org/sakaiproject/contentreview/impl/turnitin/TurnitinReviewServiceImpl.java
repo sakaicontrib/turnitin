@@ -138,7 +138,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		this.useSourceParameter = useSourceParameter;
 	}
 
-	private int sendNotifications = 0;
+	private int sendAccountNotifications = 0;
+	
+	private int sendSubmissionNotification = 0;
 
 	private Long maxRetry = null;
 
@@ -269,8 +271,35 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		useSourceParameter = serverConfigurationService.getBoolean("turnitin.useSourceParameter", false);
 
-		if  (!serverConfigurationService.getBoolean("turnitin.sendnotifations", true)) 
-			sendNotifications = 1;
+		/*
+		 * Previously, we only had the sendnotifications option. We're keeping it here,
+		 * and running it first for backwards compatibility. Because of functional
+		 * requirements we need more control over whether emails are sent for specific 
+		 * operations, thus the new options.
+		 */
+		if (!serverConfigurationService.getBoolean("turnitin.sendnotifications", true)) {
+			sendAccountNotifications = 1;
+			sendSubmissionNotification = 1;
+		} 
+		else {
+			sendAccountNotifications = 0;
+			sendSubmissionNotification = 0;
+		}
+		
+		if  (!serverConfigurationService.getBoolean("turnitin.sendAccountNotifications", true)) {
+			sendAccountNotifications = 1;
+		}
+		else {
+			sendAccountNotifications = 0;
+		}
+		
+		if  (!serverConfigurationService.getBoolean("turnitin.sendSubmissionNotifications", true)) {
+			sendSubmissionNotification = 1;
+		}
+		else {
+			sendSubmissionNotification = 0;
+		}
+			
 
 		//note that the assignment id actually has to be unique globally so use this as a prefix
 		// assignid = defaultAssignId + siteId
@@ -930,7 +959,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"cid", cid,
 				"tem", tem,
 				"ctl", ctl,
-				"dis", Integer.valueOf(sendNotifications).toString(),
+				"dis", Integer.valueOf(sendAccountNotifications).toString(),
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
@@ -1238,7 +1267,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					"cid", cid,
 					"assign", assign,
 					"ctl", ctl,
-					"dis", Integer.valueOf(sendNotifications).toString(),
+					"dis", Integer.valueOf(sendSubmissionNotification).toString(),
 					"fcmd", fcmd,
 					"fid", fid,
 					"ptype", ptype,
@@ -2019,6 +2048,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 		}
 		return ufn;
+	}
+	
+	public Map callTurnitinWDefaultsReturnMap(Map params) throws SubmissionException, TransientSubmissionException {
+	    params.putAll(getBaseTIIOptions());
+	    return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 	}
 
 }
