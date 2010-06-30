@@ -1,6 +1,7 @@
 package org.sakaiproject.contentreview.impl.turnitin;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,9 +9,15 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.Member;
+import org.sakaiproject.component.api.ServerConfigurationService;
+import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
+import org.sakaiproject.contentreview.model.ContentReviewRosterSyncItem;
 import org.sakaiproject.exception.IdUnusedException;
+import org.sakaiproject.genericdao.api.search.Order;
+import org.sakaiproject.genericdao.api.search.Restriction;
+import org.sakaiproject.genericdao.api.search.Search;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
@@ -32,6 +39,8 @@ public class TurnitinRosterSync {
 
 	private static final Log log = LogFactory.getLog(TurnitinRosterSync.class);
 
+	final static long LOCK_PERIOD = 12000000;
+
 	private TurnitinReviewServiceImpl turnitinReviewServiceImpl;
 	public void setTurnitinReviewServiceImpl(TurnitinReviewServiceImpl turnitinReviewServiceImpl) {
 		this.turnitinReviewServiceImpl = turnitinReviewServiceImpl;
@@ -50,6 +59,16 @@ public class TurnitinRosterSync {
 	private TurnitinAccountConnection turnitinConn;
 	public void setTurnitinConn(TurnitinAccountConnection turnitinConn) {
 		this.turnitinConn = turnitinConn;
+	}
+
+	private ContentReviewDao dao;
+	public void setDao(ContentReviewDao dao) {
+		this.dao = dao;
+	}
+
+	private ServerConfigurationService serverConfigurationService;
+	public void setServerConfigurationService(ServerConfigurationService serverConfigurationService) {
+		this.serverConfigurationService = serverConfigurationService;
 	}
 
 	public void init() {
@@ -202,5 +221,41 @@ public class TurnitinRosterSync {
 		}
 
 		return success;
+	}
+
+	public String makeLockID(ContentReviewRosterSyncItem item) {
+		return item.getClass().getCanonicalName() + item.getId();
+	}
+
+	private boolean obtainLock(ContentReviewRosterSyncItem item) {
+		return dao.obtainLock(makeLockID(item), serverConfigurationService.getServerId(), LOCK_PERIOD);
+	}
+
+	private void releaseLock(ContentReviewRosterSyncItem item) {
+		dao.releaseLock(makeLockID(item), serverConfigurationService.getServerId());
+	}
+
+	public void processSyncQueue() {
+		Restriction notStarted = new Restriction("status", ContentReviewRosterSyncItem.NOT_STARTED_STATUS, Restriction.EQUALS);
+		Restriction failed = new Restriction("status", ContentReviewRosterSyncItem.FAILED_STATUS, Restriction.EQUALS);
+		Order order = new Order("status", true);
+		Search search = new Search(new Restriction[] {notStarted,failed}, order);
+		search.setConjunction(false); // OR matching
+		List<ContentReviewRosterSyncItem> items = dao.findBySearch(ContentReviewRosterSyncItem.class, search);
+		for (ContentReviewRosterSyncItem item: items) {
+			if (obtainLock(item)) {
+				log.info("About to Turnitin Syncing: " + item.getId() + " , " + item.getSiteId() + " , " + item.getStatus());
+				item.setLastTried(new Date());
+				boolean success = syncSiteWithTurnitin(item.getSiteId());
+				if (success) {
+					item.setStatus(ContentReviewRosterSyncItem.FINISHED_STATUS);
+				}
+				else {
+					item.setStatus(ContentReviewRosterSyncItem.FAILED_STATUS);
+				}
+				dao.update(item);
+				releaseLock(item);
+			}
+		}
 	}
 }

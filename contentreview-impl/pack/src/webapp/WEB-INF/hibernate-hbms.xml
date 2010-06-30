@@ -13,6 +13,7 @@
 			<list>
 				<value>org/sakaiproject/contentreview/hbm/ContentReviewItem.hbm.xml</value>
 				<value>org/sakaiproject/contentreview/hbm/ContentReviewLock.hbm.xml</value>
+				<value>org/sakaiproject/contentreview/hbm/ContentReviewRosterSyncItem.hbm.xml</value>
 			</list>
 		</property>
 	</bean>

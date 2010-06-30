@@ -171,7 +171,7 @@ public class TurnitinAccountConnection {
 	/*
 	 * Utility Methods below
 	 */
-	
+
 	/**
 	 * Get's a Map of TII options that are the same for every one of these
 	 * calls. Things like encrpyt and diagnostic.
@@ -183,21 +183,21 @@ public class TurnitinAccountConnection {
 	public Map getBaseTIIOptions() {
 		String diagnostic = "0"; //0 = off; 1 = on
 		String encrypt = "0"; //encryption flag
-		
+
 		Map togo = TurnitinAPIUtil.packMap(null, 
-			"diagnostic", diagnostic,
-			"encrypt", encrypt,
-			"said", said,
-			"aid", aid
+				"diagnostic", diagnostic,
+				"encrypt", encrypt,
+				"said", said,
+				"aid", aid
 		);
-		
+
 		if (useSourceParameter) {
 			togo.put("src", "9");
 		}
-		
+
 		return togo;
 	}
-	
+
 	/**
 	 * This will return a map of the information for the instructor such as 
 	 * uem, username, ufn, etc. If the system is configured to use src9 
@@ -209,59 +209,45 @@ public class TurnitinAccountConnection {
 	 */
 	@SuppressWarnings("unchecked")
 	public Map getInstructorInfo(String siteId) {
-		/*
 		Map togo = new HashMap();
-		if (useSourceParameter) {
-			User curUser = userDirectoryService.getCurrentUser();
-			togo.put("uem", curUser.getEmail());
-			togo.put("ufn", curUser.getFirstName());
-			togo.put("uln", curUser.getLastName());
-			togo.put("uid", curUser.getId());
-			togo.put("username", curUser.getDisplayName());
-		}
-		else {
+		if (!useSourceParameter) {
 			togo.put("uem", defaultInstructorEmail);
 			togo.put("ufn", defaultInstructorFName);
 			togo.put("uln", defaultInstructorLName);
 			togo.put("uid", defaultInstructorId);
-		}
-		return togo;
-		 */
-		String INST_ROLE = "section.role.instructor";
-		User inst = null;
-		try {
-			Site site = siteService.getSite(siteId);
-			User user = userDirectoryService.getCurrentUser();
+		} 
+		else {
+			String INST_ROLE = "section.role.instructor";
+			User inst = null;
+			try {
+				Site site = siteService.getSite(siteId);
+				User user = userDirectoryService.getCurrentUser();
+				if (site.isAllowed(user.getId(), INST_ROLE)) {
+					inst = user;
+				}
+				else {
+					Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
+					if (instIds.size() > 0) {
+						inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
+					}
+				}
+			} catch (IdUnusedException e) {
+				log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
+			} catch (UserNotDefinedException e) {
+				log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
+			}
 
-			if (site.isAllowed(user.getId(), INST_ROLE)) {
-				inst = user;
+
+			if (inst == null) {
+				log.error("Instructor is null in getAbsoluteInstructorInfo");
 			}
 			else {
-				Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
-				if (instIds.size() > 0) {
-					inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
-				}
+				togo.put("uem", inst.getEmail());
+				togo.put("ufn", inst.getFirstName());
+				togo.put("uln", inst.getLastName());
+				togo.put("uid", inst.getId());
+				togo.put("username", inst.getDisplayName());
 			}
-		} catch (IdUnusedException e) {
-			log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
-		} catch (UserNotDefinedException e) {
-			log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
-		}
-
-		Map togo = new HashMap();
-		if (inst == null) {
-			//togo.put("uem", defaultInstructorEmail);
-			//togo.put("ufn", defaultInstructorFName);
-			//togo.put("uln", defaultInstructorLName);
-			//togo.put("uid", defaultInstructorId);
-			log.error("Instructor is null in getAbsoluteInstructorInfo");
-		}
-		else {
-			togo.put("uem", inst.getEmail());
-			togo.put("ufn", inst.getFirstName());
-			togo.put("uln", inst.getLastName());
-			togo.put("uid", inst.getId());
-			togo.put("username", inst.getDisplayName());
 		}
 
 		return togo;
@@ -297,7 +283,7 @@ public class TurnitinAccountConnection {
 		params.putAll(getBaseTIIOptions());
 		return TurnitinAPIUtil.callTurnitinReturnInputStream(apiURL, params, secretKey, turnitinConnTimeout, proxy, false);
 	}
-	
+
 	public Document callTurnitinWDefaultsReturnDocument(Map params) throws SubmissionException, TransientSubmissionException {
 		params.putAll(getBaseTIIOptions());
 		return TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy, false);
