@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+
+    <class name="org.sakaiproject.contentreview.model.ContentReviewRosterSyncItem"
+            table="CONTENTREVIEW_SYNC_ITEM">
+        <id name="id" type="long">
+            <generator class="native">
+                <param name="sequence">TII_ROSTER_SYNC_ITEM_ID_SEQ</param>
+            </generator>
+        </id>
+        <property name="siteId" type="string" length="255" not-null="true" />
+        <property name="dateQueued" type="java.util.Date" not-null="true"/>
+        <property name="lastTried" type="java.util.Date" not-null="false"/>
+        <property name="status" type="int" not-null="true" />
+        <property name="messages" type="text" not-null="false" />
+    </class>
+</hibernate-mapping>

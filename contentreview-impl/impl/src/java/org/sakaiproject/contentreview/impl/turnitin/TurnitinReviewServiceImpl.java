@@ -22,6 +22,7 @@ package org.sakaiproject.contentreview.impl.turnitin;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -96,7 +97,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
-
 	private static final Log log = LogFactory
 	.getLog(TurnitinReviewServiceImpl.class);
 
@@ -104,46 +104,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	private static final String SERVICE_NAME="Turnitin";
 
-	private String aid = null;
-
-	private String said = null;
-
-	private String secretKey = null;
-
-	private String apiURL = "https://www.turnitin.com/api.asp?";
-
-	private String proxyHost = null;
-
-	private String proxyPort = null;
-
 	final static long LOCK_PERIOD = 12000000;
 
-	private String defaultInstructorEmail = null;
-
-	private String defaultInstructorFName = null;
-
-	private String defaultInstructorLName = null;
-
-	private String defaultInstructorPassword = null;
-
-	private boolean useSourceParameter = false;
-
-	private int turnitinConnTimeout = 0; // Default to 0, no timeout.
+	private int sendAccountNotifications = 0;
 	
-	public boolean isUseSourceParameter() {
-		return useSourceParameter;
-	}
-
-	public void setUseSourceParameter(boolean useSourceParameter) {
-		this.useSourceParameter = useSourceParameter;
-	}
-
-	private int sendNotifications = 0;
+	private int sendSubmissionNotification = 0;
 
 	private Long maxRetry = null;
-
-	// Proxy if set
-	private Proxy proxy = null; 
 
 	//note that the assignment id actually has to be unique globally so use this as a prefix
 	// eg. assignid = defaultAssignId + siteId
@@ -151,8 +118,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	private String defaultClassPassword = null;
 
-	//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
-	private String defaultInstructorId = null;
+	private TurnitinAccountConnection turnitinConn;
+	public void setTurnitinConn(TurnitinAccountConnection turnitinConn) {
+		this.turnitinConn = turnitinConn;
+	}
 
 	/**
 	 *  Setters
@@ -175,12 +144,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		this.contentHostingService = contentHostingService;
 	}
 
-
 	private SakaiPersonManager sakaiPersonManager;
 	public void setSakaiPersonManager(SakaiPersonManager s) {
 		this.sakaiPersonManager = s;
 	}
-
 
 	//Should the service prefer the system profile email address for users if set?
 	private boolean preferSystemProfileEmail;
@@ -193,7 +160,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		super.setDao(dao);
 		this.dao = dao;
 	}
-
 
 	private UserDirectoryService userDirectoryService;
 	public void setUserDirectoryService(UserDirectoryService userDirectoryService) {
@@ -222,82 +188,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 
 	public void init() {
-
 		log.info("init()");
-
-		proxyHost = serverConfigurationService.getString("turnitin.proxyHost"); 
-
-		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
-
-
-
-		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
-			try {
-				SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
-				proxy = new Proxy(Proxy.Type.HTTP, addr);
-				log.debug("Using proxy: " + proxyHost + " " + proxyPort);
-			} catch (NumberFormatException e) {
-				log.debug("Invalid proxy port specified: " + proxyPort);
-			}
-		} else if (System.getProperty("http.proxyHost") != null && !System.getProperty("http.proxyHost").equals("")) {
-			try {
-				SocketAddress addr = new InetSocketAddress(System.getProperty("http.proxyHost"), new Integer(System.getProperty("http.proxyPort")).intValue());
-				proxy = new Proxy(Proxy.Type.HTTP, addr);
-				log.debug("Using proxy: " + System.getProperty("http.proxyHost") + " " + System.getProperty("http.proxyPort"));
-			} catch (NumberFormatException e) {
-				log.debug("Invalid proxy port specified: " + System.getProperty("http.proxyPort"));
-			}
-		}
-
-		aid = serverConfigurationService.getString("turnitin.aid");
-
-		said = serverConfigurationService.getString("turnitin.said");
-
-		secretKey = serverConfigurationService.getString("turnitin.secretKey");
-
-		apiURL = serverConfigurationService.getString("turnitin.apiURL","https://www.turnitin.com/api.asp?");
-
-
-
-		defaultInstructorEmail = serverConfigurationService.getString("turnitin.defaultInstructorEmail");
-
-		defaultInstructorFName = serverConfigurationService.getString("turnitin.defaultInstructorFName");
-
-		defaultInstructorLName = serverConfigurationService.getString("turnitin.defaultInstructorLName");
-
-		defaultInstructorPassword = serverConfigurationService.getString("turnitin.defaultInstructorPassword");
-
-		useSourceParameter = serverConfigurationService.getBoolean("turnitin.useSourceParameter", false);
-
-		if  (!serverConfigurationService.getBoolean("turnitin.sendnotifations", true)) 
-			sendNotifications = 1;
-
-		//note that the assignment id actually has to be unique globally so use this as a prefix
-		// assignid = defaultAssignId + siteId
-		defaultAssignId = serverConfigurationService.getString("turnitin.defaultAssignId");;
-
-		defaultClassPassword = serverConfigurationService.getString("turnitin.defaultClassPassword","changeit");;
-
-		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
-		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId","admin");
-
-		maxRetry = Long.valueOf(serverConfigurationService.getInt("turnitin.maxRetry",100));
-
-		if (!useSourceParameter) {
+		if (!turnitinConn.isUseSourceParameter()) {
 			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
 				doAssignments();
 		}
-		
-		turnitinConnTimeout = serverConfigurationService.getInt("turnitin.networkTimeout", 0);
-
 	}
-
 
 	public String getServiceName() {
 		return this.SERVICE_NAME;
 	}
-
-
 
 	public String getIconUrlforScore(Long score) {
 
@@ -355,7 +255,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String assignid = defaultAssignId + item.getSiteId();
 		String utp = "2";
 
-		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
 				"fid", fid,
 				"fcmd", fcmd,
 				"assignid", assignid,
@@ -364,9 +264,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp
 		);
 		
-		params.putAll(getInstructorInfo(item.getSiteId()));
+		params.putAll(turnitinConn.getInstructorInfo(item.getSiteId()));
 
-		return TurnitinAPIUtil.buildTurnitinURL(apiURL, params, secretKey);
+		return turnitinConn.buildTurnitinURL(params);
 	}
 
 	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
@@ -405,7 +305,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String uid = item.getUserId();
 		String utp = "1";
 
-		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
 				"fid", fid,
 				"fcmd", fcmd,
 				"assignid", assignid,
@@ -418,9 +318,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp
 		);
 
-		String reportURL = apiURL;
-
-		return TurnitinAPIUtil.buildTurnitinURL(apiURL, params, secretKey);
+		return turnitinConn.buildTurnitinURL(params);
 	}
 
 	public String getReviewReport(String contentId)
@@ -467,7 +365,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		Document document = null;
 
-		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 				//"uid", uid,
 				"cid", cid,
 				"cpw", cpw,
@@ -480,13 +378,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp
 		);
 		
-		params.putAll(getInstructorInfo(siteId));
+		params.putAll(turnitinConn.getInstructorInfo(siteId));
 
-		if (!useSourceParameter) {
+		//if (!useSourceParameter) {
 			/* params = TurnitinAPIUtil.packMap(params, "upw", upw); */
-		}
+		//}
 
-		document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
+		document = turnitinConn.callTurnitinReturnDocument(params);
 
 		Element root = document.getDocumentElement();
 		String rcode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim();
@@ -575,108 +473,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public Map getAssignment(String siteId, String taskId) throws SubmissionException, TransientSubmissionException {
 		String taskTitle = getAssignmentTitle(taskId);
 
-		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 			"assign", taskTitle, "assignid", taskId, "cid", siteId, "ctl", siteId,
 			"fcmd", "7", "fid", "4", "utp", "2" ); // "upw", defaultInstructorPassword,
 
-		params.putAll(getInstructorInfo(siteId));
-		
-		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, turnitinConnTimeout, proxy);
-	}
-
-	/**
-	 * This will return a map of the information for the instructor such as 
-	 * uem, username, ufn, etc. If the system is configured to use src9 
-	 * provisioning, this will draw information from the current thread based
-	 * user. Otherwise it will use the default Instructor information that has
-	 * been configured for the system.
-	 * 
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	private Map getInstructorInfo(String siteId) {
-		/*
-		Map togo = new HashMap();
-		if (useSourceParameter) {
-			User curUser = userDirectoryService.getCurrentUser();
-			togo.put("uem", curUser.getEmail());
-			togo.put("ufn", curUser.getFirstName());
-			togo.put("uln", curUser.getLastName());
-			togo.put("uid", curUser.getId());
-			togo.put("username", curUser.getDisplayName());
-		}
-		else {
-			togo.put("uem", defaultInstructorEmail);
-			togo.put("ufn", defaultInstructorFName);
-			togo.put("uln", defaultInstructorLName);
-			togo.put("uid", defaultInstructorId);
-		}
-		return togo;
-		*/
-		String INST_ROLE = "section.role.instructor";
-		User inst = null;
-		try {
-			Site site = siteService.getSite(siteId);
-			User user = userDirectoryService.getCurrentUser();
-			
-			if (site.isAllowed(user.getId(), INST_ROLE)) {
-				inst = user;
-			}
-			else {
-				Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
-				if (instIds.size() > 0) {
-					inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
-				}
-			}
-		} catch (IdUnusedException e) {
-			log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
-		} catch (UserNotDefinedException e) {
-			log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
-		}
-		
-		Map togo = new HashMap();
-		if (inst == null) {
-			//togo.put("uem", defaultInstructorEmail);
-			//togo.put("ufn", defaultInstructorFName);
-			//togo.put("uln", defaultInstructorLName);
-			//togo.put("uid", defaultInstructorId);
-			log.error("Instructor is null in getAbsoluteInstructorInfo");
-		}
-		else {
-			togo.put("uem", inst.getEmail());
-			togo.put("ufn", inst.getFirstName());
-			togo.put("uln", inst.getLastName());
-			togo.put("uid", inst.getId());
-			togo.put("username", inst.getDisplayName());
-		}
-		
-		return togo;
-	}
-	
-	/**
-	 * Get's a Map of TII options that are the same for every one of these
-	 * calls. Things like encrpyt and diagnostic.
-	 * 
-	 * This can be used as well for changing things dynamically and testing.
-	 * 
-	 * @return
-	 */
-	private Map getBaseTIIOptions() {
-		String diagnostic = "0"; //0 = off; 1 = on
-		String encrypt = "0"; //encryption flag
-		
-		Map togo = TurnitinAPIUtil.packMap(null, 
-			"diagnostic", diagnostic,
-			"encrypt", encrypt,
-			"said", said,
-			"aid", aid
-		);
-		
-		if (useSourceParameter) {
-			togo.put("src", "9");
-		}
-		
-		return togo;
+		params.putAll(turnitinConn.getInstructorInfo(siteId));
+ 
+		return turnitinConn.callTurnitinReturnMap(params);
 	}
 
 	/**
@@ -706,7 +509,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		cal.add(Calendar.DAY_OF_MONTH, -1);
 		String dtstart = dform.format(cal.getTime());
 		String today = dtstart;
-
 
 		//set the due dates for the assignments to be in 5 month's time
 		//turnitin automatically sets each class end date to 6 months after it is created
@@ -804,7 +606,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		
 
-		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
 				"assign", assignEnc, 
 				"assignid", assignid, 
 				"cid", cid,
@@ -817,7 +619,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp
 		);
 		
-		params.putAll(getInstructorInfo(siteId));
+		params.putAll(turnitinConn.getInstructorInfo(siteId));
 
 		if (extraAsnnOpts != null) {
 			for (Object key: extraAsnnOpts.keySet()) {
@@ -836,7 +638,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			firstparams.put("dtdue", today);
 			firstparams.put("fcmd", "2");
 			Document firstSaveDocument = 
-				TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, firstparams, secretKey, turnitinConnTimeout, proxy);
+				turnitinConn.callTurnitinReturnDocument(firstparams);
 			Element root = firstSaveDocument.getDocumentElement();
 			int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
 			if ((rcode > 0 && rcode < 100) || rcode == 419) {
@@ -854,7 +656,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		}
 
-		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
+		Document document = turnitinConn.callTurnitinReturnDocument(params);
 
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
@@ -868,13 +670,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 	}
 
-	private String getTEM(String cid) {
-		if (useSourceParameter) {
-			return cid + "_" + this.aid + "@tiisakai.com";
-		} else {
-			return defaultInstructorEmail;
-		}
-	}
+	
 
 	/**
 	 * Currently public for integration tests. TODO Revisit visibility of
@@ -890,10 +686,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String uid = userId;
 		String cid = siteId;
 
-		String ctl = siteId; 			//class title
+		String ctl = siteId;
 		String fid = "3";
 		String fcmd = "2";
-		String tem = getTEM(cid);
+		String tem = turnitinConn.getTEM(cid);
 
 		User user;
 		try {
@@ -924,13 +720,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp = "1";
 
 		Map params = new HashMap();
-		params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
+		params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
 				"fid", fid,
 				"fcmd", fcmd,
 				"cid", cid,
 				"tem", tem,
 				"ctl", ctl,
-				"dis", Integer.valueOf(sendNotifications).toString(),
+				"dis", Integer.valueOf(sendAccountNotifications).toString(),
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
@@ -938,7 +734,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"uid", uid
 		);
 
-		Document document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
+		Document document = turnitinConn.callTurnitinReturnDocument(params);
 
 		Element root = document.getDocumentElement();
 
@@ -1069,7 +865,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			if (!useSourceParameter) {
+			if (!turnitinConn.isUseSourceParameter()) {
 				try {				
 					createClass(currentItem.getSiteId());
 				} catch (SubmissionException t) {
@@ -1105,7 +901,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			if (!useSourceParameter) {
+			if (!turnitinConn.isUseSourceParameter()) {
 				try {
 					Map tiiresult = this.getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
 					if (tiiresult.get("rcode") != null && !tiiresult.get("rcode").equals("85")) {
@@ -1223,7 +1019,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String assignid = currentItem.getTaskId();
 
 			// TODO ONC-1292 How to get this, and is it still required with src=9?
-			String tem = getTEM(cid);
+			String tem = turnitinConn.getTEM(cid);
 
 			String utp = "1";
 
@@ -1232,13 +1028,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String assign = getAssignmentTitle(currentItem.getTaskId());;
 			String ctl = currentItem.getSiteId();
 
-			Map params = TurnitinAPIUtil.packMap( getBaseTIIOptions(),
+			Map params = TurnitinAPIUtil.packMap( turnitinConn.getBaseTIIOptions(),
 					"assignid", assignid,
 					"uid", uid,
 					"cid", cid,
 					"assign", assign,
 					"ctl", ctl,
-					"dis", Integer.valueOf(sendNotifications).toString(),
+					"dis", Integer.valueOf(sendSubmissionNotification).toString(),
 					"fcmd", fcmd,
 					"fid", fid,
 					"ptype", ptype,
@@ -1253,7 +1049,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			Document document = null;
 			try {
-				document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy, true);
+				document = turnitinConn.callTurnitinReturnDocument(params, true);
 			}
 			catch (TransientSubmissionException e) {
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
@@ -1417,17 +1213,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 
 				String cid = currentItem.getSiteId();
-				String tem = getTEM(cid);
+				String tem = turnitinConn.getTEM(cid);
 
-				//String uem = getTEM(cid);
-				//String uem = defaultInstructorEmail;
-				//String ufn = defaultInstructorFName;
-				//String uln = defaultInstructorLName;
-				//String ufn = "Sakai";  // This should only be this username for src9 I believe
-				//String uln = "Instructor";
 				String utp = "2";
-
-				//String uid = defaultInstructorId;
 
 				String assignid = currentItem.getTaskId();
 
@@ -1445,17 +1233,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					// the thread, but we're in a quartz job.
 					//Map curasnn = getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
 					// TODO FIXME Parameterize getAssignment method to take user information
-					Map getAsnnParams = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
+					Map getAsnnParams = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 							"assign", getAssignmentTitle(currentItem.getTaskId()), "assignid", currentItem.getTaskId(), "cid", currentItem.getSiteId(), "ctl", currentItem.getSiteId(),
 							"fcmd", "7", "fid", "4", "utp", "2" );
-					//getAsnnParams.put("uem", uem);
-					//getAsnnParams.put("ufn", ufn);
-					//getAsnnParams.put("uln", uln);
-					//getAsnnParams.put("uid", uid);
-					//getAsnnParams.put("username", utp);
-					getAsnnParams.putAll(getInstructorInfo(currentItem.getSiteId()));				
+
+					getAsnnParams.putAll(turnitinConn.getInstructorInfo(currentItem.getSiteId()));				
 					
-					Map curasnn = TurnitinAPIUtil.callTurnitinReturnMap(apiURL, getAsnnParams, secretKey, turnitinConnTimeout, proxy);
+					Map curasnn = turnitinConn.callTurnitinReturnMap(getAsnnParams);
 					
 					if (curasnn.containsKey("object")) {
 						Map curasnnobj = (Map) curasnn.get("object");
@@ -1494,35 +1278,22 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				
 				Map params = new HashMap();
 				//try {
-					params = TurnitinAPIUtil.packMap(getBaseTIIOptions(), 
+					params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
 							"fid", fid,
 							"fcmd", fcmd,
-							//"uid", uid,
 							"tem", tem,
 							"assign", assign,
 							"assignid", assignid,
 							"cid", cid,
 							"ctl", ctl,
-							//"uem", uem,
-							//"ufn", ufn,
-							//"uln", uln,
 							"utp", utp
 					);
-					params.putAll(getInstructorInfo(currentItem.getSiteId()));
-/*
-				}
-				catch (java.io.UnsupportedEncodingException e) {
-					log.debug("Unable to encode a URL param as UTF-8: " + e.toString());
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError(e.getMessage());
-					dao.update(currentItem);
-					break;						
-				}
-*/
+					params.putAll(turnitinConn.getInstructorInfo(currentItem.getSiteId()));
+
 				Document document = null;
 
 				try {
-					document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
+					document = turnitinConn.callTurnitinReturnDocument(params);
 				}
 				catch (TransientSubmissionException e) {
 					log.debug("Update failed due to TransientSubmissionException error: " + e.toString());
@@ -1893,15 +1664,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String fcmd = "3";						//new assignment
 		String fid = "4";						//function id
-		//String uem = defaultInstructorEmail;
-		//String ufn = defaultInstructorFName;
-		//String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
-		/* String upw = defaultInstructorPassword; */
 		String s_view_report = "1";
 
 		String cid = siteId;
-		//String uid = defaultInstructorId;
 		String assignid = taskId;
 		String assign = taskTitle;
 		String ctl = siteId;
@@ -1921,30 +1687,25 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			e.printStackTrace();
 		}
 
-		Map params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 				"assign", assignEnc,
 				"assignid", assignid,
 				"cid", cid,
-				//"uid", uid,
 				"ctl", ctl,
 				"dtdue", dtdue,
 				"dtstart", dtstart,
 				"fcmd", fcmd,
 				"fid", fid,
 				"s_view_report", s_view_report,
-				//"uem", uem,
-				//"ufn", ufn,
-				//"uln", uln,
-				/* "upw", upw, */
 				"utp", utp
 		);
 		
-		params.putAll(getInstructorInfo(siteId));
+		params.putAll(turnitinConn.getInstructorInfo(siteId));
 
 		Document document = null;
 		
 		try {
-			document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
+			document = turnitinConn.callTurnitinReturnDocument(params);
 		}
 		catch (TransientSubmissionException tse) {
 			log.error("Error on API call in updateAssignment siteid: " + siteId + " taskid: " + taskId, tse);

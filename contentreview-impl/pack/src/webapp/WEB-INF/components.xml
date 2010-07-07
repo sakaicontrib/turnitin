@@ -47,6 +47,7 @@
 		<property name="turnitinContentValidator"
 			ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator" />
 		<property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+		<property name="turnitinConn" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection" />
 	</bean>
 
 	<bean
@@ -120,9 +121,62 @@
 				bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
 		</property>
 	</bean>
+	
+	<bean id="TiiContentReviewRosterSync"
+        class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewTurnitinRosterSync">
+        <property name="turnitinRosterSync">
+            <ref
+                bean="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync" />
+        </property>
+    </bean>
 
+    <bean
+        id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewRosterSync"
+        class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
+        singleton="true" init-method="init">
+        <property name="beanId">
+            <value>TiiContentReviewRosterSync</value>
+        </property>
+        <property name="jobName">
+            <value>Process Turnitin Content Review Roster Sync</value>
+        </property>
+        <property name="schedulerManager">
+            <ref
+                bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
+        </property>
+    </bean>
 
+<bean class="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync"
+    id="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync" 
+    init-method="init">
+    <property name="turnitinReviewServiceImpl" ref="org.sakaiproject.contentreview.service.ContentReviewService" />
+    <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+    <property name="userDirectoryService" ref="org.sakaiproject.user.api.UserDirectoryService" />
+    <property name="turnitinConn" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection" />
+    <property name="dao" ref="org.sakaiproject.contentreview.dao.ContentReviewDao" />
+    <property name="serverConfigurationService"
+            ref="org.sakaiproject.component.api.ServerConfigurationService" />
+</bean>
 
+  <bean id="org.sakaiproject.contentreview.impl.turnitin.MembershipChangeObserver"
+    class="org.sakaiproject.contentreview.impl.turnitin.MembershipChangeObserver"
+    init-method="init">
+    <property name="eventTrackingService" ref="org.sakaiproject.event.api.EventTrackingService" /> 
+    <property name="turnitinRosterSync" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync" />
+    <property name="dao" ref="org.sakaiproject.contentreview.dao.ContentReviewDao" />
+    <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+    <property name="contentReviewService" ref="org.sakaiproject.contentreview.service.ContentReviewService" />
+   </bean>
+   
+   <bean id="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection"
+    class="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection"
+    init-method="init">
+        <property name="serverConfigurationService"
+            ref="org.sakaiproject.component.api.ServerConfigurationService" />
+        <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+        <property name="userDirectoryService"
+            ref="org.sakaiproject.user.api.UserDirectoryService" />
+   </bean>
 
 
 </beans>
