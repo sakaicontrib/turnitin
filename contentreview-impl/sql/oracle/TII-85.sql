@@ -8,4 +8,4 @@ create table CONTENTREVIEW_SYNC_ITEM (
         primary key (id)
     );
 
-create sequence TURNITIN_ROSTER_SYNC_ITEM_ID_SEQ;
+create sequence TII_ROSTER_SYNC_ITEM_ID_SEQ;

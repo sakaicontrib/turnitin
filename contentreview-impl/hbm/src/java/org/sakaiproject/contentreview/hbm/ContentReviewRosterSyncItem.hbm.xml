@@ -8,7 +8,7 @@
             table="CONTENTREVIEW_SYNC_ITEM">
         <id name="id" type="long">
             <generator class="native">
-                <param name="sequence">TURNITIN_ROSTER_SYNC_ITEM_ID_SEQ</param>
+                <param name="sequence">TII_ROSTER_SYNC_ITEM_ID_SEQ</param>
             </generator>
         </id>
         <property name="siteId" type="string" length="255" not-null="true" />
