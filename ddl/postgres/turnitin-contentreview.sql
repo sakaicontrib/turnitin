@@ -37,7 +37,7 @@
 
     create index eval_lock_name on CONTENTREVIEW_LOCK (NAME);
 
-    create sequence TURNITIN_ROSTER_SYNC_ITEM_ID_SEQ;
+    create sequence TII_ROSTER_SYNC_ITEM_ID_SEQ;
 
     create sequence contentreview_ITEM_ID_SEQ;
 
