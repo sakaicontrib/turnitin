@@ -75,6 +75,14 @@ public class TurnitinRosterSync {
 
 	}
 
+	/**
+	 * This method takes a Sakai Site ID and returns the xml document from 
+	 * Turnitin that lists all the instructors and students for that Turnitin 
+	 * course.
+	 * 
+	 * @param sakaiSiteID
+	 * @return
+	 */
 	public Document getEnrollmentDocument(String sakaiSiteID) {
 		Map instinfo = turnitinConn.getInstructorInfo(sakaiSiteID);
 
@@ -93,17 +101,17 @@ public class TurnitinRosterSync {
 		try {
 			togo = turnitinConn.callTurnitinWDefaultsReturnDocument(params);
 		} catch (SubmissionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Error getting enrollment document for sakai site: " 
+					+ sakaiSiteID, e);
 		} catch (TransientSubmissionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Error getting enrollment document for sakai site: " 
+					+ sakaiSiteID, e);
 		}
 		return togo;
 	}
 
 	/**
-	 * This will make an API call to turnitit to fetch the list of instructors
+	 * This will make an API call to Turnitit to fetch the list of instructors
 	 * and students for the site.  Remember that in Turnitin, a user can be 
 	 * <strong>both</strong> a student and an instructor.
 	 * 
@@ -140,44 +148,72 @@ public class TurnitinRosterSync {
 		return togo;
 	}
 
+	/**
+	 * This method swap a users role in a Turnitin site. The currentRole should
+	 * be accurate for the users current information otherwise the method may
+	 * fail (this all depends on calls to Turnitin's Webservice API's). So if
+	 * you pass in a site, a user, and the value 1 (student) that user should be
+	 * switched to an instructor in that site.
+	 * 
+	 * @param siteId
+	 * @param user
+	 * @param currentRole The current role using Turnitin codes. In Turnitin a 
+	 * value of 1 always represents a student and a value of 2 represents an
+	 * instructor.
+	 * @return
+	 */
 	public boolean swapTurnitinRoles(String siteId, User user, int currentRole ) {
 		boolean togo = false;
-		// TODO We need to centralize packing user options since sometimes the 
-		// email address may come from their Profile Tool profile
-		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
-				"fid","19","fcmd", "3", "uem", user.getEmail(), "uid", user.getId(),
-				"ufn", user.getFirstName(), "uln", user.getLastName(), 
-				"username", user.getDisplayName(), "ctl", siteId, "cid", siteId,
-				"utp", currentRole+"", 
-				"tem", turnitinConn.getInstructorInfo(siteId).get("uem"));
+		
+		if (user != null) {
+			// TODO We need to centralize packing user options since sometimes the 
+			// email address may come from their Profile Tool profile
+			Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
+					"fid","19","fcmd", "3", "uem", user.getEmail(), "uid", user.getId(),
+					"ufn", user.getFirstName(), "uln", user.getLastName(), 
+					"username", user.getDisplayName(), "ctl", siteId, "cid", siteId,
+					"utp", currentRole+"", 
+					"tem", turnitinConn.getInstructorInfo(siteId).get("uem"));
 
-		Map ret = new HashMap();
-		try {
-			ret = turnitinConn.callTurnitinWDefaultsReturnMap(params);
-		} catch (SubmissionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TransientSubmissionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Map ret = new HashMap();
+			try {
+				ret = turnitinConn.callTurnitinWDefaultsReturnMap(params);
+			} catch (SubmissionException e) {
+				log.error("Error syncing Turnitin site: " + siteId + " userid: " + user.getId(), e);
+			} catch (TransientSubmissionException e) {
+				log.error("Error syncing Turnitin site: " + siteId + " userid: " + user.getId(), e);
+			}
+
+			// A Successful return should look like:
+			// {rmessage=Successful!, rcode=93}
+			if (ret.containsKey("rcode") && ret.get("rcode").equals("93")) {
+				log.info("Successfully swapped roles for site: " + siteId + " user: " + user.getEid() + " oldRole: " + currentRole);
+				togo = true;
+			}
 		}
-
-		// A Successful return should look like:
-		// {rmessage=Successful!, rcode=93}
-		if (ret.containsKey("rcode") && ret.get("rcode").equals("93")) {
-			log.info("Successfully swapped roles for site: " + siteId + " user: " + user.getEid() + " oldRole: " + currentRole);
-			togo = true;
+		else {
+			// This was successful because the user doesn't exist in our Sakai
+			// installation, and so we don't need to sync them at all.
+			togo = true; 
 		}
 
 		return togo;
 	}
 
+	/**
+	 * Looks up a Sakai {@link org.sakaiproject.user.api.User} by userid, 
+	 * returns null if they do not exist.
+	 * 
+	 * @param userid
+	 * @return the User object or null if the user does not exist in the Sakai
+	 * installation.
+	 */
 	public User getUser(String userid) {
 		User user = null;
 		try {
 			user = userDirectoryService.getUser(userid);
 		} catch (UserNotDefinedException e) {
-			throw new IllegalArgumentException("User Does not Exist: " + userid, e);
+			log.warn("Attemping to lookup user for Turnitn Sync that does not exist: " + userid, e);
 		}
 		return user;
 	}
@@ -202,7 +238,6 @@ public class TurnitinRosterSync {
 
 
 		for (String uid: enrollment.get("instructor")) {
-			Member member = site.getMember(uid);
 			if (!site.isAllowed(uid, "section.role.instructor")) {
 				boolean status = swapTurnitinRoles(sakaiSiteID, getUser(uid), 2);
 				if (status == false) {
@@ -223,6 +258,14 @@ public class TurnitinRosterSync {
 		return success;
 	}
 
+	/**
+	 * Utility method to create the Lock ID that will be used in the 
+	 * Content Review Lock table to hold on to a Sakai Site while we try to 
+	 * sync it.
+	 * 
+	 * @param item
+	 * @return
+	 */
 	public String makeLockID(ContentReviewRosterSyncItem item) {
 		return item.getClass().getCanonicalName() + item.getId();
 	}
@@ -235,6 +278,11 @@ public class TurnitinRosterSync {
 		dao.releaseLock(makeLockID(item), serverConfigurationService.getServerId());
 	}
 
+	/**
+	 * This is the main processing method that's meant to be periodically run
+	 * by a quartz job or other script. It will sync all the Sakai Sites that
+	 * have been put in the queue due to site updates or something.
+	 */
 	public void processSyncQueue() {
 		Restriction notStarted = new Restriction("status", ContentReviewRosterSyncItem.NOT_STARTED_STATUS, Restriction.EQUALS);
 		Restriction failed = new Restriction("status", ContentReviewRosterSyncItem.FAILED_STATUS, Restriction.EQUALS);
@@ -246,15 +294,27 @@ public class TurnitinRosterSync {
 			if (obtainLock(item)) {
 				log.info("About to Turnitin Syncing: " + item.getId() + " , " + item.getSiteId() + " , " + item.getStatus());
 				item.setLastTried(new Date());
-				boolean success = syncSiteWithTurnitin(item.getSiteId());
-				if (success) {
-					item.setStatus(ContentReviewRosterSyncItem.FINISHED_STATUS);
-				}
-				else {
+				try {
+					boolean success = syncSiteWithTurnitin(item.getSiteId());
+					if (success) {
+						item.setStatus(ContentReviewRosterSyncItem.FINISHED_STATUS);
+					}
+					else {
+						item.setStatus(ContentReviewRosterSyncItem.FAILED_STATUS);
+					}
+				} catch (Exception e) {
 					item.setStatus(ContentReviewRosterSyncItem.FAILED_STATUS);
+					log.error("Unable to complete Turnitin Roster Sync for SyncItem id: " 
+						+ item.getId() + " + siteid: " + item.getSiteId(), e);
+					StringBuilder sb = item.getMessages() == null ? new StringBuilder() : new StringBuilder(item.getMessages());
+					sb.append("\n"+item.getLastTried().toLocaleString()
+						+"Unable to complete Turnitin Roster Sync. See log for full stack trace\n");
+					sb.append(e.getMessage());
+					item.setMessages(sb.toString());
+				} finally {
+					dao.update(item);
+					releaseLock(item);
 				}
-				dao.update(item);
-				releaseLock(item);
 			}
 		}
 	}
