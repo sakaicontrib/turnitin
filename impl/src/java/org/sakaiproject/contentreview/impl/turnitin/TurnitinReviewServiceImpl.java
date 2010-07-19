@@ -188,6 +188,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 
 	public void init() {
+		
+		sendAccountNotifications = turnitinConn.getSendAccountNotifications();
+		sendSubmissionNotification = turnitinConn.getSendSubmissionNotification();
+		maxRetry = turnitinConn.getMaxRetry();
+		defaultAssignId = turnitinConn.getDefaultAssignId();
+		defaultClassPassword = turnitinConn.getDefaultClassPassword();
+		
 		log.info("init()");
 		if (!turnitinConn.isUseSourceParameter()) {
 			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))

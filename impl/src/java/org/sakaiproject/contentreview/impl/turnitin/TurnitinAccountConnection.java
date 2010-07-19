@@ -320,4 +320,44 @@ public class TurnitinAccountConnection {
 	public void setUserDirectoryService(UserDirectoryService userDirectoryService) {
 		this.userDirectoryService = userDirectoryService;
 	}
+
+	public int getSendAccountNotifications() {
+		return sendAccountNotifications;
+	}
+
+	public void setSendAccountNotifications(int sendAccountNotifications) {
+		this.sendAccountNotifications = sendAccountNotifications;
+	}
+
+	public int getSendSubmissionNotification() {
+		return sendSubmissionNotification;
+	}
+
+	public void setSendSubmissionNotification(int sendSubmissionNotification) {
+		this.sendSubmissionNotification = sendSubmissionNotification;
+	}
+
+	public Long getMaxRetry() {
+		return maxRetry;
+	}
+
+	public void setMaxRetry(Long maxRetry) {
+		this.maxRetry = maxRetry;
+	}
+
+	public String getDefaultAssignId() {
+		return defaultAssignId;
+	}
+
+	public void setDefaultAssignId(String defaultAssignId) {
+		this.defaultAssignId = defaultAssignId;
+	}
+
+	public String getDefaultClassPassword() {
+		return defaultClassPassword;
+	}
+
+	public void setDefaultClassPassword(String defaultClassPassword) {
+		this.defaultClassPassword = defaultClassPassword;
+	}
 }
