@@ -59,7 +59,7 @@ public class MembershipChangeObserver implements Observer {
 		eventTrackingService.addLocalObserver(this);
 	}
 
-	@Override
+	
 	public void update(Observable o, Object arg) {
 		if (arg instanceof Event) {
 			Event event = (Event) arg;

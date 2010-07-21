@@ -361,7 +361,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String cpw = defaultClassPassword;
 		String ctl = siteId;	
 		String fcmd = "2";
-		String fid = "2";
+		String fid = "2"
 		//String uem = defaultInstructorEmail;
 		//String ufn = defaultInstructorFName;
 		//String uln = defaultInstructorLName;
@@ -642,7 +642,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			Map firstparams = new HashMap();
 			firstparams.putAll(params);
 			firstparams.put("dtstart", today);
-			firstparams.put("dtdue", today);
+			firstparams.put("dtdue", dtdue);
 			firstparams.put("fcmd", "2");
 			Document firstSaveDocument = 
 				turnitinConn.callTurnitinReturnDocument(firstparams);
