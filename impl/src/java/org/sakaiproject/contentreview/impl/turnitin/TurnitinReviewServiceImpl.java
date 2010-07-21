@@ -572,8 +572,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//TODO use the 'secret' function to change this to longer
 		cal.add(Calendar.MONTH, 5);
 		String dtdue = dform.format(cal.getTime());
+		log.debug("Set date due to: " + dtdue);
 		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("dtdue")) {
 			dtdue = extraAsnnOpts.get("dtdue").toString();
+			log.debug("Settign date due from external to: " + dtdue);
 			extraAsnnOpts.remove("dtdue");
 		}
 
@@ -643,6 +645,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			firstparams.putAll(params);
 			firstparams.put("dtstart", today);
 			firstparams.put("dtdue", dtdue);
+			log.debug("date due is: " + dtdue);
 			firstparams.put("fcmd", "2");
 			Document firstSaveDocument = 
 				turnitinConn.callTurnitinReturnDocument(firstparams);
