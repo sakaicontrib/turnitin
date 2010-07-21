@@ -361,7 +361,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String cpw = defaultClassPassword;
 		String ctl = siteId;	
 		String fcmd = "2";
-		String fid = "2"
+		String fid = "2";
 		//String uem = defaultInstructorEmail;
 		//String ufn = defaultInstructorFName;
 		//String uln = defaultInstructorLName;
