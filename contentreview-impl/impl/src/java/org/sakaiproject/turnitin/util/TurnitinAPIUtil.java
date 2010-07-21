@@ -20,10 +20,13 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.Map.Entry;
 
 import javax.net.ssl.HttpsURLConnection;
 import sun.net.www.protocol.http.HttpURLConnection;
@@ -31,6 +34,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.collections.iterators.EntrySetMapIterator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.azeckoski.reflectutils.transcoders.XMLTranscoder;
@@ -273,6 +277,19 @@ public class TurnitinAPIUtil {
 		parameters.put("gmtime", getGMTime());
 		//}
 
+		
+		/**
+		 * Some debug logging
+		 */
+		if (log.isDebugEnabled()) {
+			Set<Entry<String, Object>> ets = parameters.entrySet();
+			Iterator<Entry<String, Object>> it = ets.iterator();
+			while (it.hasNext()) {
+				Entry<String, Object> entr = it.next();
+				log.debug("Paramater entry: " + entr.getKey() + ": " + entr.getValue());
+			}
+		}
+		
 		List<String> sortedkeys = new ArrayList<String>();
 		sortedkeys.addAll(parameters.keySet());
 

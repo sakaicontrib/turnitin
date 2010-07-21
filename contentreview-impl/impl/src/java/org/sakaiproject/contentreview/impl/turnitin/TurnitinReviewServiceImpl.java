@@ -662,7 +662,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			try {Thread.sleep(1000);} catch (Exception e) { log.error("Unable to sleep, while waiting for the turnitin cloud to sync", e); }
 
 		}
-
+		log.debug("going to attempt second update");
 		Document document = turnitinConn.callTurnitinReturnDocument(params);
 
 		Element root = document.getDocumentElement();
