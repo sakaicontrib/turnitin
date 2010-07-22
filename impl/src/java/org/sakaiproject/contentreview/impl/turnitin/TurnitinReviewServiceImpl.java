@@ -662,7 +662,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			// TODO FIXME -sgithens This is for real. For some reason the 
 			// Turnitin cloud doesn't seem to update fast enough all the time
 			// for back to back calls.
-			try {Thread.sleep(1000);} catch (Exception e) { log.error("Unable to sleep, while waiting for the turnitin cloud to sync", e); }
+			//FIXME - UCT testign seems to indicate that 1s is too short
+			try {Thread.sleep(5000);} catch (Exception e) { log.error("Unable to sleep, while waiting for the turnitin cloud to sync", e); }
 
 		}
 		log.debug("going to attempt second update");

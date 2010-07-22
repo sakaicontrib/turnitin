@@ -275,14 +275,14 @@ public class TurnitinAPIUtil {
 		/**
 		 * Some debug logging
 		 */
-		//if (log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			Set<Entry<String, Object>> ets = parameters.entrySet();
 			Iterator<Entry<String, Object>> it = ets.iterator();
 			while (it.hasNext()) {
 				Entry<String, Object> entr = it.next();
-				log.warn("Paramater entry: " + entr.getKey() + ": " + entr.getValue());
+				log.debug("Paramater entry: " + entr.getKey() + ": " + entr.getValue());
 			}
-		//}
+		}
 		
 		List<String> sortedkeys = new ArrayList<String>();
 		sortedkeys.addAll(parameters.keySet());
