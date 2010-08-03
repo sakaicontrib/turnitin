@@ -38,7 +38,20 @@
         <module>scheduler-jobs</module>
         <module>tool</module>
     </modules>
-
+	<issueManagement>
+        <system>jira</system>
+        <url>http://jira.sakaiproject.org/browse/TII</url>
+    </issueManagement>
+	    <licenses>
+        <license>
+            <name>Educational Community License, Version 2.0</name>
+            <url>http://www.osedu.org/licenses/ECL-2.0/ecl2.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    
+    
+    
     <!-- handles the management of all related dependencies -->
     <dependencyManagement>
         <dependencies>
@@ -140,5 +153,43 @@
             </snapshots>
         </repository>
     </repositories>
+    <developers>
+     <developer>
+            <id>david.horwitz@uct.ac.za</id>
+            <name>David Horwitz</name>
+            <email>david.horwitz@uct.ac.za</email>
+            <url>http://blogs.uct.ac.za/blog/daves-blog</url>
+            <organization>
+                Centre for Educational Technology, University of Cape
+                Town
+            </organization>
+            <organizationUrl>http://www.cet.uct.ac.za</organizationUrl>
+            <roles>
+                <role>developer</role>
+                <role>branch manager</role>
+            </roles>
+            <timezone>+2</timezone>
+            <properties>
+                <picUrl>
+                    http://www.sakaiproject.org/access/content/group/sakai-community/images/people/horwitzdavid_sakaigers_100x80.jpg
+                </picUrl>
+            </properties>
+        </developer>
+     <developer>
+            <id>sgithens@mtu.edu</id>
+            <name>Steven Githens</name>
+            <email>sgithens@mtu.edu</email>
+            <url>http://githens.org/blog/</url>
+            <organization>
+                Indiana University
+            </organization>
+            <organizationUrl>http://www.iu.edu</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>-5</timezone>
+        </developer>
+        
+    </developers>
 
 </project>
