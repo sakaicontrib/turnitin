@@ -72,17 +72,17 @@
 	    <dependency>
                 <groupId>org.sakaiproject.common</groupId>
                 <artifactId>sakai-common-edu-person-api</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>[1.0,1.1)</version>
             </dependency>
             <dependency>
                 <groupId>org.sakaiproject.common</groupId>
                 <artifactId>sakai-common-manager-api</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>[1.0,1.1)</version>
 	    </dependency>
             <dependency>
                 <groupId>org.sakaiproject.common</groupId>
                 <artifactId>sakai-common-type-api</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>[1.0,1.1)</version>
             </dependency>
 
           </dependencies>
