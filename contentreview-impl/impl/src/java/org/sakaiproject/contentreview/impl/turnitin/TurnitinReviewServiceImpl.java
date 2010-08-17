@@ -1058,7 +1058,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String utp = "1";
 
-			log.warn("Using Emails: tem: " + tem + " uem: " + uem);
+			log.debug("Using Emails: tem: " + tem + " uem: " + uem);
 
 			String assign = getAssignmentTitle(currentItem.getTaskId());;
 			String ctl = currentItem.getSiteId();
