@@ -1752,9 +1752,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		catch (TransientSubmissionException tse) {
 			log.error("Error on API call in updateAssignment siteid: " + siteId + " taskid: " + taskId, tse);
+			return;
 		}
 		catch (SubmissionException se) {
 			log.error("Error on API call in updateAssignment siteid: " + siteId + " taskid: " + taskId, se);
+			return;
 		}
 
 		Element root = document.getDocumentElement();

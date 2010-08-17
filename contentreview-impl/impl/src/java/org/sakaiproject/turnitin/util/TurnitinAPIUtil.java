@@ -135,7 +135,6 @@ public class TurnitinAPIUtil {
 
 	@SuppressWarnings({ "unchecked" })
 	public static Map packMap(Map map, Object... vargs) {
-		Map togo = map;
 		if (map == null) {
 			map = new HashMap();
 		}
