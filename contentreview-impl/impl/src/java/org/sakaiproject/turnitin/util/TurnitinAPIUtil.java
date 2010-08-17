@@ -342,7 +342,11 @@ public class TurnitinAPIUtil {
 								+ "\r\ncontent-transfer-encoding: binary" + "\r\n\r\n")
 								.getBytes());
 
-						outStream.write(resource.getContent());
+						byte[] content = resource.getContent();
+						if (content == null) {
+							throw new SubmissionException("zero length submission!");
+						}
+						outStream.write(content);
 						outStream.write("\r\n".getBytes("UTF-8"));
 						if (apiTraceLog.isDebugEnabled()) {
 							apiDebugSB.append(sortedkeys.get(i));
