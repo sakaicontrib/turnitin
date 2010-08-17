@@ -159,6 +159,12 @@ public class TurnitinContentValidator {
 			return false;
 		}
 
+		//TII-93 content length must be > o
+		if (resource.getContentLength() == 0) {
+			log.debug("File is Ob");
+			return false;
+		}
+		
 		//if this is a msword type file we can check the legth
 		if (isMsWordDoc(resource)) {
 			if (wordDocLength(resource) < 20) {
