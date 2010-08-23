@@ -340,7 +340,7 @@ public class TurnitinAPIUtil {
 								+ "Content-Type: " + resource.getContentType()
 								+ "\r\ncontent-transfer-encoding: binary" + "\r\n\r\n")
 								.getBytes());
-
+						//TODO this loads the doc into memory rather use the stream method
 						byte[] content = resource.getContent();
 						if (content == null) {
 							throw new SubmissionException("zero length submission!");

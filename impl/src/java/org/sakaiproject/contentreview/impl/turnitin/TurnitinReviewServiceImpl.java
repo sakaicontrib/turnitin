@@ -83,6 +83,8 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.ServerOverloadException;
 import org.sakaiproject.exception.TypeException;
+import org.sakaiproject.genericdao.api.search.Restriction;
+import org.sakaiproject.genericdao.api.search.Search;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
@@ -203,7 +205,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	public String getServiceName() {
-		return this.SERVICE_NAME;
+		return SERVICE_NAME;
 	}
 
 	public String getIconUrlforScore(Long score) {
@@ -234,7 +236,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * @see org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl#getReviewReportInstructor(java.lang.String)
 	 */
 	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
-		List matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		
+		Search search = new Search();
+		search.addRestriction(new Restriction("contentId", contentId));
+		List<ContentReviewItem> matchingItems = dao.findBySearch(ContentReviewItem.class, search);
 		if (matchingItems.size() == 0) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
@@ -277,7 +282,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
-		List<ContentReviewItem> matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+		
+		Search search = new Search();
+		search.addRestriction(new Restriction("contentId", contentId));
+		List<ContentReviewItem> matchingItems = dao.findBySearch(ContentReviewItem.class, search);
 		if (matchingItems.size() == 0) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
