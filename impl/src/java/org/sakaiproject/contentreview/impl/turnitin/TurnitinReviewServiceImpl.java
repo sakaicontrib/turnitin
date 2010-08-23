@@ -769,11 +769,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 	private ContentReviewItem getNextItemInSubmissionQueue() {
 
-		ContentReviewItem searchItem = new ContentReviewItem();
-		searchItem.setContentId(null);
-		searchItem.setStatus(ContentReviewItem.NOT_SUBMITTED_CODE);
-
-		List notSubmittedItems = dao.findByExample(searchItem);
+		
+		Search search = new Search();
+		search.addRestriction(new Restriction("status", ContentReviewItem.NOT_SUBMITTED_CODE));
+		
+		List<ContentReviewItem> notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
 		for (int i =0; i < notSubmittedItems.size(); i++) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(0);
 			//can we get a lock
@@ -783,8 +783,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		}
 
-		searchItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-		notSubmittedItems = dao.findByExample(searchItem);
+		search = new Search();
+		search.addRestriction(new Restriction("status", ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE));
+		notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
 
 		//we need the next one whose retry time has not been reached
 		for  (int i =0; i < notSubmittedItems.size(); i++ ) {
