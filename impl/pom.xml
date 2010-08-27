@@ -208,6 +208,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+        	<groupId>commons-lang</groupId>
+        	<artifactId>commons-lang</artifactId>
+        	<type>jar</type>
+        	<scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

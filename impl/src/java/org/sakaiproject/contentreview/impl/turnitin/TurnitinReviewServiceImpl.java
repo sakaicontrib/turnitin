@@ -55,6 +55,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.hpsf.SummaryInformation;
@@ -1023,6 +1024,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 
 				fileName = fileName.replace(' ', '_');
+				//its possible we have double _ as a result of this lets do some cleanup
+				fileName = StringUtils.replace(fileName, "__", "_");
+				
 				log.debug("fileName is :" + fileName);
 			}
 			catch (PermissionException e2) {
@@ -1047,6 +1051,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				e.printStackTrace();
 			}
 
+			//TII-97 filenames can't be longer than 200 chars
+			if (fileName != null && fileName.length() >=200 ) {
+				fileName = truncateFileName(fileName, 198);
+			}
+			
+			
 			String userEid = currentItem.getUserId();
 			try {
 				userEid = userDirectoryService.getUserEid(currentItem.getUserId());
@@ -1178,6 +1188,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		log.info("Queue run completed " + total + " items submitted " + errors + ", " + success + " successes");
 
+	}
+
+	private String truncateFileName(String fileName, int i) {
+		//get the extension for later re-use
+		String extension = "";
+		if (fileName.contains(".")) {
+			 extension = fileName.substring(fileName.lastIndexOf("."));
+		}
+		
+		fileName = fileName.substring(0, i - extension.length());
+		fileName = fileName + extension;
+		
+		return fileName;
 	}
 
 	public void checkForReports() {
