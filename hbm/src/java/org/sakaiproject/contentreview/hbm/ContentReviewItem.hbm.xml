@@ -25,6 +25,6 @@
 		<property name="lastError" type="text" not-null="false" />
         <property name="retryCount" type="long" not-null="false" />
         <property name="nextRetryTime" type="java.util.Date" not-null="false"/>
-		
+        <property name="errorCode" type="integer" not-null="false"/>
 	</class>
 </hibernate-mapping>
