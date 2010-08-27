@@ -58,6 +58,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.validator.EmailValidator;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
@@ -1673,8 +1674,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		if (email.indexOf(" ") > 0)
 			return false;
 
-		//"^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*$" 
-		if (email.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*$")) 
+		//use commons-validator
+		EmailValidator validator = EmailValidator.getInstance();
+		if (validator.isValid(email))
 			return true;
 
 		return false;
