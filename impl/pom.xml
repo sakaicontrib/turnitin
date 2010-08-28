@@ -74,7 +74,6 @@
             <artifactId>jdom</artifactId>
             <version>1.0</version>
         </dependency>
-
         <!-- Quartz dependencies -->
         <dependency>
             <groupId>quartz</groupId>
@@ -149,13 +148,6 @@
             <groupId>hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
             <version>1.8.0.5</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>dom4j</groupId>
-            <artifactId>dom4j</artifactId>
-            <version>1.6.1</version>
             <scope>test</scope>
         </dependency>
 
