@@ -205,7 +205,10 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 	public List<ContentReviewItem> getReportList(String siteId, String taskId) {
 		log.debug("Returning list of reports for site: " + siteId + ", task: " + taskId);
 		Search search = new Search();
-		search.addRestriction(new Restriction("siteId", siteId));
+		//TII-99 siteId can be null
+		if (siteId != null) {
+			search.addRestriction(new Restriction("siteId", siteId));
+		}
 		search.addRestriction(new Restriction("taskId", taskId));
 		search.addRestriction(new Restriction("status", ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE));
 		
