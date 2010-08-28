@@ -20,22 +20,9 @@
  **********************************************************************************/
 package org.sakaiproject.contentreview.impl.turnitin;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.Proxy;
-import java.net.SocketAddress;
-import java.net.URL;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
@@ -47,21 +34,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.TimeZone;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.EmailValidator;
-import org.apache.poi.hpsf.SummaryInformation;
-import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.component.api.ServerConfigurationService;
@@ -83,11 +60,9 @@ import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
-import org.sakaiproject.exception.ServerOverloadException;
 import org.sakaiproject.exception.TypeException;
 import org.sakaiproject.genericdao.api.search.Restriction;
 import org.sakaiproject.genericdao.api.search.Search;
-import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
 import org.sakaiproject.user.api.User;
@@ -97,8 +72,6 @@ import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private static final Log log = LogFactory
@@ -667,7 +640,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} else {
 				log.debug("FirstDate Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 				//log.debug(root);
-				throw new TransientSubmissionException("FirstDate Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+				throw new TransientSubmissionException("FirstDate Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode
+						, Integer.valueOf(rcode));
 			}
 			// TODO FIXME -sgithens This is for real. For some reason the 
 			// Turnitin cloud doesn't seem to update fast enough all the time
@@ -687,7 +661,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		} else {
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 			//log.debug(root);
-			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
+			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode
+					, Integer.valueOf(rcode));
 		}
 	}
 
@@ -945,6 +920,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				} catch (SubmissionException se) {
 					currentItem.setLastError("Assign creation error: " + se.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					if (se.getErrorCode() != null) {
+						currentItem.setErrorCode(se.getErrorCode());
+					}
 					dao.update(currentItem);
 					releaseLock(currentItem);
 					errors++;
@@ -952,6 +930,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				} catch (TransientSubmissionException tse) {
 					currentItem.setLastError("Assign creation error: " + tse.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					if (tse.getErrorCode() != null) {
+						currentItem.setErrorCode(tse.getErrorCode());
+					}
+					
 					dao.update(currentItem);
 					releaseLock(currentItem);
 					errors++;
@@ -1180,6 +1162,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					errors++;
 				}
 				currentItem.setLastError("Submission Error: " + rMessage + "(" + rCode + ")");
+				currentItem.setErrorCode(Integer.valueOf(rCode));
 				dao.update(currentItem);
 
 			}
