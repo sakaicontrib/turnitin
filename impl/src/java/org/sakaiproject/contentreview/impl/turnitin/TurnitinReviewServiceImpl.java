@@ -611,7 +611,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp
 		);
 		
-		params.putAll(turnitinConn.getInstructorInfo(siteId));
+		// Save instructorInfo up here to reuse for calls in this 
+		// method, since theoretically getInstructorInfo could return
+		// different instructors for different invocations and we need
+		// the same one since we're using a session id.
+		Map instructorInfo = turnitinConn.getInstructorInfo(siteId);
+		params.putAll(instructorInfo);
 
 		if (extraAsnnOpts != null) {
 			for (Object key: extraAsnnOpts.keySet()) {
@@ -623,9 +628,20 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 		}
 
+		// We only need to use a session id if we are creating this
+		// assignment for the first time.
+		String sessionid = null;
+		Map sessionParams = null;
+		
 		if (!asnnExists) {
+		        sessionParams = turnitinConn.getBaseTIIOptions();
+		        sessionParams.putAll(instructorInfo);
+		        sessionParams.put("utp", utp);
+		        sessionid = TurnitinSessionFuncs.getTurnitinSession(turnitinConn, sessionParams);
+		    
 			Map firstparams = new HashMap();
 			firstparams.putAll(params);
+			firstparams.put("session-id", sessionid);
 			firstparams.put("dtstart", today);
 			firstparams.put("dtdue", dtdue);
 			log.debug("date due is: " + dtdue);
@@ -643,14 +659,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				throw new TransientSubmissionException("FirstDate Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode
 						, Integer.valueOf(rcode));
 			}
-			// TODO FIXME -sgithens This is for real. For some reason the 
-			// Turnitin cloud doesn't seem to update fast enough all the time
-			// for back to back calls.
-			//FIXME - UCT testign seems to indicate that 1s is too short
-			try {Thread.sleep(5000);} catch (Exception e) { log.error("Unable to sleep, while waiting for the turnitin cloud to sync", e); }
-
 		}
 		log.debug("going to attempt second update");
+		if (sessionid != null) {
+		    params.put("session-id", sessionid);
+		}
 		Document document = turnitinConn.callTurnitinReturnDocument(params);
 
 		Element root = document.getDocumentElement();
@@ -663,6 +676,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			//log.debug(root);
 			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode
 					, Integer.valueOf(rcode));
+		}
+		
+		if (sessionid != null) {
+		    TurnitinSessionFuncs.logoutTurnitinSession(turnitinConn, sessionid, sessionParams);
 		}
 	}
 
