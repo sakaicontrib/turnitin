@@ -46,6 +46,7 @@ public enum TIIParam {
     ptl,
     ptype,
     said,
+    sessionId,
     tem,
     uem,
     ufn,
@@ -53,5 +54,16 @@ public enum TIIParam {
     uln,
     upw,
     username,
-    utp
+    utp;
+    
+    public String toString() {
+        // Unfortunately you can't put dashes in enum constant names, so this
+        // special case is for the newly added session-id TII Parameter.
+        if (name().equals("sessionId")) {
+            return "session-id";
+        }
+        else {
+            return name();
+        }
+    }
 }
