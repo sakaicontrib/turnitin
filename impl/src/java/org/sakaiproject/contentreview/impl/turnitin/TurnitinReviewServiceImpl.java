@@ -1259,7 +1259,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				dao.update(currentItem);
 				continue;
 			} else {
-				log.info("Still have retries left, continuing. ItemID: " + currentItem.getId());
+				log.debug("Still have retries left, continuing. ItemID: " + currentItem.getId());
 				// Moving down to check for report generate speed.
 				//long l = currentItem.getRetryCount().longValue();
 				//l++;
@@ -1337,7 +1337,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							continue;
 						}
 						else {
-							log.info("Incrementing retry count for currentItem: " + currentItem.getId());
+							log.debug("Incrementing retry count for currentItem: " + currentItem.getId());
 							long l = currentItem.getRetryCount().longValue();
 							l++;
 							currentItem.setRetryCount(Long.valueOf(l));
