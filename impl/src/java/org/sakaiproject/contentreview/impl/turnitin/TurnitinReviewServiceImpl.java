@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -1859,6 +1860,25 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 		}
 		return ufn;
+	}
+	
+	
+	public String getLocalizedStatusMessage(String messageCode, String userRef) {
+		return getLocalizedStatusMessage(messageCode, getUserLocale(userRef));
+	}
+	
+	private Locale getUserLocale(String userRef) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String getLocalizedStatusMessage(String messageCode) {
+		return getLocalizedStatusMessage(messageCode, userDirectoryService.getCurrentUser().getReference());
+	}
+	
+	public String getLocalizedStatusMessage(String messageCode, Locale locale) {
+		//TODO auto generated message stubb
+		return null;
 	}
 
 }
