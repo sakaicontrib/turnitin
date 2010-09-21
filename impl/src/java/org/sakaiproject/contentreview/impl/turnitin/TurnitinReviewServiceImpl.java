@@ -1875,7 +1875,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public String getLocalizedStatusMessage(String messageCode, String userRef) {
 		
 		String userId = EntityReference.getIdFromRef(userRef);
-		ResourceLoader resourceLoader = new ResourceLoader(userId, "org.sakaiproject.contentreview.impl.turnitin.bundle.turnitinCodes");
+		ResourceLoader resourceLoader = new ResourceLoader(userId, "turnitinCodes");
 		return resourceLoader.getString(messageCode);
 	}
 	
