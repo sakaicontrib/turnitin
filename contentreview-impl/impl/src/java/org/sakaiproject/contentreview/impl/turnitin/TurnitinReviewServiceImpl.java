@@ -59,6 +59,7 @@ import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.EntityProducer;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
+import org.sakaiproject.entitybroker.EntityReference;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.TypeException;
@@ -66,9 +67,11 @@ import org.sakaiproject.genericdao.api.search.Restriction;
 import org.sakaiproject.genericdao.api.search.Search;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
+import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
+import org.sakaiproject.util.ResourceLoader;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -155,6 +158,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		sqlService = sql;
 	}
 	
+	
+	private PreferencesService preferencesService;
+	public void setPreferencesService(PreferencesService preferencesService) {
+		this.preferencesService = preferencesService;
+	}
+
 	private TurnitinContentValidator turnitinContentValidator;
 	public void setTurnitinContentValidator(TurnitinContentValidator turnitinContentValidator) {
 		this.turnitinContentValidator = turnitinContentValidator;
@@ -1864,20 +1873,20 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	
 	
 	public String getLocalizedStatusMessage(String messageCode, String userRef) {
-		return getLocalizedStatusMessage(messageCode, getUserLocale(userRef));
+		
+		String userId = EntityReference.getIdFromRef(userRef);
+		ResourceLoader resourceLoader = new ResourceLoader(userId, "org.sakaiproject.contentreview.impl.turnitin.bundle.turnitinCodes");
+		return resourceLoader.getString(messageCode);
 	}
 	
-	private Locale getUserLocale(String userRef) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+
 
 	public String getLocalizedStatusMessage(String messageCode) {
 		return getLocalizedStatusMessage(messageCode, userDirectoryService.getCurrentUser().getReference());
 	}
 	
 	public String getLocalizedStatusMessage(String messageCode, Locale locale) {
-		//TODO auto generated message stubb
+		//TODO not sure how to do this with  the sakai resource loader
 		return null;
 	}
 

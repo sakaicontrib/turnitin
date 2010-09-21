@@ -15,14 +15,11 @@
 package org.sakaiproject.contentreview.dao;
 
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
 
 import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.contentreview.model.ContentReviewLock;
 import org.sakaiproject.contentreview.test.ContentReviewTestDataLoad;
-import org.sakaiproject.contentreview.test.PreloadTestDataImpl;
 import org.springframework.test.AbstractTransactionalSpringContextTests;
 
 
