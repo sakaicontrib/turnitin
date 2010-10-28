@@ -218,6 +218,21 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		return existingItems;
 	}
 	
+	public List<ContentReviewItem> getAllContentReviewItems(String siteId, String taskId) {
+            log.debug("Returning list of reports for site: " + siteId + ", task: " + taskId);
+            Search search = new Search();
+            //TII-99 siteId can be null
+            if (siteId != null) {
+                    search.addRestriction(new Restriction("siteId", siteId));
+            }
+            search.addRestriction(new Restriction("taskId", taskId));
+            
+            List<ContentReviewItem> existingItems = dao.findBySearch(ContentReviewItem.class, search);
+            
+            
+            return existingItems;
+    }
+	
 	public List<ContentReviewItem> getReportList(String siteId) {
 		log.debug("Returning list of reports for site: " + siteId);
 		
