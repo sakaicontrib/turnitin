@@ -644,10 +644,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		Map sessionParams = null;
 		
 		if (!asnnExists) {
-		        sessionParams = turnitinConn.getBaseTIIOptions();
-		        sessionParams.putAll(instructorInfo);
-		        sessionParams.put("utp", utp);
-		        sessionid = TurnitinSessionFuncs.getTurnitinSession(turnitinConn, sessionParams);
+			sessionParams = turnitinConn.getBaseTIIOptions();
+			sessionParams.putAll(instructorInfo);
+			sessionParams.put("utp", utp);
+			sessionid = TurnitinSessionFuncs.getTurnitinSession(turnitinConn, sessionParams);
 		    
 			Map firstparams = new HashMap();
 			firstparams.putAll(params);
