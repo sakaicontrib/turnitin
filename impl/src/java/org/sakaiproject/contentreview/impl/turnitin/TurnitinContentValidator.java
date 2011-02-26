@@ -45,7 +45,11 @@ import org.sakaiproject.exception.ServerOverloadException;
 public class TurnitinContentValidator {
 	private static final Log log = LogFactory.getLog(TurnitinContentValidator.class);
 
-	private int TII_MAX_FILE_SIZE;
+	private int tii_Max_Fil_Size;
+	/**
+	 * Default max allowed filesize - should match turnitins own setting (surrently 20Mb)
+	 */
+	private static int TII_DEFAULT_MAX_FILE_SIZE = 20971520;
 	
 	private ServerConfigurationService serverConfigurationService; 
 	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
@@ -53,7 +57,7 @@ public class TurnitinContentValidator {
 	}
 	
 	public void init() {
-		TII_MAX_FILE_SIZE = serverConfigurationService.getInt("turnitin.maxFileSize",10995116);
+		tii_Max_Fil_Size = serverConfigurationService.getInt("turnitin.maxFileSize", TII_DEFAULT_MAX_FILE_SIZE);
 	}
 	
 	private boolean isMsWordDoc(ContentResource resource) {
@@ -154,7 +158,7 @@ public class TurnitinContentValidator {
 
 		//TODO: if file is too big reject here 10.48576 MB
 
-		if (resource.getContentLength() > TII_MAX_FILE_SIZE) {
+		if (resource.getContentLength() > tii_Max_Fil_Size) {
 			log.debug("File is too big: " + resource.getContentLength());
 			return false;
 		}
