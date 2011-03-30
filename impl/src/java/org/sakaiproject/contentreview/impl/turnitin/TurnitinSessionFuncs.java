@@ -3,8 +3,11 @@ package org.sakaiproject.contentreview.impl.turnitin;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
+import org.sakaiproject.util.Xml;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -22,6 +25,7 @@ import org.w3c.dom.Element;
  *
  */
 public class TurnitinSessionFuncs {
+	private static final Log log = LogFactory.getLog(TurnitinSessionFuncs.class);
 
     /**
      * Logs in to turnitin.  Scrapes the response XML and returns the session id
@@ -58,6 +62,9 @@ public class TurnitinSessionFuncs {
         
         String sessionId = ((CharacterData) 
                 (root.getElementsByTagName("sessionid").item(0).getFirstChild())).getData().trim();
+        
+        log.debug("Log in results. rcode: " + rcode + " message: " + message +
+        		" sessionId: " + sessionId);
         
         return sessionId;
     }
