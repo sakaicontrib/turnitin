@@ -58,6 +58,7 @@ import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.exception.ServerOverloadException;
+import org.sakaiproject.util.Xml;
 import org.w3c.dom.Document;
 
 import uk.org.ponder.streamutil.StreamCopyUtil;
@@ -271,6 +272,10 @@ public class TurnitinAPIUtil {
 			throw new TransientSubmissionException ("Parser configuration error", pce);
 		} catch (Exception t) {
 			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+		}
+		
+		if (apiTraceLog.isDebugEnabled()) {
+			apiTraceLog.debug(" Result from call: " + Xml.writeDocumentToString(document));
 		}
 
 		return document;
