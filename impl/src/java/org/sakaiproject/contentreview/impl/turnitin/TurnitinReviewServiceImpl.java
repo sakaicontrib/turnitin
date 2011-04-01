@@ -481,6 +481,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
  
 		return turnitinConn.callTurnitinReturnMap(params);
 	}
+	
+	public void addTurnitinInstructor(Map userparams) throws SubmissionException, TransientSubmissionException {
+		Map params = new HashMap();
+		params.putAll(userparams);
+		params.putAll(turnitinConn.getBaseTIIOptions());
+		params.put("fid", "1");
+		params.put("fcmd", "2");
+		params.put("utp", "2");
+		turnitinConn.callTurnitinReturnMap(params);
+	}
 
 	/**
 	 * Creates or Updates an Assignment
@@ -644,6 +654,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		Map sessionParams = null;
 		
 		if (!asnnExists) {
+			// Try adding the user in case they don't exist TII-XXX
+			addTurnitinInstructor(instructorInfo);
+			
 			sessionParams = turnitinConn.getBaseTIIOptions();
 			sessionParams.putAll(instructorInfo);
 			sessionParams.put("utp", utp);
