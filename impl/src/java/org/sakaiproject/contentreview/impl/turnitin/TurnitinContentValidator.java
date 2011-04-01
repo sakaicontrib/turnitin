@@ -75,7 +75,7 @@ public class TurnitinContentValidator {
 		if (fileName.contains(".")) {
 			String extension = fileName.substring(fileName.lastIndexOf("."));
 			log.debug("file has an extension of " + extension);
-			if (extension.equals(".doc") || extension.equals(".docx") || ".rtf".equals(extension)) {
+			if (extension.equalsIgnoreCase(".doc") || extension.equalsIgnoreCase(".docx") || ".rtf".equalsIgnoreCase(extension)) {
 				return true;
 			}
 		} else {
