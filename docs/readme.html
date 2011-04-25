@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.6: http://docutils.sourceforge.net/" />
+<title>Turnitin Content Review Service</title>
+<style type="text/css">
+
+/*
+Author: Peter Parente
+Date: 2008/01/22
+Version: 1.0
+Copyright: This stylesheet has been placed in the public domain - free to edit and use for all uses.
+*/
+
+body {
+  font: 100% sans-serif;
+  background: #ffffff;
+  color: black;
+  margin: 2em;
+  padding: 0em 2em;
+}
+
+p.topic-title {
+  font-weight: bold;
+}
+
+table.docinfo {
+  text-align: left;
+  margin: 2em 0em;
+}
+
+a[href] {
+  color: #436976;
+  background-color: transparent;
+}
+
+a.toc-backref {
+  text-decoration: none;
+}
+
+h1 a[href] {
+  color: #003a6b;
+  text-decoration: none;
+  background-color: transparent;
+}
+
+a.strong {
+  font-weight: bold;
+}
+
+img {
+  margin: 0;
+  border: 0;
+}
+
+p {
+  margin: 0.5em 0 1em 0;
+  line-height: 1.5em;
+}
+
+p a:visited {
+  color: purple;
+  background-color: transparent;
+}
+
+p a:active {
+  color: red;
+  background-color: transparent;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+p img {
+  border: 0;
+  margin: 0;
+}
+
+p.rubric {
+  font-weight: bold;
+  font-style: italic;
+}
+
+h1.title {
+  color: #003a6b;
+  font-size: 250%;
+  margin-bottom: 0em;
+}
+
+h2.subtitle {
+  color: #003a6b;
+  border-bottom: 0px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #555;
+  background-color: transparent;
+  margin: 0em;
+  padding-top: 0.5em;
+}
+
+h1 {
+  font-size: 160%;
+  margin-bottom: 0.5em;
+  border-bottom: 2px solid #aaa;
+}
+
+h2 {
+  font-size: 140%;
+  margin-bottom: 0.5em;
+  border-bottom: 1px solid #aaa;
+}
+
+h3 {
+  font-size: 130%;
+  margin-bottom: 0.5em;
+}
+
+h4 {
+  font-size: 110%;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+
+h5 {
+  font-size: 105%;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+
+h6 {
+  font-size: 100%;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+
+dt {
+  font-style: italic;
+}
+
+dd {
+  margin-bottom: 1.5em;
+}
+
+div.admonition, div.note, div.tip, div.caution, div.important {
+  margin: 2em 2em;
+  padding: 0em 1em;
+  border-top: 1px solid #aaa;
+  border-left: 1px solid #aaa;
+  border-bottom: 2px solid #555;
+  border-right: 2px solid #555;
+}
+
+div.important {
+  background: transparent url('../images/important.png') 10px 2px no-repeat;
+}
+
+div.caution {
+  background: transparent url('../images/caution.png') 10px 2px no-repeat;
+}
+
+div.note {
+  background: transparent url('../images/note.png') 10px 2px no-repeat;
+}
+
+div.tip {
+  background: transparent url('../images/tip.png') 10px 2px no-repeat;
+}
+
+div.admonition-example {
+  background: transparent url('../images/tip.png') 10px 2px no-repeat;
+}
+
+div.admonition-critical-example {
+  background: transparent url('../images/important.png') 10px 2px no-repeat;
+}
+
+p.admonition-title {
+  font-weight: bold;
+  border-bottom: 1px solid #aaa;
+  padding-left: 30px;
+}
+
+table.docutils {
+  text-align: left;
+  border: 1px solid gray;
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5em 0em;
+}
+
+table.docutils caption {
+  font-style: italic;
+}
+
+table.docutils td, table.docutils th {
+  padding: 0.25em 0.5em;
+}
+
+table.docutils th {
+  background-color: #dddddd;
+}
+
+div.sidebar {
+  width: 33%;
+  float: right;
+  margin: 0em 2em;
+  padding: 0em 1em;
+  border-top: 1px solid #aaa;
+  border-left: 1px solid #aaa;
+  border-bottom: 2px solid #555;
+  border-right: 2px solid #555;
+}
+
+p.sidebar-title {
+  margin-bottom: 0em;
+  color: #003a6b;
+  border-bottom: 1px solid #aaa;
+  font-weight: bold;
+}
+
+p.sidebar-subtitle {
+  margin-top: 0em;
+  font-style: italic;
+  color: #003a6b;
+}
+
+</style>
+</head>
+<body>
+<div class="document" id="turnitin-content-review-service">
+<h1 class="title">Turnitin Content Review Service</h1>
+
+<div class="section" id="installation">
+<h1>Installation</h1>
+<p>This module can be installed with the standard Sakai maven idiom.</p>
+<pre class="literal-block">
+mvn clean install sakai:deploy
+</pre>
+</div>
+<div class="section" id="post-install-configuration">
+<h1>Post Install Configuration</h1>
+<p>After compiling and installing the code you need to add some
+sakai.properties with your account information, and then set up
+some quartz jobs that submit and fetch papers from the Turnitin
+web service.</p>
+<div class="section" id="sakai-properties">
+<h2>Sakai Properties</h2>
+<p>Sakai Turnitin Content Review configurations typically fall in to
+2 categories.  The original iteration of development had a single
+instructor account that controlled all the classes for the integration.
+More recent versions have allowed using an option that enables
+each instructor in Sakai to have a fully provisioned account as
+well which makes some tighter integration options possible.</p>
+<p>We'll cover the newer setup first.  Assuming you have a Turnitin
+Account/Contract already, you'll need to log in to turnitin.com
+and create a new subaccount on your main account. You'll then need
+to configure the integration to use the Open API.  Very soon there
+will be an option there for Sakai (along with the other Course Management
+Systems), but until then you'll need to email David Wu at Turnitin
+and request that this account be &quot;Source 9 Enabled&quot;.  His email is
+davidw At iparadigms Dot com</p>
+<p>You'll need the shared key and Account ID for the properties.</p>
+<p>The properties then are as follows:</p>
+<pre class="literal-block">
+turnitin.enable.assignment2=true # This assumes you are using Assignments 2
+turnitin.apiURL=https://www.turnitin.com/api.asp?
+turnitin.secretKey=mysecret # This is the secret you set online.
+turnitin.said=12345 # These are the 5 digit account
+turnitin.aid=12345  # ID you had enabled
+turnitin.useSourceParameter=true
+</pre>
+<p>If you wish to use (or are currently) a system with one Turnitin Instructor
+account provisioning all the assignments, the settings are as follows.</p>
+<pre class="literal-block">
+TODO
+</pre>
+<p>Usefull logging settings for this project include:</p>
+<p>DEBUG.org.sakaiproject.contentreview.impl.turnitin
+DEBUG.org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace</p>
+</div>
+</div>
+</div>
+</body>
+</html>
