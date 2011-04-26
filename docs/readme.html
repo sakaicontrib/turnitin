@@ -234,9 +234,13 @@ p.sidebar-subtitle {
 <div class="document" id="turnitin-content-review-service">
 <h1 class="title">Turnitin Content Review Service</h1>
 
+<!-- author Steven Githens -->
 <div class="section" id="installation">
 <h1>Installation</h1>
-<p>This module can be installed with the standard Sakai maven idiom.</p>
+<p>This module can be installed with the standard Sakai maven idiom.
+Additionally, it can be included with a Sakai distribution as a top
+level module as is typical with other 3rd party modules and tools.</p>
+<p>The standard build command is the same:</p>
 <pre class="literal-block">
 mvn clean install sakai:deploy
 </pre>
@@ -282,6 +286,36 @@ TODO
 <p>DEBUG.org.sakaiproject.contentreview.impl.turnitin
 DEBUG.org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace</p>
 </div>
+<div class="section" id="quartz-cron-jobs">
+<h2>Quartz (Cron) Jobs</h2>
+<p>There are 2 mandatory quartz jobs that need to be set up, and a third
+if you are using Instructor Provisioning.</p>
+<ul class="simple">
+<li>TII Content Review Queue
+Typical Cron Expression: 0 0/5 * * * ?</li>
+<li>Process Content Review Reports
+Typical Cron Expression: 0 0/5 * * * ?</li>
+</ul>
+<p>If you are using Instructor Provisioning, then also set up:</p>
+<ul class="simple">
+<li>Process Turnitin Content Review Roster Sync
+Typical Cron Expression: 0 0/1 * * * ?</li>
+</ul>
+</div>
+<div class="section" id="enabling-turnitin-on-specific-sites">
+<h2>Enabling Turnitin on Specific Sites</h2>
+<p>Out of the box, Turnitin integration is enabled on all sites in the Sakai
+Instance. It is possible to restrict this by using a different
+ContentReviewSiteAdvisor, which can be changed in the components.xml of
+the pack module.</p>
+<p>The other 2 that exist</p>
+</div>
+</div>
+<div class="section" id="faq">
+<h1>FAQ</h1>
+<p>Users must have all account fields filled in</p>
+<p>Can't use same accounts across test/dev/prod nodes</p>
+<p>docx but really doc so it won't work</p>
 </div>
 </div>
 </body>
