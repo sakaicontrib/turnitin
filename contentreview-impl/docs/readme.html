@@ -235,8 +235,47 @@ p.sidebar-subtitle {
 <h1 class="title">Turnitin Content Review Service</h1>
 
 <!-- author Steven Githens -->
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#overview" id="id1">Overview</a></li>
+<li><a class="reference internal" href="#installation" id="id2">Installation</a></li>
+<li><a class="reference internal" href="#post-install-configuration" id="id3">Post Install Configuration</a><ul>
+<li><a class="reference internal" href="#sakai-properties" id="id4">Sakai Properties</a></li>
+<li><a class="reference internal" href="#quartz-cron-jobs" id="id5">Quartz (Cron) Jobs</a></li>
+<li><a class="reference internal" href="#enabling-turnitin-on-specific-sites" id="id6">Enabling Turnitin on Specific Sites</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#faq" id="id7">FAQ</a></li>
+<li><a class="reference internal" href="#development-documentation" id="id8">Development Documentation</a></li>
+<li><a class="reference internal" href="#release-notes" id="id9">Release Notes</a></li>
+</ul>
+</div>
+<div class="section" id="overview">
+<h1><a class="toc-backref" href="#id1">Overview</a></h1>
+<p>The Turnitin Content Review service is an implementation of the
+Content Review API's for Sakai. Essentially it allows assignments
+from Assignments 1 or Assignments 2 to be checked for plagiarism
+using the commercial Turnitin.com service.</p>
+<p>The integration with Assignments 1, and especially 2 is fairly
+deep, ie. it's not just an iframe of the Turnitin Site embedded
+in Sakai. Assignments 2 exposes a fairly large number of options
+for Turnitin in it's own interface.  For example, the assignment
+authoring page options for an instructor are as below:</p>
+<p>TODO Insert Screenshot</p>
+<p>This integration was originally written by INSERT NAME at the
+University of Cape Town.  Current maintainers, contributers, and
+developers include:</p>
+<ul class="simple">
+<li>David Horwitz <em>lead</em></li>
+<li>Steven Githens <em>lead</em></li>
+<li>Michelle Wagner</li>
+<li>Numberous folks at deployments.</li>
+</ul>
+<p>Let me know if I someone should be added.</p>
+</div>
 <div class="section" id="installation">
-<h1>Installation</h1>
+<h1><a class="toc-backref" href="#id2">Installation</a></h1>
 <p>This module can be installed with the standard Sakai maven idiom.
 Additionally, it can be included with a Sakai distribution as a top
 level module as is typical with other 3rd party modules and tools.</p>
@@ -246,15 +285,15 @@ mvn clean install sakai:deploy
 </pre>
 </div>
 <div class="section" id="post-install-configuration">
-<h1>Post Install Configuration</h1>
+<h1><a class="toc-backref" href="#id3">Post Install Configuration</a></h1>
 <p>After compiling and installing the code you need to add some
 sakai.properties with your account information, and then set up
 some quartz jobs that submit and fetch papers from the Turnitin
 web service.</p>
 <div class="section" id="sakai-properties">
-<h2>Sakai Properties</h2>
+<h2><a class="toc-backref" href="#id4">Sakai Properties</a></h2>
 <p>Sakai Turnitin Content Review configurations typically fall in to
-2 categories.  The original iteration of development had a single
+2 categories.  Older installations typically had a single
 instructor account that controlled all the classes for the integration.
 More recent versions have allowed using an option that enables
 each instructor in Sakai to have a fully provisioned account as
@@ -282,40 +321,71 @@ account provisioning all the assignments, the settings are as follows.</p>
 <pre class="literal-block">
 TODO
 </pre>
-<p>Usefull logging settings for this project include:</p>
-<p>DEBUG.org.sakaiproject.contentreview.impl.turnitin
-DEBUG.org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace</p>
+<p>Usefull logging settings for this project include (these are using the
+standard Sakai log4j syntax, so you can just add them to the count
+if you already have some.):</p>
+<pre class="literal-block">
+log.config.count = 2
+log.config.1 = DEBUG.org.sakaiproject.contentreview.impl.turnitin
+log.config.2 = DEBUG.org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace
+</pre>
 </div>
 <div class="section" id="quartz-cron-jobs">
-<h2>Quartz (Cron) Jobs</h2>
+<h2><a class="toc-backref" href="#id5">Quartz (Cron) Jobs</a></h2>
 <p>There are 2 mandatory quartz jobs that need to be set up, and a third
 if you are using Instructor Provisioning.</p>
-<ul class="simple">
-<li>TII Content Review Queue
-Typical Cron Expression: 0 0/5 * * * ?</li>
-<li>Process Content Review Reports
-Typical Cron Expression: 0 0/5 * * * ?</li>
+<ul>
+<li><div class="first line-block">
+<div class="line">TII Content Review Queue</div>
+<div class="line">Typical Cron Expression: 0 0/5 * * * ?</div>
+</div>
+</li>
+<li><div class="first line-block">
+<div class="line">Process Content Review Reports</div>
+<div class="line">Typical Cron Expression: 0 0/5 * * * ?</div>
+</div>
+</li>
 </ul>
 <p>If you are using Instructor Provisioning, then also set up:</p>
-<ul class="simple">
-<li>Process Turnitin Content Review Roster Sync
-Typical Cron Expression: 0 0/1 * * * ?</li>
+<ul>
+<li><div class="first line-block">
+<div class="line">Process Turnitin Content Review Roster Sync</div>
+<div class="line">Typical Cron Expression: 0 0/1 * * * ?</div>
+</div>
+</li>
 </ul>
 </div>
 <div class="section" id="enabling-turnitin-on-specific-sites">
-<h2>Enabling Turnitin on Specific Sites</h2>
+<h2><a class="toc-backref" href="#id6">Enabling Turnitin on Specific Sites</a></h2>
 <p>Out of the box, Turnitin integration is enabled on all sites in the Sakai
 Instance. It is possible to restrict this by using a different
 ContentReviewSiteAdvisor, which can be changed in the components.xml of
 the pack module.</p>
-<p>The other 2 that exist</p>
+<p>The other 2 that exist are the SitePropertyAdvisor and SiteCourseTypeAdvisor.</p>
+<p>If the SiteCourseTypeAdvisor is enabled, Turnitin integration will only
+be available on Course sites.</p>
+<p>If the SitePropertyAdvisor is used, the integration will only be
+available on sites with the following property set to true (on the site
+itself)</p>
+<pre class="literal-block">
+useContentReviewService = true
+</pre>
 </div>
 </div>
 <div class="section" id="faq">
-<h1>FAQ</h1>
+<h1><a class="toc-backref" href="#id7">FAQ</a></h1>
 <p>Users must have all account fields filled in</p>
 <p>Can't use same accounts across test/dev/prod nodes</p>
 <p>docx but really doc so it won't work</p>
+<p>My reports are taking a long time to generate.</p>
+</div>
+<div class="section" id="development-documentation">
+<h1><a class="toc-backref" href="#id8">Development Documentation</a></h1>
+<p>This section contains documentation for developers who want to work
+extending the functionality and fix bugs.</p>
+</div>
+<div class="section" id="release-notes">
+<h1><a class="toc-backref" href="#id9">Release Notes</a></h1>
 </div>
 </div>
 </body>
