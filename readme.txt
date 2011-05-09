@@ -73,33 +73,4 @@ Quartz (Cron) Jobs
 ~~~~~~~~~~~~~~~~~~
 
 There are 2 mandatory quartz jobs that need to be set up, and a third
-if you are using Instructor Provisioning.
-
-- TII Content Review Queue 
-  Typical Cron Expression: 0 0/5 * * * ?
-- Process Content Review Reports
-  Typical Cron Expression: 0 0/5 * * * ?
-
-If you are using Instructor Provisioning, then also set up:
-
-- Process Turnitin Content Review Roster Sync
-  Typical Cron Expression: 0 0/1 * * * ?
-
-Enabling Turnitin on Specific Sites
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Out of the box, Turnitin integration is enabled on all sites in the Sakai
-Instance. It is possible to restrict this by using a different 
-ContentReviewSiteAdvisor, which can be changed in the components.xml of 
-the pack module.
-
-The other 2 that exist 
-
-FAQ
----
-
-Users must have all account fields filled in
-
-Can't use same accounts across test/dev/prod nodes
-
-docx but really doc so it won't work
+Please see either the readme.txt or readme.html in the docs folder.
