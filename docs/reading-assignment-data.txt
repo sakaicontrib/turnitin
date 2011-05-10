@@ -1,0 +1,21 @@
+2011-05-09 16:33:30,254 DEBUG http-8080-Processor19 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+assign = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+assignid = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+encrypt = 0
+fcmd = 7
+fid = 4
+gmtime = 20110509203
+said = 58602
+src = 9
+uem = admin@randomdemotools.org
+ufn = Sakai
+uid = admin
+uln = Administrator
+username = Sakai Administrator
+utp = 2
+md5 = 75a1e8990559e5aee209482fa0dfc2d4
+2011-05-09 16:33:30,580 DEBUG http-8080-Processor19 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Turnitin Result Payload: {object={assign=/asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821, maxpoints=0, dtstart=2011-05-09 09:10:00-07, dtdue=2011-10-08 09:10:42-07, dtpost=2011-10-08 09:10:42-07, ainst=null, userubrics=0, draft=0, generate=0, sviewreports=0, latesubmissions=1, repository=0, searchpapers=1, searchinternet=1, searchjournals=1, searchinstitution=1, anon=0}, rcode=85, rmessage=Successful!}

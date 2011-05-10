@@ -247,8 +247,19 @@ p.sidebar-subtitle {
 </ul>
 </li>
 <li><a class="reference internal" href="#faq" id="id7">FAQ</a></li>
-<li><a class="reference internal" href="#development-documentation" id="id8">Development Documentation</a></li>
-<li><a class="reference internal" href="#release-notes" id="id9">Release Notes</a></li>
+<li><a class="reference internal" href="#development-documentation" id="id8">Development Documentation</a><ul>
+<li><a class="reference internal" href="#api-call-traces" id="id9">API Call Traces</a><ul>
+<li><a class="reference internal" href="#adding-an-assignment-with-class-user" id="id10">Adding an Assignment (with class, user)</a></li>
+<li><a class="reference internal" href="#reading-an-assignment" id="id11">Reading an Assignment</a></li>
+<li><a class="reference internal" href="#submitting-papers-to-queue" id="id12">Submitting Papers to Queue</a></li>
+<li><a class="reference internal" href="#fetching-reports" id="id13">Fetching Reports</a></li>
+<li><a class="reference internal" href="#syncing-rosters" id="id14">Syncing Rosters</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#turnitin-quick-api-call-reference" id="id15">Turnitin Quick API Call Reference</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#release-notes" id="id16">Release Notes</a></li>
 </ul>
 </div>
 <div class="section" id="overview">
@@ -260,9 +271,7 @@ using the commercial Turnitin.com service.</p>
 <p>The integration with Assignments 1, and especially 2 is fairly
 deep, ie. it's not just an iframe of the Turnitin Site embedded
 in Sakai. Assignments 2 exposes a fairly large number of options
-for Turnitin in it's own interface.  For example, the assignment
-authoring page options for an instructor are as below:</p>
-<p>TODO Insert Screenshot</p>
+for Turnitin in it's own interface.</p>
 <p>This integration was originally written by INSERT NAME at the
 University of Cape Town.  Current maintainers, contributers, and
 developers include:</p>
@@ -317,7 +326,9 @@ turnitin.aid=12345  # ID you had enabled
 turnitin.useSourceParameter=true
 </pre>
 <p>If you wish to use (or are currently) a system with one Turnitin Instructor
-account provisioning all the assignments, the settings are as follows.</p>
+account provisioning all the assignments, the settings are as follows. These
+are mostly for older installations. If you are starting from scratch you should
+use the above settings.</p>
 <pre class="literal-block">
 TODO
 </pre>
@@ -382,10 +393,183 @@ useContentReviewService = true
 <div class="section" id="development-documentation">
 <h1><a class="toc-backref" href="#id8">Development Documentation</a></h1>
 <p>This section contains documentation for developers who want to work
-extending the functionality and fix bugs.</p>
+with extending the functionality and fix bugs. It also contains details
+on how we call the Turnitin API and which calls and order we send them
+over the wire in.</p>
+<p>Turnitin.com provides a web interface to the plagiarism checking service,
+but also a set of API's that roughly mimic the interaction of the Web
+Based GUI. Our interaction with turnitin is modeled by a state machine
+idiom. Because it can take a while for turnitin to process and index the
+contents of student's papers (especially if you are submitting large amounts
+of them), the results are not available immediately in the Sakai User
+Interface. What happens is that we store the information in a table row,
+and then we have 2 quartz (cron) jobs that periodically poll the rows and
+see if they can take any action. Additionally, having the turnitin calls
+processed in the background ensures we won't have too much extra latency
+for our user interface operations in the Assignments application.</p>
+<p>The first quartz job is responsible for submitting the actual paper contents
+to turnitin. When a student submits a Content Review enabled assignment (
+in either Assignments 1 or 2), a new database row is added to the
+CONTENT_REVIEW_ITEM table. This contains a good deal of information about
+this specific paper. There is a row in the table for each paper to be checked.
+So in Assignments 2, if a student attaches multiple papers to an assignment,
+each of those will have it's own row.  So, this first quartz job scans the
+table for jobs that need to be submitted to Turnitin still (based off the
+status column), and for each one sends it over the wire to Turnitin. It then
+records whether the call was successful or not, and records any errors that
+occurred. At this point, if everything worked ok, the paper is now on
+Turnitin's servers waiting to be processed.</p>
+<p>The second quartz job, Review Reports, checks in on Turnitin to see if it
+has finished processing</p>
+<div class="section" id="api-call-traces">
+<h2><a class="toc-backref" href="#id9">API Call Traces</a></h2>
+<p>This section includes traces of calls we make to turnitin.</p>
+<div class="section" id="adding-an-assignment-with-class-user">
+<h3><a class="toc-backref" href="#id10">Adding an Assignment (with class, user)</a></h3>
+<p>When adding an assignment, the calls to Turnitin actually occur during
+the assignment addition rather than in a background job. We have support
+built to deal with failures that occurs and automatically timing out if
+the out of band call to Turnitin takes too long.</p>
+<p>The options available in Assignments 2 are depicted below.</p>
+<img alt="images/assignment2-authoring.png" src="images/assignment2-authoring.png" />
+<p>This will create the class and user if they do not exist first.</p>
+<p>Fids and fcmds used:</p>
+<ul class="simple">
+<li>4-7</li>
+<li>1-2</li>
+<li>17-2</li>
+<li>4-2</li>
+<li>4-3</li>
+<li>18-2</li>
+</ul>
+<p><a class="reference external" href="creating-assignment-trace.txt">Full trace of adding an assignment.</a></p>
+</div>
+<div class="section" id="reading-an-assignment">
+<h3><a class="toc-backref" href="#id11">Reading an Assignment</a></h3>
+<p>The code for reading an assignment is very close to authoring, essentially
+we just fetch the information since the assignment alreay exists.</p>
+<p>Fids/Fcmds used:</p>
+<ul class="simple">
+<li>4-7</li>
+</ul>
+<p><a class="reference external" href="reading-assignment-data.txt">Full trace of reading an existing assignment.</a></p>
+</div>
+<div class="section" id="submitting-papers-to-queue">
+<h3><a class="toc-backref" href="#id12">Submitting Papers to Queue</a></h3>
+<p>This happens in the background after students submit papers.  The student
+submission screen is pictured below. Each attachment is added to the
+queue table to be run in this job.</p>
+<img alt="images/submitting-assignment.png" src="images/submitting-assignment.png" />
+<p>Fids/Fcmds used:</p>
+<ul class="simple">
+<li>3-2</li>
+<li>5-2</li>
+</ul>
+<p><a class="reference external" href="submitting-document-to-turnitin.txt">Full trace of submitting papers.</a></p>
+</div>
+<div class="section" id="fetching-reports">
+<h3><a class="toc-backref" href="#id13">Fetching Reports</a></h3>
+<p>When papers have been finished being processed instructors (and students if
+that option is selected) see percentage bars with the plagiarism score. Clicking on
+the bar brings you to the report at the turnitin.com site.</p>
+<img alt="images/generated-reports.png" src="images/generated-reports.png" />
+<p>Fids/Fcmds used:</p>
+<ul class="simple">
+<li>4-7</li>
+<li>10-2</li>
+</ul>
+<p><a class="reference external" href="fetching-reports-from-turnitin.txt">Full trace of fetching reports.</a></p>
+</div>
+<div class="section" id="syncing-rosters">
+<h3><a class="toc-backref" href="#id14">Syncing Rosters</a></h3>
+<p>This requires a bit of an explanation. We have another quartz job that runs in
+the background that is related to provisioning. We have a registered event
+listener in Sakai that observers membership role changes occuring from Site Setup
+or other tools. ( This is similar to other roster sync events sometimes used
+in modules in Sakai. ) However, we don't sync the roles during the actual event
+but had the site to a sync table. This is so we don't add extra time to the UI
+operation with the out of band call to turnitin.com. ( This also means it's
+important to run the sync quartz job regularly. )</p>
+<p>There are also a few caveats to note. The provisioning functionality doesn't
+completely match up between Sakai and Turnitin, so we have to make up for
+a few things. The major item is that a user can be both a Student and an Instructor
+in a Turnitin site. This creates a possible security issue if the following
+events were to occur:</p>
+<ol class="arabic simple">
+<li>A Student submits an assignment in Assignment 2, at which point they are
+initially provisioned in the Turnitin.com site as a student.</li>
+<li>For some reason the student gets changed to an instructor (or other elevated)
+role in the site and accesses the Assignment 2 site, at which point they
+are provisioned as an instructor in the same Turnitin.com site.</li>
+<li>Someone notices this error and switches them back to being a student in the
+Sakai site. However, if they log in to turnitin.com to access the site, they
+are both a student and an instructor, and thusly can view materials they
+shouldn't have access to.</li>
+</ol>
+<p>Because of this scenerio, when we sync the Sakai and Turnitin sites, we download the
+entire class list from Turnitin, parse it, and check for any duplicate roles, etc
+and make the correct calls to adjust everyones role.</p>
+<p>Fids/Fcmds used:</p>
+<ul class="simple">
+<li>19-5</li>
+<li>19-3</li>
+</ul>
+<p><a class="reference external" href="roster-sync-with-turnitin.txt">Full trace of syncing rosters.</a></p>
+</div>
+</div>
+<div class="section" id="turnitin-quick-api-call-reference">
+<h2><a class="toc-backref" href="#id15">Turnitin Quick API Call Reference</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="79%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Fid-Fcmd</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>4-7</td>
+<td>Return Assignment metadata</td>
+</tr>
+<tr><td>1-2</td>
+<td>Create User</td>
+</tr>
+<tr><td>17-2</td>
+<td>Login, Create Turnitin Session</td>
+</tr>
+<tr><td>4-2</td>
+<td>Create a New Assignment</td>
+</tr>
+<tr><td>4-3</td>
+<td>Modify an existing Assignment</td>
+</tr>
+<tr><td>18-2</td>
+<td>Logout of Turnitin Session</td>
+</tr>
+<tr><td>5-2</td>
+<td>Submit paper for processing</td>
+</tr>
+<tr><td>3-2</td>
+<td>Join a Class</td>
+</tr>
+<tr><td>10-2</td>
+<td>List submissions for course</td>
+</tr>
+<tr><td>19-5</td>
+<td>Get list of course enrollment</td>
+</tr>
+<tr><td>19-3</td>
+<td>Switch the users role in course</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div class="section" id="release-notes">
-<h1><a class="toc-backref" href="#id9">Release Notes</a></h1>
+<h1><a class="toc-backref" href="#id16">Release Notes</a></h1>
+<!-- Header levels = -  ~  * -->
 </div>
 </div>
 </body>

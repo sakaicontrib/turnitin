@@ -1,0 +1,75 @@
+2011-05-09 13:32:33,985 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Checking for updated reports from Turnitin in bulk mode
+2011-05-09 13:32:34,039 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - There are 1 submissions awaiting reports
+2011-05-09 13:32:34,040 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Still have retries left, continuing. ItemID: 1
+2011-05-09 13:32:34,040 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Attempting to update hashtable with reports for site tiitest3
+2011-05-09 13:32:35,366 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+assign = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+assignid = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+encrypt = 0
+fcmd = 7
+fid = 4
+gmtime = 20110509173
+said = 58602
+src = 9
+uem = seb001@shadowtools2.org
+ufn = Shirin
+uid = 9f3fa54f-cf3e-4cfb-ba01-4c3f359573f1
+uln = Ebadi
+username = Shirin Ebadi
+utp = 2
+md5 = 6eeef03ed8ca579be177a0c705119abc
+2011-05-09 13:32:35,988 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Turnitin Result Payload: {object={assign=/asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821, maxpoints=0, dtstart=2011-05-09 09:10:00-07, dtdue=2011-10-08 09:10:42-07, dtpost=2011-10-08 09:10:42-07, ainst=null, userubrics=0, draft=0, generate=0, sviewreports=0, latesubmissions=1, repository=0, searchpapers=1, searchinternet=1, searchjournals=1, searchinstitution=1, anon=0}, rcode=85, rmessage=Successful!}
+2011-05-09 13:32:35,988 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Incrementing retry count for currentItem: 1
+2011-05-09 13:32:36,006 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+assign = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+assignid = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+encrypt = 0
+fcmd = 2
+fid = 10
+gmtime = 20110509173
+said = 58602
+src = 9
+tem = seb001@shadowtools2.org
+uem = seb001@shadowtools2.org
+ufn = Shirin
+uid = 9f3fa54f-cf3e-4cfb-ba01-4c3f359573f1
+uln = Ebadi
+username = Shirin Ebadi
+utp = 2
+md5 = ebe43b944749117b199cb1634348519c
+2011-05-09 13:32:36,481 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace -  Result from call: <?xml version="1.0" encoding="UTF-8"?>
+<returndata>
+	<object>
+		<userid>27064062</userid>
+		<firstname>Betty</firstname>
+		<lastname>Williams</lastname>
+		<title>bwi002:Fowler1997-DealingWithProperties.pdf</title>
+		<objectID>186323781</objectID>
+		<date_submitted>2011-05-09 12:38:20-0400</date_submitted>
+		<similarityScore>4</similarityScore>
+		<overlap>100</overlap>
+		<web_overlap>99</web_overlap>
+		<publication_overlap>0</publication_overlap>
+		<student_paper_overlap>100</student_paper_overlap>
+		<score/>
+		<anon>0</anon>
+		<gradeMarkStatus>18</gradeMarkStatus>
+		<markup_exists>0</markup_exists>
+	</object>
+	<rcode>72</rcode>
+	<rmessage>Successful!</rmessage>
+</returndata><!-- Turnitin API Return Data -->
+2011-05-09 13:32:36,482 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Report list returned successfully
+2011-05-09 13:32:36,482 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - 1 objects in the returned list
+2011-05-09 13:32:36,483 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - objectId: 186323781 similarity: 4 overlap: 100
+2011-05-09 13:32:36,483 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - reportVal for 186323781: 100
+2011-05-09 13:32:36,488 DEBUG QuartzScheduler_Worker-2 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - new report received: 186323781 -> 100
+

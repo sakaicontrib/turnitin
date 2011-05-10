@@ -1,0 +1,71 @@
+2011-05-09 12:38:14,269  INFO QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Processing submission queue
+2011-05-09 12:38:14,351 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Attempting to submit content: /attachment/tiitest3/Assignment2/c5fe3540-61b0-4f8b-b80c-14be190d9557/Fowler1997-DealingWithProperties.pdf for user: 0f98e2fb-2404-466d-9335-e4e615871f52 and site: tiitest3
+2011-05-09 12:38:14,356 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Looking for email for bwi002 with prefer system profile email set to true
+2011-05-09 12:38:14,356 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - try system profile email first
+2011-05-09 12:38:14,683 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Enrolling user bwi002(0f98e2fb-2404-466d-9335-e4e615871f52)  in class tiitest3
+2011-05-09 12:38:15,102 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+dis = 0
+encrypt = 0
+fcmd = 2
+fid = 3
+gmtime = 20110509163
+said = 58602
+src = 9
+tem = 
+uem = bwi002@shadowtools.org
+ufn = Betty
+uid = 0f98e2fb-2404-466d-9335-e4e615871f52
+uln = Williams
+utp = 1
+md5 = b75fc6d6bf033e52ea7beb9d18209216
+2011-05-09 12:38:15,464 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace -  Result from call: <?xml version="1.0" encoding="UTF-8"?>
+<returndata>
+	<rmessage>Successful!</rmessage>
+	<userid>27064062</userid>
+	<classid>4016076</classid>
+	<rcode>31</rcode>
+</returndata><!-- Turnitin API Return Data -->
+2011-05-09 12:38:15,464 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Results from enrollInClass with user + 0f98e2fb-2404-466d-9335-e4e615871f52 and class title: tiitest3.
+rCode: 31 rMessage: Successful!
+2011-05-09 12:38:15,467 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - origional filename is: Fowler1997-DealingWithProperties.pdf
+2011-05-09 12:38:15,467 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - fileName is :Fowler1997-DealingWithProperties.pdf
+2011-05-09 12:38:15,467 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - fileName is :Fowler1997-DealingWithProperties.pdf
+2011-05-09 12:38:15,477 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Using Emails: tem:  uem: bwi002@shadowtools.org
+2011-05-09 12:38:15,500 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting Multipart TII CALL:
+aid = 58602
+assign = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+assignid = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+dis = 0
+encrypt = 0
+fcmd = 2
+fid = 5
+gmtime = 20110509163
+ptl = bwi002:Fowler1997-DealingWithProperties.pdf
+ptype = 2
+resource_obj = ContentHostingResource: /attachment/tiitest3/Assignment2/c5fe3540-61b0-4f8b-b80c-14be190d9557/Fowler1997-DealingWithProperties.pdf
+said = 58602
+src = 9
+tem = 
+uem = bwi002@shadowtools.org
+ufn = Betty
+uid = 0f98e2fb-2404-466d-9335-e4e615871f52
+uln = Williams
+utp = 1
+md5 = 9235736850369882a38c42a08e8974f8
+
+2011-05-09 12:38:20,461 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace -  Result from call: <?xml version="1.0" encoding="UTF-8"?>
+<returndata>
+	<rmessage>Successful!</rmessage>
+	<objectID>186323781</objectID>
+	<rcode>51</rcode>
+</returndata><!-- Turnitin API Return Data -->
+2011-05-09 12:38:20,461 DEBUG QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Submission successful
+2011-05-09 12:38:20,514  INFO QuartzScheduler_Worker-3 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Queue run completed 0 items submitted 0, 1 successes
+

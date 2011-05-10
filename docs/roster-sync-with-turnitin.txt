@@ -1,0 +1,75 @@
+2011-05-09 14:03:15,695  INFO QuartzScheduler_Worker-5 org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync - About to Turnitin Syncing: 4 , tiitest3 , 1
+2011-05-09 14:03:15,975 DEBUG QuartzScheduler_Worker-5 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+encrypt = 0
+fcmd = 5
+fid = 19
+gmtime = 20110509180
+said = 58602
+src = 9
+uem = admin@randomdemotools.org
+ufn = Sakai
+uid = admin
+uln = Administrator
+username = Sakai Administrator
+utp = 2
+md5 = 5f8196359c9a6ac32e7768a7846077b4
+2011-05-09 14:03:16,193 DEBUG QuartzScheduler_Worker-5 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace -  Result from call: <?xml version="1.0" encoding="UTF-8"?>
+<returndata>
+	<classid>4016076</classid>
+	<cid>tiitest3</cid>
+	<instructors>
+		<instructor>
+			<userid>26455664</userid>
+			<uid>9f3fa54f-cf3e-4cfb-ba01-4c3f359573f1</uid>
+			<username>Shirin Ebadi</username>
+			<email>seb001@shadowtools2.org</email>
+			<firstname>Shirin</firstname>
+			<lastname>Ebadi</lastname>
+		</instructor>
+		<instructor>
+			<userid>27063656</userid>
+			<uid>75d5d447-fef8-4d34-8756-e823513184ed</uid>
+			<username>Aung San Suu Kyi</username>
+			<email>asu001@shadowtools5.org</email>
+			<firstname>Aung San</firstname>
+			<lastname>Suu Kyi</lastname>
+		</instructor>
+	</instructors>
+	<students>
+		<student>
+			<userid>27064062</userid>
+			<uid>0f98e2fb-2404-466d-9335-e4e615871f52</uid>
+			<username/>
+			<email>bwi002@shadowtools.org</email>
+			<firstname>Betty</firstname>
+			<lastname>Williams</lastname>
+		</student>
+	</students>
+	<rcode>93</rcode>
+	<rmessage>Successful!</rmessage>
+</returndata><!-- Turnitin API Return Data -->
+2011-05-09 14:03:16,225 DEBUG QuartzScheduler_Worker-5 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+encrypt = 0
+fcmd = 3
+fid = 19
+gmtime = 20110509180
+said = 58602
+src = 9
+tem = admin@randomdemotools.org
+uem = seb001@shadowtools2.org
+ufn = Shirin
+uid = 9f3fa54f-cf3e-4cfb-ba01-4c3f359573f1
+uln = Ebadi
+username = Shirin Ebadi
+utp = 2
+md5 = 35d77e2b17bbcbe966d3cab624d7703a
+2011-05-09 14:03:16,448 DEBUG QuartzScheduler_Worker-5 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Turnitin Result Payload: {rmessage=Successful!, rcode=93}
+2011-05-09 14:03:16,448  INFO QuartzScheduler_Worker-5 org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync - Successfully swapped roles for site: tiitest3 user: seb001 oldRole: 2
