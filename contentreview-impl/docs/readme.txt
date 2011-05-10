@@ -306,15 +306,15 @@ Turnitin Quick API Call Reference
 ========  ===============================
 Fid-Fcmd  Description
 ========  ===============================
-4-7       Return Assignment metadata
 1-2       Create User
-17-2      Login, Create Turnitin Session
+3-2       Join a Class
 4-2       Create a New Assignment
 4-3       Modify an existing Assignment
-18-2      Logout of Turnitin Session
+4-7       Return Assignment metadata
 5-2       Submit paper for processing
-3-2       Join a Class
 10-2      List submissions for course
+17-2      Login, Create Turnitin Session
+18-2      Logout of Turnitin Session
 19-5      Get list of course enrollment
 19-3      Switch the users role in course
 ========  ===============================
