@@ -1,0 +1,169 @@
+2011-05-09 12:10:44,374 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+assign = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+assignid = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+encrypt = 0
+fcmd = 7
+fid = 4
+gmtime = 20110509161
+said = 58602
+src = 9
+uem = asu001@shadowtools5.org
+ufn = Aung San
+uid = 75d5d447-fef8-4d34-8756-e823513184ed
+uln = Suu Kyi
+username = Aung San Suu Kyi
+utp = 2
+md5 = 7207bbbcafa8701c7ecc6a146f1017d1
+2011-05-09 12:10:45,032 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Turnitin Result Payload: {rmessage=Class does not exist in Turnitin database for account.  Please contact your instructor for further details., rcode=204}
+2011-05-09 12:10:45,032 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Set date due to: 2011-10-08 12:10:42
+2011-05-09 12:10:45,032 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Assign title is /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+2011-05-09 12:10:45,042 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+diagnostic = 0
+encrypt = 0
+fcmd = 2
+fid = 1
+gmtime = 20110509161
+said = 58602
+src = 9
+uem = asu001@shadowtools5.org
+ufn = Aung San
+uid = 75d5d447-fef8-4d34-8756-e823513184ed
+uln = Suu Kyi
+username = Aung San Suu Kyi
+utp = 2
+md5 = 924861004a9e62b96d62674fdbd12390
+2011-05-09 12:10:45,498 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Turnitin Result Payload: {rmessage=Successful!, userid=27063656, rcode=11}
+2011-05-09 12:10:45,505 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+diagnostic = 0
+encrypt = 0
+fcmd = 2
+fid = 17
+gmtime = 20110509161
+said = 58602
+src = 9
+uem = asu001@shadowtools5.org
+ufn = Aung San
+uid = 75d5d447-fef8-4d34-8756-e823513184ed
+uln = Suu Kyi
+username = Aung San Suu Kyi
+utp = 2
+md5 = 9bc9f2e926e4837557f9c11faf2e087c
+2011-05-09 12:10:47,139 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace -  Result from call: <?xml version="1.0" encoding="UTF-8"?>
+<!-- Turnitin API Return Data --><returndata>
+	<rmessage>Successful!</rmessage>
+	<sessionid>fbb705024cd9bf3851230f03cfd6a993</sessionid>
+	<rcode>92</rcode>
+</returndata>
+2011-05-09 12:10:47,145 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinSessionFuncs - Log in results. rcode: 92 message: Successful! sessionId: fbb705024cd9bf3851230f03cfd6a993
+2011-05-09 12:10:47,145 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - date due is: 2011-10-08 12:10:42
+2011-05-09 12:10:47,147 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+assign = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+assignid = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+dtdue = 2011-10-08 12:10:42
+dtstart = 2011-05-08 12:10:42
+encrypt = 0
+fcmd = 2
+fid = 4
+gmtime = 20110509161
+institution_check = 1
+internet_check = 1
+journal_check = 1
+late_accept_flag = 1
+report_gen_speed = 0
+s_paper_check = 1
+s_view_report = 0
+said = 58602
+session-id = fbb705024cd9bf3851230f03cfd6a993
+src = 9
+submit_papers_to = 0
+uem = asu001@shadowtools5.org
+ufn = Aung San
+uid = 75d5d447-fef8-4d34-8756-e823513184ed
+uln = Suu Kyi
+username = Aung San Suu Kyi
+utp = 2
+md5 = 91348cd4c39779acf7d4bbe4ad1c9d00
+2011-05-09 12:10:47,574 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace -  Result from call: <?xml version="1.0" encoding="UTF-8"?>
+<!-- Turnitin API Return Data --><returndata>
+	<rmessage>Successful!</rmessage>
+	<userid>27063656</userid>
+	<classid>4016076</classid>
+	<assignmentid>12122464</assignmentid>
+	<rcode>41</rcode>
+</returndata>
+2011-05-09 12:10:47,575 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Create FirstDate Assignment successful
+2011-05-09 12:10:47,575 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - tii returned Successful!. Code: 41
+2011-05-09 12:10:47,576 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - going to attempt second update
+2011-05-09 12:10:47,578 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+assign = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+assignid = /asnn2contentreview/c0df2896-ebea-495f-82fe-8e6ccd8b2821
+cid = tiitest3
+ctl = tiitest3
+diagnostic = 0
+dtdue = 2011-10-08 12:10:42
+dtstart = 2011-05-09 12:10:00
+encrypt = 0
+fcmd = 3
+fid = 4
+gmtime = 20110509161
+institution_check = 1
+internet_check = 1
+journal_check = 1
+late_accept_flag = 1
+report_gen_speed = 0
+s_paper_check = 1
+s_view_report = 0
+said = 58602
+session-id = fbb705024cd9bf3851230f03cfd6a993
+src = 9
+submit_papers_to = 0
+uem = asu001@shadowtools5.org
+ufn = Aung San
+uid = 75d5d447-fef8-4d34-8756-e823513184ed
+uln = Suu Kyi
+username = Aung San Suu Kyi
+utp = 2
+md5 = a3fea6d7d0023cac83c4254aaedad799
+2011-05-09 12:10:47,996 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace -  Result from call: <?xml version="1.0" encoding="UTF-8"?>
+<!-- Turnitin API Return Data --><returndata>
+	<rmessage>Successful!</rmessage>
+	<userid>27063656</userid>
+	<classid>4016076</classid>
+	<assignmentid>12122464</assignmentid>
+	<rcode>42</rcode>
+</returndata>
+2011-05-09 12:10:47,996 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - Create Assignment successful
+2011-05-09 12:10:47,997 DEBUG http-8080-Processor23 org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl - tii returned Successful!. Code: 42
+2011-05-09 12:10:47,998 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace - Starting TII CALL:
+aid = 58602
+diagnostic = 0
+encrypt = 0
+fcmd = 2
+fid = 18
+gmtime = 20110509161
+said = 58602
+session-id = fbb705024cd9bf3851230f03cfd6a993
+src = 9
+uem = asu001@shadowtools5.org
+ufn = Aung San
+uid = 75d5d447-fef8-4d34-8756-e823513184ed
+uln = Suu Kyi
+username = Aung San Suu Kyi
+utp = 2
+md5 = fea753ef70c9f0dbab6a857e142f65d4
+2011-05-09 12:10:48,201 DEBUG http-8080-Processor23 org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace -  Result from call: <?xml version="1.0" encoding="UTF-8"?>
+<!-- Turnitin API Return Data --><returndata>
+	<rmessage>Successful!</rmessage>
+	<rcode>92</rcode>
+</returndata>
