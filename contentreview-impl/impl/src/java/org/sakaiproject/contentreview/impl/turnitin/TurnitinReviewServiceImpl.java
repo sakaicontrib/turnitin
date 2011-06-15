@@ -1673,10 +1673,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				if (rMessage.equals("User password does not match user email") 
 						|| "1001".equals(rCode) || "".equals(rMessage) || "413".equals(rCode) || "1025".equals(rCode) || "208".equals(rCode)) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				} else if (rCode.equals("423")) {
+				} else if ("423".equals(rCode)) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				
-				} else if (rCode.equals("301")) {
+				} else if ("301".equals(rCode)) {
 					log.warn("got a gmtTims submission failure after " + timeDone + "ms. gmttime submitted was:" + gmtime);
 					//this took a long time
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
@@ -1688,7 +1688,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						currentItem.setNextRetryTime(getNextRetryTime(currentItem.getRetryCount()));
 					}
 					
-				}else {
+				} else if ("250".equals(rCode)) {
+					// There was an error building up the user session data to submit the paper.
+					// This is usually a back end Turnitin problem that is solved by wrapping the
+					// submission in a session and retrying
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					
+				} else {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				}
 				log.warn("Submission failed with a core of " + rCode + ": " + rMessage);
