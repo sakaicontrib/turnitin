@@ -272,6 +272,22 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 	}
 	
 
+    public String getReviewError(String contentId) {
+        log.debug("Returning review error for content: " + contentId);
+
+        List<ContentReviewItem> matchingItems = dao.findByExample(new ContentReviewItem(contentId));
+
+        if (matchingItems.size() == 0) {
+            log.debug("Content " + contentId + " has not been queued previously");
+            return null;
+        }
+
+        if (matchingItems.size() > 1) {
+            log.debug("more than one matching item found - using first item found");
+        }
+
+        return ((ContentReviewItem) matchingItems.iterator().next()).getLastError();
+    }
 	
 
 	
