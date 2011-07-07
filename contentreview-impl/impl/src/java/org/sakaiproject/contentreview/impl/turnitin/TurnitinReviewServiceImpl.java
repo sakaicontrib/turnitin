@@ -1892,7 +1892,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return resourceLoader.getString(messageCode);
 	}
 	
-
+    public String getReviewError(String contentId) {
+    	return getLocalizedReviewErrorMessage(contentId);
+    }
 
 	public String getLocalizedStatusMessage(String messageCode) {
 		return getLocalizedStatusMessage(messageCode, userDirectoryService.getCurrentUser().getReference());
@@ -1917,6 +1919,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("more than one matching item found - using first item found");
 		}
 
-		return getLocalizedStatusMessage(((ContentReviewItem) matchingItems.iterator().next()).getErrorCode().toString());
+		//its possible the error code column is not populated
+		Integer errorCode = ((ContentReviewItem) matchingItems.iterator().next()).getErrorCode();
+		if (errorCode == null) {
+			return ((ContentReviewItem) matchingItems.iterator().next()).getLastError();
+		}
+		return getLocalizedStatusMessage(errorCode.toString());
 	}
 }
