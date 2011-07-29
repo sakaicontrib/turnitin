@@ -17,7 +17,7 @@
     <parent>
         <artifactId>content-review-impl-base</artifactId>
         <groupId>org.sakaiproject.contentreview</groupId>
-        <version>0.7-SNAPSHOT</version>
+        <version>0.7</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
