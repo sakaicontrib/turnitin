@@ -1007,50 +1007,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 				resourceProperties = resource.getProperties();
 				fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
-				log.debug("origional filename is: " + fileName);
-				if (fileName == null) {
-					//use the id 
-					fileName  = currentItem.getContentId();
-				} else if (fileName.length() > 199) {
-					fileName = fileName.substring(0, 199);
-				}
-				log.debug("fileName is :" + fileName);
-				try {
-					fileName = URLDecoder.decode(fileName, "UTF-8");
-					//in rare cases it seems filenames can be double encoded
-					while (fileName.indexOf("%20")> 0 || fileName.contains("%2520") ) {
-						try {
-							fileName = URLDecoder.decode(fileName, "UTF-8");
-						}
-						catch (IllegalArgumentException eae) {
-							log.warn("Unable to decode fileName: " + fileName);
-							currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-							currentItem.setLastError("FileName decode exception: " + fileName);
-							dao.update(currentItem);
-							releaseLock(currentItem);
-							errors++;
-							throw new SubmissionException("Can't decode fileName!");
-						}
-
-					}
-				} 
-				catch (IllegalArgumentException eae) {
-					log.warn("Unable to decode fileName: " + fileName);
-				}  catch (SubmissionException se) {
-					log.debug("got a submission exception from decoding");
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError("FileName decode exception: " + fileName);
-					dao.update(currentItem);
-					releaseLock(currentItem);
-					errors++;
-					continue;
-				}
-
-				fileName = fileName.replace(' ', '_');
-				//its possible we have double _ as a result of this lets do some cleanup
-				fileName = StringUtils.replace(fileName, "__", "_");
-				
-				log.debug("fileName is :" + fileName);
+				fileName = escapeFileName(fileName, resource.getId());
 			}
 			catch (PermissionException e2) {
 				log.debug("Submission failed due to permission error: " + e2.getMessage());
@@ -1069,9 +1026,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				releaseLock(currentItem);
 				errors++;
 				continue;
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 
 			//TII-97 filenames can't be longer than 200 chars
@@ -1212,6 +1166,54 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		log.info("Queue run completed " + total + " items submitted " + errors + ", " + success + " successes");
 
+	}
+
+	public String escapeFileName(String fileName, String contentId) {
+		log.debug("origional filename is: " + fileName);
+		if (fileName == null) {
+			//use the id 
+			fileName  = contentId;
+		} else if (fileName.length() > 199) {
+			fileName = fileName.substring(0, 199);
+		}
+		log.debug("fileName is :" + fileName);
+		try {
+			fileName = URLDecoder.decode(fileName, "UTF-8");
+			//in rare cases it seems filenames can be double encoded
+			while (fileName.indexOf("%20")> 0 || fileName.contains("%2520") ) {
+				try {
+					fileName = URLDecoder.decode(fileName, "UTF-8");
+				}
+				catch (IllegalArgumentException eae) {
+					log.warn("Unable to decode fileName: " + fileName);
+					eae.printStackTrace();
+					//as the result is likely to cause a MD5 exception use the ID
+					return contentId;
+				/*	currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+					currentItem.setLastError("FileName decode exception: " + fileName);
+					dao.update(currentItem);
+					releaseLock(currentItem);
+					errors++;
+					throw new SubmissionException("Can't decode fileName!");*/
+				}
+
+			}
+		} 
+		catch (IllegalArgumentException eae) {
+			log.warn("Unable to decode fileName: " + fileName);
+			eae.printStackTrace();
+			return contentId;
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  
+		
+		fileName = fileName.replace(' ', '_');
+		//its possible we have double _ as a result of this lets do some cleanup
+		fileName = StringUtils.replace(fileName, "__", "_");
+		
+		log.debug("fileName is :" + fileName);
+		return fileName;
 	}
 
 	private String truncateFileName(String fileName, int i) {
