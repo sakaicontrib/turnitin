@@ -776,7 +776,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
 		String rCode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData();
-		if ("32".equals(rCode)) {
+		if ("31".equals(rCode)) {
 			log.debug("Results from enrollInClass with user + " + userId + " and class title: " + ctl + ".\n" +
 					"rCode: " + rCode + " rMessage: " + rMessage);
 		} else {
