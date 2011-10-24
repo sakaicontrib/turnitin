@@ -776,8 +776,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String rMessage = ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData();
 		String rCode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData();
-		log.debug("Results from enrollInClass with user + " + userId + " and class title: " + ctl + ".\n" +
-				"rCode: " + rCode + " rMessage: " + rMessage);
+		if ("32".equals(rCode)) {
+			log.debug("Results from enrollInClass with user + " + userId + " and class title: " + ctl + ".\n" +
+					"rCode: " + rCode + " rMessage: " + rMessage);
+		} else {
+			//certain return codes need to be logged
+			log.warn("Results from enrollInClass with user + " + userId + " and class title: " + ctl + ". " +
+					"rCode: " + rCode + ", rMessage: " + rMessage);
+			//TODO for certain types we should probably throw an exception here and stop the proccess
+		}
+		
 	}
 
 	/*
