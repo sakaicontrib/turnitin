@@ -24,12 +24,15 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hsqldb.lib.HashSet;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
@@ -246,7 +249,8 @@ public class TurnitinAccountConnection {
 					inst = user;
 				}
 				else {
-					Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
+					Set<String> instIds = getActiveInstructorIds(INST_ROLE,
+							site);
 					if (instIds.size() > 0) {
 						inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
 					}
@@ -271,6 +275,19 @@ public class TurnitinAccountConnection {
 		}
 
 		return togo;
+	}
+
+	private Set<String> getActiveInstructorIds(String INST_ROLE, Site site) {
+		Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
+		//the site could contain references to deleted users
+		List<User> activeUsers = userDirectoryService.getUsers(instIds);
+		Set<String> ret = Collections.emptySet();
+		for (int i = 0; i < activeUsers.size(); i++) {
+			User user = activeUsers.get(i);
+			ret.add(user.getId());
+		}
+		
+		return ret;
 	}
 
 	public String getTEM(String cid) {
