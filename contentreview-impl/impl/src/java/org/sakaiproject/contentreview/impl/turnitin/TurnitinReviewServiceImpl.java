@@ -299,7 +299,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String assignid = defaultAssignId + item.getSiteId();
 
 		User user = userDirectoryService.getCurrentUser();
-		String uem = user.getEmail();
+		
+		//USe the method to get the correct email
+		String uem = getEmail(user);
 		String ufn = getUserFirstName(user);
 		String uln = user.getLastName();
 		String uid = item.getUserId();
