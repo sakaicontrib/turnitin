@@ -1407,14 +1407,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					document = turnitinConn.callTurnitinReturnDocument(params);
 				}
 				catch (TransientSubmissionException e) {
-					log.debug("Update failed due to TransientSubmissionException error: " + e.toString());
+					log.warn("Update failed due to TransientSubmissionException error: " + e.toString(), e);
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e.getMessage());
 					dao.update(currentItem);
 					break;
 				}
 				catch (SubmissionException e) {
-					log.debug("Update failed due to SubmissionException error: " + e.toString());
+					log.warn("Update failed due to SubmissionException error: " + e.toString(), e);
 					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 					currentItem.setLastError(e.getMessage());
 					dao.update(currentItem);
