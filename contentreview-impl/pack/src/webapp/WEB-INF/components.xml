@@ -10,7 +10,7 @@
 
 	<!-- Bring in the hibernate related beans -->
 	<import resource="spring-hibernate.xml" />
-	
+
 	<bean id="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator"
 		class="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator"
 		init-method="init">
@@ -56,7 +56,7 @@
 	</bean>
 
 	<!--  Uncomment this to use a site property to define which sites use c-r -->
-	<!-- 
+	<!--
 		<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.SitePropertyAdvisor">
 		<property name="siteProperty"><value>useContentReviewService</value></property>
 		</bean>
@@ -70,7 +70,7 @@
 
 	<!-- QueuProcessing jobs -->
 	<!-- Content review Queue Process -->
-	
+
 	<bean id="TiiContentReviewQueue"
 		class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewQueue">
 		<property name="contentReviewService">
@@ -121,7 +121,7 @@
 				bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
 		</property>
 	</bean>
-	
+
 	<bean id="TiiContentReviewRosterSync"
         class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewTurnitinRosterSync">
         <property name="turnitinRosterSync">
@@ -147,7 +147,7 @@
     </bean>
 
 <bean class="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync"
-    id="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync" 
+    id="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync"
     init-method="init">
     <property name="turnitinReviewServiceImpl" ref="org.sakaiproject.contentreview.service.ContentReviewService" />
     <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
@@ -158,16 +158,23 @@
             ref="org.sakaiproject.component.api.ServerConfigurationService" />
 </bean>
 
+<!--Migrate SRC-->
+  <bean class="org.sakaiproject.contentreview.impl.turnitin.TurnitinMigrateSRC"
+      id="org.sakaiproject.contentreview.impl.turnitin.TurnitinMigrateSRC"
+      init-method="init">
+      <property name="turnitinConn" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection" />
+  </bean>
+
   <bean id="org.sakaiproject.contentreview.impl.turnitin.MembershipChangeObserver"
     class="org.sakaiproject.contentreview.impl.turnitin.MembershipChangeObserver"
     init-method="init">
-    <property name="eventTrackingService" ref="org.sakaiproject.event.api.EventTrackingService" /> 
+    <property name="eventTrackingService" ref="org.sakaiproject.event.api.EventTrackingService" />
     <property name="turnitinRosterSync" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync" />
     <property name="dao" ref="org.sakaiproject.contentreview.dao.ContentReviewDao" />
     <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
     <property name="contentReviewService" ref="org.sakaiproject.contentreview.service.ContentReviewService" />
    </bean>
-   
+
    <bean id="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection"
     class="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection"
     init-method="init">
