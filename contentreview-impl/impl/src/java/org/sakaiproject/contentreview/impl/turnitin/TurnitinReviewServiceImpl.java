@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -42,7 +43,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.EmailValidator;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
+import org.sakaiproject.authz.api.SecurityAdvisor;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
+import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
@@ -65,7 +69,13 @@ import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.TypeException;
 import org.sakaiproject.genericdao.api.search.Restriction;
 import org.sakaiproject.genericdao.api.search.Search;
+import org.sakaiproject.service.gradebook.shared.GradebookExternalAssessmentService;
+import org.sakaiproject.service.gradebook.shared.GradebookService;
+import org.sakaiproject.service.gradebook.shared.GradebookNotFoundException;
 import org.sakaiproject.site.api.SiteService;
+import org.sakaiproject.service.gradebook.shared.Assignment;
+import org.sakaiproject.tool.api.Session;
+import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
 import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.User;
@@ -88,7 +98,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	final static long LOCK_PERIOD = 12000000;
 
 	private int sendAccountNotifications = 0;
-	
+
 	private int sendSubmissionNotification = 0;
 
 	private Long maxRetry = null;
@@ -108,7 +118,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 *  Setters
 	 */
 
-	private ServerConfigurationService serverConfigurationService; 
+	private ServerConfigurationService serverConfigurationService;
 
 	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
 		this.serverConfigurationService = serverConfigurationService;
@@ -147,7 +157,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		super.setUserDirectoryService(userDirectoryService);
 		this.userDirectoryService = userDirectoryService;
 	}
-	
+
 	private SiteService siteService;
 	public void setSiteService(SiteService siteService) {
 		this.siteService = siteService;
@@ -157,8 +167,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public void setSqlService(SqlService sql) {
 		sqlService = sql;
 	}
-	
-	
+
+
 	private PreferencesService preferencesService;
 	public void setPreferencesService(PreferencesService preferencesService) {
 		this.preferencesService = preferencesService;
@@ -169,19 +179,28 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		this.turnitinContentValidator = turnitinContentValidator;
 	}
 
+               private GradebookService gradebookService = (GradebookService)
+                            ComponentManager.get("org.sakaiproject.service.gradebook.GradebookService");
+                    private GradebookExternalAssessmentService gradebookExternalAssessmentService =
+                            (GradebookExternalAssessmentService)ComponentManager.get("org.sakaiproject.service.gradebook.GradebookExternalAssessmentService");
+
+                    private SecurityService securityService = (SecurityService)
+                            ComponentManager.get(SecurityService.class.getName());
+                    private SessionManager sessionManager = (SessionManager)
+                            ComponentManager.get(SessionManager.class.getName());
 	/**
 	 * Place any code that should run when this class is initialized by spring
 	 * here
 	 */
 
 	public void init() {
-		
+
 		sendAccountNotifications = turnitinConn.getSendAccountNotifications();
 		sendSubmissionNotification = turnitinConn.getSendSubmissionNotification();
 		maxRetry = turnitinConn.getMaxRetry();
 		defaultAssignId = turnitinConn.getDefaultAssignId();
 		defaultClassPassword = turnitinConn.getDefaultClassPassword();
-		
+
 		log.info("init()");
 		if (!turnitinConn.isUseSourceParameter()) {
 			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
@@ -213,15 +232,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 
-	
 
-	/** 
+
+	/**
 	 * This uses the default Instructor information or current user.
-	 * 
+	 *
 	 * @see org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl#getReviewReportInstructor(java.lang.String)
 	 */
 	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
-		
+
 		Search search = new Search();
 		search.addRestriction(new Restriction("contentId", contentId));
 		List<ContentReviewItem> matchingItems = dao.findBySearch(ContentReviewItem.class, search);
@@ -252,7 +271,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String assignid = defaultAssignId + item.getSiteId();
 		String utp = "2";
 
-		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 				"fid", fid,
 				"fcmd", fcmd,
 				"assignid", assignid,
@@ -260,14 +279,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"oid", oid,
 				"utp", utp
 		);
-		
+
 		params.putAll(turnitinConn.getInstructorInfo(item.getSiteId()));
 
 		return turnitinConn.buildTurnitinURL(params);
 	}
 
 	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
-		
+
 		Search search = new Search();
 		search.addRestriction(new Restriction("contentId", contentId));
 		List<ContentReviewItem> matchingItems = dao.findBySearch(ContentReviewItem.class, search);
@@ -299,7 +318,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String assignid = defaultAssignId + item.getSiteId();
 
 		User user = userDirectoryService.getCurrentUser();
-		
+
 		//USe the method to get the correct email
 		String uem = getEmail(user);
 		String ufn = getUserFirstName(user);
@@ -307,7 +326,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String uid = item.getUserId();
 		String utp = "1";
 
-		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 				"fid", fid,
 				"fcmd", fcmd,
 				"assignid", assignid,
@@ -332,6 +351,383 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return this.getReviewReportInstructor(contentId);
 	}
 
+private List<ContentReviewItem> getItemsByContentId(String contentId) {
+        Search search = new Search();
+        search.addRestriction(new Restriction("contentId", contentId));
+        List<ContentReviewItem> existingItems = dao.findBySearch(ContentReviewItem.class, search);
+        return existingItems;
+    }
+
+    /**
+    * Get additional data from String if available
+    * @return array containing site ID, Task ID, Task Title
+    */
+    private String[] getAssignData(String data){
+        String[] assignData = null;
+        try{
+            if(data.contains("#")){
+                assignData = data.split("#");
+            }
+        }catch(Exception e){
+        }
+        return assignData;
+    }
+
+    @Override
+    public int getReviewScore(String contentId)throws QueueException, ReportException, Exception {
+            ContentReviewItem item=null;
+            try{
+                        List<ContentReviewItem> matchingItems = getItemsByContentId(contentId);
+                        if (matchingItems.size() == 0) {
+                                log.debug("Content " + contentId + " has not been queued previously");
+                        }
+                        if (matchingItems.size() > 1)
+                                log.debug("More than one matching item - using first item found");
+
+                        item = (ContentReviewItem) matchingItems.iterator().next();
+                        if (item.getStatus().compareTo(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE) != 0) {
+                                log.debug("Report not available: " + item.getStatus());
+                        }
+            }catch(Exception e){
+                log.error("(getReviewScore)"+e);
+            }
+
+            String[] assignData = null;
+            try{
+                   assignData = getAssignData(contentId);
+            }catch(Exception e){
+                log.error("(assignData)"+e);
+            }
+
+            String siteId = "",taskId ="",taskTitle = "";
+            Map<String,Object> data = new HashMap<String, Object>();
+            if(assignData != null){
+                siteId = assignData[0];
+                taskId = assignData[1];
+                taskTitle = assignData[2];
+            }else{
+                siteId = item.getSiteId();
+                taskId = item.getTaskId();
+                taskTitle = getAssignmentTitle(taskId);
+                data.put("assignment1","assignment1");
+            }
+            //Sync Grades
+            if(turnitinConn.getUseGradeMark()){
+                try{
+                    data.put("siteId", siteId);
+                    data.put("taskId", taskId);
+                    data.put("taskTitle", taskTitle);
+                    syncGrades(data);
+                }catch(Exception e){
+                    log.error("Error syncing grades. "+e);
+                }
+            }
+
+            return item.getReviewScore().intValue();
+        }
+
+        /**
+         * Check if grade sync has been run already for the specified site
+         * @param sess Current Session
+         * @param taskId
+         * @return
+         */
+        public boolean gradesChecked(Session sess, String taskId){
+            String sessSync = "";
+            try{
+                sessSync = sess.getAttribute("sync").toString();
+                if(sessSync.equals(taskId)){
+                    return true;
+                }
+            }catch(Exception e){
+                //log.error("(gradesChecked)"+e);
+            }
+            return false;
+        }
+
+        /**
+    * Check if the specified user has the student role on the specified site.
+    * @param siteId Site ID
+    * @param userId User ID
+    * @return true if user has student role on the site.
+    */
+        public boolean isUserStudent(String  siteId, String userId){
+            boolean isStudent=false;
+            try{
+                        Set<String> studentIds = siteService.getSite(siteId).getUsersIsAllowed("section.role.student");
+                        List<User> activeUsers = userDirectoryService.getUsers(studentIds);
+                        for (int i = 0; i < activeUsers.size(); i++) {
+                            User user = activeUsers.get(i);
+                            if(userId.equals(user.getId())){
+                                return true;
+                            }
+                        }
+                }catch(Exception e){
+                    log.info("(isStudentUser)"+e);
+                }
+            return isStudent;
+        }
+
+        /**
+    * Return the Gradebook item associated with an assignment.
+    * @param data Map containing Site/Assignment IDs
+    * @return Associated gradebook item
+    */
+        public Assignment getAssociatedGbItem(Map data){
+            Assignment assignment = null;
+            String taskId = data.get("taskId").toString();
+            String siteId = data.get("siteId").toString();
+            String taskTitle = data.get("taskTitle").toString();
+
+            pushAdvisor();
+            try {
+                List<Assignment> allGbItems = gradebookService.getAssignments(siteId);
+                for (Assignment assign : allGbItems) {
+                        //Match based on External ID / Assignment title
+                        if(taskId.equals(assign.getExternalId()) || assign.getName().equals(taskTitle) ){
+                            assignment = assign;
+                            break;
+                        }
+                }
+            } catch (Exception e) {
+                    log.error("(allGbItems)"+e.toString());
+            } finally{
+                popAdvisor();
+            }
+            return assignment;
+        }
+
+        /**
+    * Check Turnitin for grades and write them to the associated gradebook
+    * @param data Map containing relevant IDs (site ID, Assignment ID, Title)
+    */
+        public void syncGrades(Map<String,Object>data){
+                //Get session and check if gardes have already been synced
+                Session sess = sessionManager.getCurrentSession();
+                boolean runOnce=gradesChecked(sess, data.get("taskId").toString());
+                boolean isStudent = isUserStudent(data.get("siteId").toString(), sess.getUserId());
+
+                if(turnitinConn.getUseGradeMark() && runOnce == false && isStudent == false){
+                    log.info("Syncing Grades with Turnitin");
+
+                    String siteId = data.get("siteId").toString();
+                    String taskId = data.get("taskId").toString();
+
+                    HashMap<String, Integer> reportTable = new HashMap<String, Integer>();
+                    HashMap<String, String> additionalData = new HashMap<String, String>();
+                    String tiiUserId="";
+
+                    String assign = taskId;
+                    if(data.containsKey("assignment1")){
+                        //Assignments 1 uses the actual title whereas Assignments 2 uses the ID
+                        assign = getAssignmentTitle(taskId);
+                    }
+
+                    //Run once
+                    sess.setAttribute("sync", taskId);
+
+                    //Get students enrolled on class in Turnitin
+                    Map<String,Object> enrollmentInfo = getAllEnrollmentInfo(siteId);
+
+                    //Get Associated GB item
+                    Assignment assignment = getAssociatedGbItem(data);
+
+                    //List submissions call
+                    Map params = new HashMap();
+                    params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
+                                "fid", "10",
+                                "fcmd", "2",
+                                "tem", turnitinConn.getTEM(siteId),
+                                "assign", assign,
+                                "assignid", taskId,
+                                "cid", siteId,
+                                "ctl", siteId,
+                                "utp", "2"
+                    );
+                    params.putAll(turnitinConn.getInstructorInfo(siteId));
+
+                    Document document = null;
+                    try {
+                            document = turnitinConn.callTurnitinReturnDocument(params);
+                    }catch (TransientSubmissionException e) {
+                        log.error(e);
+                    }catch (SubmissionException e) {
+                        log.warn("SubmissionException error. "+e);
+                    }
+                    Element root = document.getDocumentElement();
+                    if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
+                            NodeList objects = root.getElementsByTagName("object");
+                            String grade="";
+                            log.debug(objects.getLength() + " objects in the returned list");
+
+                            for (int i=0; i<objects.getLength(); i++) {
+                                    tiiUserId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("userid").item(0).getFirstChild())).getData().trim();
+                                    additionalData.put("tiiUserId",tiiUserId);
+                                    //Get GradeMark Grade
+                                    try{
+                                        grade = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("score").item(0).getFirstChild())).getData().trim();
+                                        reportTable.put("grade"+tiiUserId, Integer.valueOf(grade));
+                                    } catch(Exception e){
+                                        //No score returned
+                                        grade="";
+                                    }
+
+                                    if(!grade.equals("")){
+                                        //Update Grade ----------------
+                                        if(gradebookService.isGradebookDefined(siteId)){
+                                            writeGrade(assignment,data,reportTable,additionalData,enrollmentInfo);
+                                        }
+                                    }
+                            }
+                    } else {
+                            log.debug("Report list request not successful");
+                            log.debug(document.getTextContent());
+                    }
+                }
+            }
+
+    /**
+    * Check if a grade returned from Turnitin is greater than the max points for
+    * an assignment. If so then set to max points.
+    * (Grade is unchanged in Turnitin)
+    * @param grade Grade returned from Turnitin
+    * @param assignment
+    * @return
+    */
+    public String processGrade(String grade,Assignment assignment){
+        String processedGrade="";
+        try{
+            int gradeVal = Integer.parseInt(grade);
+            if(gradeVal > assignment.getPoints()){
+                processedGrade = Double.toString(assignment.getPoints());
+                log.info("Grade exceeds maximum point value for this assignment("
+                        +assignment.getName()+") Setting to Max Points value");
+            }else{
+                processedGrade = grade;
+            }
+        }catch(NumberFormatException e){
+            log.warn("Error parsing grade");
+        }catch(Exception e){
+            log.warn("Error processing grade");
+        }
+        return processedGrade;
+    }
+
+
+    /**
+     * Write a grade to the gradebook for the current specified user
+     * @param assignment
+     * @param data
+     * @param reportTable
+     * @param additionalData
+     * @param enrollmentInfo
+     * @return
+     */
+    public boolean writeGrade(Assignment assignment, Map<String,Object> data, HashMap reportTable,HashMap additionalData,Map enrollmentInfo){
+            boolean success = false;
+            String grade = null;
+            String siteId = data.get("siteId").toString();
+            String currentStudentUserId = additionalData.get("tiiUserId").toString();
+            String tiiExternalId ="";
+
+            if(!enrollmentInfo.isEmpty()){
+                if(enrollmentInfo.containsKey(currentStudentUserId)){
+                    tiiExternalId = enrollmentInfo.get(currentStudentUserId).toString();
+                    log.info("tiiExternalId: "+tiiExternalId);
+                }
+            }else{
+                return false;
+            }
+
+            //Check if the returned grade is greater than the maximum possible grade
+            //If so then set to the maximum grade
+            grade = processGrade(reportTable.get("grade"+currentStudentUserId).toString(),assignment);
+
+            pushAdvisor();
+            try {
+                        if(grade!=null){
+                                try{
+                                    if(data.containsKey("assignment1")){
+                                        gradebookExternalAssessmentService.updateExternalAssessmentScore(siteId, assignment.getExternalId(),tiiExternalId,grade);
+                                    }else{
+                                        gradebookService.setAssignmentScoreString(siteId, data.get("taskTitle").toString(), tiiExternalId, grade, "SYNC");
+                                    }
+                                    log.info("UPDATED GRADE ("+grade+") FOR USER ("+tiiExternalId+") IN ASSIGNMENT ("+assignment.getName()+")");
+                                    success = true;
+                                }catch(GradebookNotFoundException e){
+                                    log.error("Error update grade GradebookNotFoundException "+e.toString());
+                                }catch(Exception e){
+                                    log.error("Error update grade "+e.toString());
+                                }
+                        }
+            } catch (Exception e) {
+                log.error("Error setting grade "+e.toString());
+            } finally {
+                    popAdvisor();
+            }
+            return success;
+        }
+
+        /**
+   * Get a list of students enrolled on a class in Turnitin
+   * @param siteId Site ID
+   * @return Map containing Students turnitin / Sakai ID
+   */
+        public Map getAllEnrollmentInfo(String siteId){
+                Map params = new HashMap();
+                Map<String,String> enrollmentInfo=new HashMap();
+                String tiiExternalId="";//the ID sakai stores
+                String tiiInternalId="";//Turnitin internal ID
+                User user = null;
+                Map instructorInfo = turnitinConn.getInstructorInfo(siteId,true);
+                try{
+                    user = userDirectoryService.getUser(instructorInfo.get("uid").toString());
+                }catch(UserNotDefinedException e){
+                    log.error("(getAllEnrollmentInfo)User not defined. "+e);
+                }
+                params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
+                                "fid", "19",
+                                "fcmd", "5",
+                                "tem", turnitinConn.getTEM(siteId),
+                                "ctl", siteId,
+                                "cid", siteId,
+                                "utp", "2",
+                                "uid", user.getId(),
+                                "uem",getEmail(user),
+                                "ufn",user.getFirstName(),
+                                "uln",user.getLastName()
+                );
+                Document document = null;
+                try {
+                        document = turnitinConn.callTurnitinReturnDocument(params);
+                }catch (Exception e) {
+                        log.warn("Failed to get enrollment data using user: "+user.getDisplayName(), e);
+                }
+
+                Element root = document.getDocumentElement();
+                if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("93") == 0) {
+                        NodeList objects = root.getElementsByTagName("student");
+                        for (int i=0; i<objects.getLength(); i++) {
+                                tiiExternalId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("uid").item(0).getFirstChild())).getData().trim();
+                                tiiInternalId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("userid").item(0).getFirstChild())).getData().trim();
+                                enrollmentInfo.put(tiiInternalId, tiiExternalId);
+                        }
+                }
+                return enrollmentInfo;
+        }
+
+         public void pushAdvisor() {
+                securityService.pushAdvisor(new SecurityAdvisor() {
+                        @Override
+                        public SecurityAdvisor.SecurityAdvice isAllowed(String userId, String function,
+                                String reference) {
+                                return SecurityAdvisor.SecurityAdvice.ALLOWED;
+                        }
+                });
+        }
+        public void popAdvisor() {
+                securityService.popAdvisor();
+        }
 	/**
 	 * private methods
 	 */
@@ -342,9 +738,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 
 	/**
-	 * This method was originally private, but is being made public for the 
+	 * This method was originally private, but is being made public for the
 	 * moment so we can run integration tests. TODO Revisit this decision.
-	 * 
+	 *
 	 * @param siteId
 	 * @throws SubmissionException
 	 * @throws TransientSubmissionException
@@ -354,7 +750,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		log.debug("Creating class for site: " + siteId);
 
 		String cpw = defaultClassPassword;
-		String ctl = siteId;	
+		String ctl = siteId;
 		String fcmd = "2";
 		String fid = "2";
 		//String uem = defaultInstructorEmail;
@@ -379,7 +775,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				//"uln", uln,
 				"utp", utp
 		);
-		
+
 		params.putAll(turnitinConn.getInstructorInfo(siteId));
 
 		//if (!useSourceParameter) {
@@ -391,9 +787,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		Element root = document.getDocumentElement();
 		String rcode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim();
 
-		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("20") == 0 || 
+		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("20") == 0 ||
 				((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("21") == 0 ) {
-			log.debug("Create Class successful");						
+			log.debug("Create Class successful");
 		} else {
 			if ("218".equals(rcode) || "9999".equals(rcode)) {
 				throw new TransientSubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
@@ -406,24 +802,24 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	/**
 	 * This returns the String that will be used as the Assignment Title
 	 * in Turn It In.
-	 * 
+	 *
 	 * The current implementation here has a few interesting caveats so that
 	 * it will work with both, the existing Assignments 1 integration, and
 	 * the new Assignments 2 integration under development.
-	 * 
+	 *
 	 * We will check and see if the taskId starts with /assignment/. If it
 	 * does we will look up the Assignment Entity on the legacy Entity bus.
-	 * (not the entitybroker).  This needs some general work to be made 
+	 * (not the entitybroker).  This needs some general work to be made
 	 * generally modular ( and useful for more than just Assignments 1 and 2
 	 * ). We will need to look at some more concrete use cases and then
-	 * factor it accordingly in the future when the next scenerio is 
+	 * factor it accordingly in the future when the next scenerio is
 	 * required.
-	 * 
+	 *
 	 * Another oddity is that to get rid of our hard dependency on Assignments 1
-	 * we are invoking the getTitle method by hand. We probably need a 
-	 * mechanism to register a title handler or something as part of the 
+	 * we are invoking the getTitle method by hand. We probably need a
+	 * mechanism to register a title handler or something as part of the
 	 * setup process for new services that want to be reviewable.
-	 * 
+	 *
 	 * @param taskId
 	 * @return
 	 */
@@ -437,7 +833,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				Entity ent = ep.getEntity(ref);
 				log.debug("got entity " + ent);
-				String title = 
+				String title =
 					ent.getClass().getMethod("getTitle").invoke(ent).toString();
 				log.debug("Got reflected assignemment title from entity " + title);
 				togo = URLDecoder.decode(title,"UTF-8");
@@ -464,7 +860,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	/**
 	 * Works by fetching the Instructor User info based on defaults or current
 	 * user.
-	 * 
+	 *
 	 * @param siteId
 	 * @param taskId
 	 * @return
@@ -480,10 +876,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			"fcmd", "7", "fid", "4", "utp", "2" ); // "upw", defaultInstructorPassword,
 
 		params.putAll(turnitinConn.getInstructorInfo(siteId));
- 
+
 		return turnitinConn.callTurnitinReturnMap(params);
 	}
-	
+
 	public void addTurnitinInstructor(Map userparams) throws SubmissionException, TransientSubmissionException {
 		Map params = new HashMap();
 		params.putAll(userparams);
@@ -496,11 +892,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	/**
 	 * Creates or Updates an Assignment
-	 * 
+	 *
 	 * This method will look at the current user or default instructor for it's
 	 * user information.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param siteId
 	 * @param taskId
 	 * @param extraAsnnOpts
@@ -534,46 +930,46 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		    fcmd = "3";
 		    asnnExists = true;
 		}
-		
+
 		/* Some notes about start and due dates. This information is
-		 * accurate as of Nov 12, 2009 and was determined by testing 
+		 * accurate as of Nov 12, 2009 and was determined by testing
 		 * and experimentation with some Sash scripts.
-		 * 
+		 *
 		 * A turnitin due date, must be after the start date. This makes
 		 * sense and follows the logic in both Assignments 1 and 2.
-		 * 
-		 * When *creating* a new Turnitin Assignment, the start date 
-		 * must be todays date or later.  The format for dates only 
+		 *
+		 * When *creating* a new Turnitin Assignment, the start date
+		 * must be todays date or later.  The format for dates only
 		 * includes the day, and not any specific times. I believe that,
 		 * in order to make up for time zone differences between your
 		 * location and the turnitin cloud, it can be basically the
 		 * current day anywhere currently, with some slack. For instance
 		 * I can create an assignment for yesterday, but not for 2 days
 		 * ago. Doing so causes an error.
-		 * 
+		 *
 		 * However!  For an existing turnitin assignment, you appear to
-		 * have the liberty of changing the start date to sometime in 
+		 * have the liberty of changing the start date to sometime in
 		 * the past. You can also change an assignment to have a due
 		 * date in the past as long as it is still after the start date.
-		 * 
-		 * So, to avoid errors when syncing information, or adding 
+		 *
+		 * So, to avoid errors when syncing information, or adding
 		 * turnitin support to new or existing assignments we will:
-		 * 
+		 *
 		 * 1. If the assignment already exists we'll just save it.
-		 * 
-		 * 2. If the assignment does not exist, we will save it once using 
+		 *
+		 * 2. If the assignment does not exist, we will save it once using
 		 * todays date for the start and due date, and then save it again with
 		 * the proper dates to ensure we're all tidied up and in line.
-		 * 
-		 * Also, with our current class creation, due dates can be 5 
+		 *
+		 * Also, with our current class creation, due dates can be 5
 		 * years out, but not further. This seems a bit lower priortity,
-		 * but we still should figure out an appropriate way to deal 
+		 * but we still should figure out an appropriate way to deal
 		 * with it if it does happen.
-		 * 
+		 *
 		 */
-		  
-		 
-		
+
+
+
 		//TODO use the 'secret' function to change this to longer
 		cal.add(Calendar.MONTH, 5);
 		String dtdue = dform.format(cal.getTime());
@@ -586,7 +982,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 		String fid = "4";						//function id
 		String utp = "2"; 					//user type 2 = instructor
-		// String upw = defaultInstructorPassword;  TODO Is the upw actually 
+		// String upw = defaultInstructorPassword;  TODO Is the upw actually
 		// required at all? It says optional in the API.
 		String s_view_report = "1";
 		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("s_view_report")) {
@@ -594,14 +990,54 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			extraAsnnOpts.remove("s_view_report");
 		}
 
+                                           //erater
+		String erater = "0";
+                                           String ets_handbook ="1";
+                                           String ets_dictionary="en";
+                                           String ets_spelling = "1";
+                                           String ets_style = "1";
+                                           String ets_grammar = "1";
+                                           String ets_mechanics = "1";
+                                           String ets_usage = "1";
+
+                                           try{
+		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("erater")) {
+                                                    erater = extraAsnnOpts.get("erater").toString();
+                                                    extraAsnnOpts.remove("erater");
+
+                                                    ets_handbook = extraAsnnOpts.get("ets_handbook").toString();
+                                                    extraAsnnOpts.remove("ets_handbook");
+
+                                                    ets_dictionary = extraAsnnOpts.get("ets_dictionary").toString();
+                                                    extraAsnnOpts.remove("ets_dictionary");
+
+                                                    ets_spelling = extraAsnnOpts.get("ets_spelling").toString();
+                                                    extraAsnnOpts.remove("ets_spelling");
+
+                                                    ets_style = extraAsnnOpts.get("ets_style").toString();
+                                                    extraAsnnOpts.remove("ets_style");
+
+                                                    ets_grammar = extraAsnnOpts.get("ets_grammar").toString();
+                                                    extraAsnnOpts.remove("ets_grammar");
+
+                                                    ets_mechanics = extraAsnnOpts.get("ets_mechanics").toString();
+                                                    extraAsnnOpts.remove("ets_mechanics");
+
+                                                    ets_usage = extraAsnnOpts.get("ets_usage").toString();
+                                                    extraAsnnOpts.remove("ets_usage");
+		}
+                                           }catch(Exception e){
+                                               log.info("(createAssignment)erater extraAsnnOpts. "+e);
+                                           }
+
 		String cid = siteId;
 		String assignid = taskId;
 		String assign = taskTitle;
 		String ctl = siteId;
 
 		/* TODO SWG
-		 * I'm not sure why this is encoding n's to & rather than just 
-		 * encoding all parameters using urlencode, but I'm hesitant to change 
+		 * I'm not sure why this is encoding n's to & rather than just
+		 * encoding all parameters using urlencode, but I'm hesitant to change
 		 * without more knowledge to avoid introducing bugs with pre-existing
 		 * data.
 		 */
@@ -618,11 +1054,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			e.printStackTrace();
 		}
 
-		
 
-		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
-				"assign", assignEnc, 
-				"assignid", assignid, 
+
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
+				"assign", assignEnc,
+				"assignid", assignid,
 				"cid", cid,
 				"ctl", ctl,
 				"dtdue", dtdue,
@@ -630,10 +1066,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"fcmd", "3",
 				"fid", fid,
 				"s_view_report", s_view_report,
-				"utp", utp
+				"utp", utp,
+                                                                                      "erater",erater,
+                                                                                      "ets_handbook",ets_handbook,
+                                                                                      "ets_dictionary",ets_dictionary,
+                                                                                      "ets_spelling",ets_spelling,
+                                                                                      "ets_style",ets_style,
+                                                                                      "ets_grammar",ets_grammar,
+                                                                                      "ets_mechanics",ets_mechanics,
+                                                                                      "ets_usage",ets_usage
 		);
-		
-		// Save instructorInfo up here to reuse for calls in this 
+
+		// Save instructorInfo up here to reuse for calls in this
 		// method, since theoretically getInstructorInfo could return
 		// different instructors for different invocations and we need
 		// the same one since we're using a session id.
@@ -645,7 +1089,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				if (extraAsnnOpts.get(key) == null) {
 					continue;
 				}
-				params = TurnitinAPIUtil.packMap(params, key.toString(), 
+				params = TurnitinAPIUtil.packMap(params, key.toString(),
 						extraAsnnOpts.get(key).toString());
 			}
 		}
@@ -654,16 +1098,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		// assignment for the first time.
 		String sessionid = null;
 		Map sessionParams = null;
-		
+
 		if (!asnnExists) {
 			// Try adding the user in case they don't exist TII-XXX
 			addTurnitinInstructor(instructorInfo);
-			
+
 			sessionParams = turnitinConn.getBaseTIIOptions();
 			sessionParams.putAll(instructorInfo);
 			sessionParams.put("utp", utp);
 			sessionid = TurnitinSessionFuncs.getTurnitinSession(turnitinConn, sessionParams);
-		    
+
 			Map firstparams = new HashMap();
 			firstparams.putAll(params);
 			firstparams.put("session-id", sessionid);
@@ -671,12 +1115,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			firstparams.put("dtdue", dtdue);
 			log.debug("date due is: " + dtdue);
 			firstparams.put("fcmd", "2");
-			Document firstSaveDocument = 
+			Document firstSaveDocument =
 				turnitinConn.callTurnitinReturnDocument(firstparams);
 			Element root = firstSaveDocument.getDocumentElement();
 			int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
 			if ((rcode > 0 && rcode < 100) || rcode == 419) {
-				log.debug("Create FirstDate Assignment successful");	
+				log.debug("Create FirstDate Assignment successful");
 				log.debug("tii returned " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 			} else {
 				log.debug("FirstDate Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
@@ -694,7 +1138,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
 		if ((rcode > 0 && rcode < 100) || rcode == 419) {
-			log.debug("Create Assignment successful");	
+			log.debug("Create Assignment successful");
 			log.debug("tii returned " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		} else {
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
@@ -702,18 +1146,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new TransientSubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode
 					, Integer.valueOf(rcode));
 		}
-		
+
 		if (sessionid != null) {
 		    TurnitinSessionFuncs.logoutTurnitinSession(turnitinConn, sessionid, sessionParams);
 		}
 	}
 
-	
+
 
 	/**
 	 * Currently public for integration tests. TODO Revisit visibility of
 	 * method.
-	 * 
+	 *
 	 * @param userId
 	 * @param uem
 	 * @param siteId
@@ -758,7 +1202,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp = "1";
 
 		Map params = new HashMap();
-		params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
+		params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 				"fid", fid,
 				"fcmd", fcmd,
 				"cid", cid,
@@ -787,7 +1231,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					"rCode: " + rCode + ", rMessage: " + rMessage);
 			//TODO for certain types we should probably throw an exception here and stop the proccess
 		}
-		
+
 	}
 
 	/*
@@ -796,10 +1240,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 	private ContentReviewItem getNextItemInSubmissionQueue() {
 
-		
+
 		Search search = new Search();
 		search.addRestriction(new Restriction("status", ContentReviewItem.NOT_SUBMITTED_CODE));
-		
+
 		List<ContentReviewItem> notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
 		for (int i =0; i < notSubmittedItems.size(); i++) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(0);
@@ -853,7 +1297,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		int errors = 0;
 		int success = 0;
 
-		
+
 		for (ContentReviewItem currentItem = getNextItemInSubmissionQueue(); currentItem != null; currentItem = getNextItemInSubmissionQueue()) {
 
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
@@ -923,7 +1367,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 
 			if (!turnitinConn.isUseSourceParameter()) {
-				try {				
+				try {
 					createClass(currentItem.getSiteId());
 				} catch (SubmissionException t) {
 					log.debug ("Submission attempt unsuccessful: Could not create class", t);
@@ -983,13 +1427,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					if (tse.getErrorCode() != null) {
 						currentItem.setErrorCode(tse.getErrorCode());
 					}
-					
+
 					dao.update(currentItem);
 					releaseLock(currentItem);
 					errors++;
 					continue;
 
-				} 
+				}
 			}
 
 			//get all the info for the api call
@@ -1027,7 +1471,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				releaseLock(currentItem);
 				errors++;
 				continue;
-			} 
+			}
 			catch (TypeException e) {
 				log.debug("Submission failed due to content Type error: " + e.getMessage());
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
@@ -1042,8 +1486,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			if (fileName != null && fileName.length() >=200 ) {
 				fileName = truncateFileName(fileName, 198);
 			}
-			
-			
+
+
 			String userEid = currentItem.getUserId();
 			try {
 				userEid = userDirectoryService.getUserEid(currentItem.getUserId());
@@ -1066,7 +1510,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			log.debug("Using Emails: tem: " + tem + " uem: " + uem);
 
-			String assign = getAssignmentTitle(currentItem.getTaskId());;
+			String assign = getAssignmentTitle(currentItem.getTaskId());
 			String ctl = currentItem.getSiteId();
 
 			Map params = TurnitinAPIUtil.packMap( turnitinConn.getBaseTIIOptions(),
@@ -1121,7 +1565,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			if (rMessage == null)
 				rMessage = rCode;
-			else 
+			else
 				rMessage = rMessage.trim();
 
 			if (rCode.compareTo("51") == 0) {
@@ -1145,7 +1589,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 
-				if (rMessage.equals("User password does not match user email") 
+				if (rMessage.equals("User password does not match user email")
 						|| "1001".equals(rCode) || "".equals(rMessage) || "413".equals(rCode) || "1025".equals(rCode) || "250".equals(rCode)) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					errors++;
@@ -1181,7 +1625,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public String escapeFileName(String fileName, String contentId) {
 		log.debug("origional filename is: " + fileName);
 		if (fileName == null) {
-			//use the id 
+			//use the id
 			fileName  = contentId;
 		} else if (fileName.length() > 199) {
 			fileName = fileName.substring(0, 199);
@@ -1208,7 +1652,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 
 			}
-		} 
+		}
 		catch (IllegalArgumentException eae) {
 			log.warn("Unable to decode fileName: " + fileName);
 			eae.printStackTrace();
@@ -1216,12 +1660,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}  
-		
+		}
+
 		fileName = fileName.replace(' ', '_');
 		//its possible we have double _ as a result of this lets do some cleanup
 		fileName = StringUtils.replace(fileName, "__", "_");
-		
+
 		log.debug("fileName is :" + fileName);
 		return fileName;
 	}
@@ -1232,17 +1676,17 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		if (fileName.contains(".")) {
 			 extension = fileName.substring(fileName.lastIndexOf("."));
 		}
-		
+
 		fileName = fileName.substring(0, i - extension.length());
 		fileName = fileName + extension;
-		
+
 		return fileName;
 	}
 
 	public void checkForReports() {
 		//if (serverConfigurationService.getBoolean("turnitin.getReportsBulk", true))
 			checkForReportsBulk();
-		//else 
+		//else
 		//	checkForReportsIndividual();
 	}
 
@@ -1251,7 +1695,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 	@SuppressWarnings({ "deprecation", "unchecked" })
 	public void checkForReportsBulk() {
-		
+
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
 		dform.applyPattern(TURNITIN_DATETIME_FORMAT);
 
@@ -1332,8 +1776,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				String assign = currentItem.getTaskId();
 				String ctl = currentItem.getSiteId();
-				
-				// TODO FIXME Current sgithens 
+
+				// TODO FIXME Current sgithens
 				// Move the update setRetryAttempts to here, and first call and
 				// check the assignment from TII to see if the generate until
 				// due is enabled. In that case we don't want to waste retry
@@ -1348,10 +1792,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							"assign", getAssignmentTitle(currentItem.getTaskId()), "assignid", currentItem.getTaskId(), "cid", currentItem.getSiteId(), "ctl", currentItem.getSiteId(),
 							"fcmd", "7", "fid", "4", "utp", "2" );
 
-					getAsnnParams.putAll(turnitinConn.getInstructorInfo(currentItem.getSiteId()));				
-					
+					getAsnnParams.putAll(turnitinConn.getInstructorInfo(currentItem.getSiteId()));
+
 					Map curasnn = turnitinConn.callTurnitinReturnMap(getAsnnParams);
-					
+
 					if (curasnn.containsKey("object")) {
 						Map curasnnobj = (Map) curasnn.get("object");
 						String reportGenSpeed = (String) curasnnobj.get("generate");
@@ -1362,7 +1806,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						try {
 							if (duedate != null) {
 								duedateObj = retform.parse(duedate);
-							} 
+							}
 						} catch (ParseException pe) {
 							log.warn("Unable to parse turnitin dtdue: " + duedate, pe);
 						}
@@ -1385,11 +1829,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				} catch (TransientSubmissionException e) {
 					log.error("Unable to check the report gen speed of the asnn for item: " + currentItem.getId(), e);
 				}
-				
-				
+
+
 				Map params = new HashMap();
 				//try {
-					params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(), 
+					params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 							"fid", fid,
 							"fcmd", fcmd,
 							"tem", tem,
@@ -1569,7 +2013,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
 				currentItem.setLastError(e.getMessage());
 				dao.update(currentItem);
-				break;						
+				break;
 			}
 
 			Document document = null;
@@ -1639,7 +2083,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 */
 
 	// returns null if no valid email exists
-	private String getEmail(User user) {
+	public String getEmail(User user) {
 		String uem = null;
 		log.debug("Looking for email for " + user.getEid() + " with prefer system profile email set to " + this.preferSystemProfileEmail);
 		if (!this.preferSystemProfileEmail) {
@@ -1779,6 +2223,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		String utp = "2"; 					//user type 2 = instructor
 		String s_view_report = "1";
 
+                                            //erater
+		String erater = "0";
+                                           String ets_handbook ="1";
+                                           String ets_dictionary="en";
+                                           String ets_spelling = "1";
+                                           String ets_style = "1";
+                                           String ets_grammar = "1";
+                                           String ets_mechanics = "1";
+                                           String ets_usage = "1";
+
 		String cid = siteId;
 		String assignid = taskId;
 		String assign = taskTitle;
@@ -1809,13 +2263,21 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"fcmd", fcmd,
 				"fid", fid,
 				"s_view_report", s_view_report,
-				"utp", utp
+				"utp", utp,
+                                                                                      "erater",erater,
+                                                                                      "ets_handbook",ets_handbook,
+                                                                                      "ets_dictionary",ets_dictionary,
+                                                                                      "ets_spelling",ets_spelling,
+                                                                                      "ets_style",ets_style,
+                                                                                      "ets_grammar",ets_grammar,
+                                                                                      "ets_mechanics",ets_mechanics,
+                                                                                      "ets_usage",ets_usage
 		);
-		
+
 		params.putAll(turnitinConn.getInstructorInfo(siteId));
 
 		Document document = null;
-		
+
 		try {
 			document = turnitinConn.callTurnitinReturnDocument(params);
 		}
@@ -1831,13 +2293,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		Element root = document.getDocumentElement();
 		int rcode = new Integer(((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim()).intValue();
 		if ((rcode > 0 && rcode < 100) || rcode == 419) {
-			log.debug("Create Assignment successful");						
+			log.debug("Create Assignment successful");
 		} else {
 			log.debug("Assignment creation failed with message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 			throw new SubmissionException("Create Assignment not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + rcode);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see org.sakaiproject.contentreview.service.ContentReviewService#isAcceptableContent(org.sakaiproject.content.api.ContentResource)
 	 */
@@ -1885,9 +2347,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", true);
 			if (genFN) {
 				String eid = user.getEid();
-				if (eid != null 
+				if (eid != null
 						&& eid.length() > 0) {
-					ufn = eid.substring(0,1);        
+					ufn = eid.substring(0,1);
 				} else {
 					ufn = "X";
 				}
@@ -1920,12 +2382,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 	
 	public String getLocalizedStatusMessage(String messageCode, String userRef) {
-		
+
 		String userId = EntityReference.getIdFromRef(userRef);
 		ResourceLoader resourceLoader = new ResourceLoader(userId, "turnitin");
 		return resourceLoader.getString(messageCode);
 	}
-	
+
     public String getReviewError(String contentId) {
     	return getLocalizedReviewErrorMessage(contentId);
     }
@@ -1933,7 +2395,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public String getLocalizedStatusMessage(String messageCode) {
 		return getLocalizedStatusMessage(messageCode, userDirectoryService.getCurrentUser().getReference());
 	}
-	
+
 	public String getLocalizedStatusMessage(String messageCode, Locale locale) {
 		//TODO not sure how to do this with  the sakai resource loader
 		return null;

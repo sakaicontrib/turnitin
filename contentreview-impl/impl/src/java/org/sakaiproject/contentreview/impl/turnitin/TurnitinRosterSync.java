@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,6 +45,7 @@ import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
+import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -51,11 +53,11 @@ import org.w3c.dom.NodeList;
 /**
  * This class contains functionality to sync the membership between a Turnitin
  * Course and a Sakai Site.
- * 
+ *
  * @author sgithens
  *
  */
-public class TurnitinRosterSync { 
+public class TurnitinRosterSync {
 
 	private static final Log log = LogFactory.getLog(TurnitinRosterSync.class);
 
@@ -96,10 +98,10 @@ public class TurnitinRosterSync {
 	}
 
 	/**
-	 * This method takes a Sakai Site ID and returns the xml document from 
-	 * Turnitin that lists all the instructors and students for that Turnitin 
+	 * This method takes a Sakai Site ID and returns the xml document from
+	 * Turnitin that lists all the instructors and students for that Turnitin
 	 * course.
-	 * 
+	 *
 	 * @param sakaiSiteID
 	 * @return
 	 */
@@ -121,20 +123,20 @@ public class TurnitinRosterSync {
 		try {
 			togo = turnitinConn.callTurnitinWDefaultsReturnDocument(params);
 		} catch (SubmissionException e) {
-			log.error("Error getting enrollment document for sakai site: " 
+			log.error("Error getting enrollment document for sakai site: "
 					+ sakaiSiteID, e);
 		} catch (TransientSubmissionException e) {
-			log.error("Error getting enrollment document for sakai site: " 
+			log.error("Error getting enrollment document for sakai site: "
 					+ sakaiSiteID, e);
 		}
 		return togo;
 	}
 
 	/**
-	 * This will make an API call to Turnitit to fetch the list of instructors
-	 * and students for the site.  Remember that in Turnitin, a user can be 
+	 * This will make an API call to Turnitin to fetch the list of instructors
+	 * and students for the site.  Remember that in Turnitin, a user can be
 	 * <strong>both</strong> a student and an instructor.
-	 * 
+	 *
 	 * @param sakaiSiteID
 	 * @return An Map. The first element is a List<String> of instructor ids,
 	 * the second element is a List<String> of student ids.
@@ -174,25 +176,25 @@ public class TurnitinRosterSync {
 	 * fail (this all depends on calls to Turnitin's Webservice API's). So if
 	 * you pass in a site, a user, and the value 1 (student) that user should be
 	 * switched to an instructor in that site.
-	 * 
+	 *
 	 * @param siteId
 	 * @param user
-	 * @param currentRole The current role using Turnitin codes. In Turnitin a 
+	 * @param currentRole The current role using Turnitin codes. In Turnitin a
 	 * value of 1 always represents a student and a value of 2 represents an
 	 * instructor.
 	 * @return
 	 */
 	public boolean swapTurnitinRoles(String siteId, User user, int currentRole ) {
 		boolean togo = false;
-		
+
 		if (user != null) {
-			// TODO We need to centralize packing user options since sometimes the 
+			// TODO We need to centralize packing user options since sometimes the
 			// email address may come from their Profile Tool profile
 			Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 					"fid","19","fcmd", "3", "uem", user.getEmail(), "uid", user.getId(),
-					"ufn", user.getFirstName(), "uln", user.getLastName(), 
+					"ufn", user.getFirstName(), "uln", user.getLastName(),
 					"username", user.getDisplayName(), "ctl", siteId, "cid", siteId,
-					"utp", currentRole+"", 
+					"utp", currentRole+"",
 					"tem", turnitinConn.getInstructorInfo(siteId).get("uem"));
 
 			Map ret = new HashMap();
@@ -214,16 +216,80 @@ public class TurnitinRosterSync {
 		else {
 			// This was successful because the user doesn't exist in our Sakai
 			// installation, and so we don't need to sync them at all.
-			togo = true; 
+			togo = true;
 		}
 
 		return togo;
 	}
 
+                           /**
+         * Add an instructor to a class in Turnitin, allowing them to properly
+         * access assignments created by other instructors. (Only applicable to SRC 9)
+         * @param siteId Sakai site ID
+         * @param userId Sakai User ID
+         * @throws SubmissionException
+         * @throws TransientSubmissionException
+         */
+                     @SuppressWarnings("unchecked")
+	public void addInstructor(String siteId, String userId) throws SubmissionException, TransientSubmissionException {
+		log.info("Adding Instructor("+userId+") to site: " + siteId);
+		User user;
+		try {
+			user = userDirectoryService.getUser(userId);
+		} catch (Exception t) {
+			throw new SubmissionException ("(addInstructor)Cannot get user information.", t);
+		}
+		String cpw = turnitinConn.getDefaultClassPassword();
+		String ctl = siteId;
+		String fcmd = "2";
+		String fid = "2";
+		String utp = "2";
+		String cid = siteId;
+                                           String uem = turnitinReviewServiceImpl.getEmail(user);
+                                           String uid = user.getId();
+		String ufn = user.getFirstName();
+		if (ufn == null) {
+			throw new SubmissionException ("User has no first name");
+		}
+		String uln = user.getLastName();
+		if (uln == null) {
+			throw new SubmissionException ("User has no last name");
+		}
+
+		Document document = null;
+
+		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
+				"uid", uid,
+				"cid", cid,
+				"cpw", cpw,
+				"ctl", ctl,
+				"fcmd", fcmd,
+				"fid", fid,
+				"uem", uem,
+				"ufn", ufn,
+				"uln", uln,
+				"utp", utp
+		);
+		document = turnitinConn.callTurnitinReturnDocument(params);
+
+		Element root = document.getDocumentElement();
+		String rcode = ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim();
+
+		if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("20") == 0 ||
+				((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("21") == 0 ) {
+                                                log.debug("Add instructor successful");
+		} else {
+                                                if ("218".equals(rcode) || "9999".equals(rcode)) {
+                                                        throw new TransientSubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
+                                                } else {
+                                                        throw new SubmissionException("Create Class not successful. Message: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim() + ". Code: " + ((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim());
+                                                }
+		}
+	}
 	/**
-	 * Looks up a Sakai {@link org.sakaiproject.user.api.User} by userid, 
+	 * Looks up a Sakai {@link org.sakaiproject.user.api.User} by userid,
 	 * returns null if they do not exist.
-	 * 
+	 *
 	 * @param userid
 	 * @return the User object or null if the user does not exist in the Sakai
 	 * installation.
@@ -238,10 +304,36 @@ public class TurnitinRosterSync {
 		return user;
 	}
 
+            /**
+         * Return a Map containing all users of x type enrolled on a site
+         * @param siteId Sakai site ID
+         * @param role specific user role e.g. 'instructor'
+         * @return
+         */
+                    @SuppressWarnings("unchecked")
+	public Map getAllUsers(String siteId, String role) {
+                                String ROLE = "section.role."+role;
+                                Map<String,String> users = new HashMap();
+                                Site site = null;
+                                try {
+                                           site = siteService.getSite(siteId);
+                                           Set<String> instIds = site.getUsersIsAllowed(ROLE);
+                                           List<User> activeUsers = userDirectoryService.getUsers(instIds);
+                		for (int i = 0; i < activeUsers.size(); i++) {
+			User user = activeUsers.get(i);
+			users.put(user.getId(),user.getId());
+		}
+                                } catch (IdUnusedException e) {
+                                        log.error("Unable to fetch site in getAllUsers: " + siteId, e);
+                                } catch (Exception e) {
+                                        log.error("Exception in getAllUsers", e);
+                                }
+                            return users;
+	}
 	/**
 	 * The primary method of this class. Syncs the enrollment between a Sakai
-	 * Site and it's corresponding 
-	 * 
+	 * Site and it's corresponding
+	 *
 	 * @param sakaiSiteID
 	 */
 	public boolean syncSiteWithTurnitin(String sakaiSiteID) {
@@ -256,6 +348,22 @@ public class TurnitinRosterSync {
 			throw new IllegalArgumentException("The Sakai Site with ID: " + sakaiSiteID + " does not exist.");
 		}
 
+                                            //Only run if using SRC 9
+                                            if(turnitinConn.isUseSourceParameter()){
+                                               //Enroll all instructors
+                                                Map<String,String> allInstructors = getAllUsers(sakaiSiteID,"instructor");
+                                                for (String key : allInstructors.keySet()) {
+                                                        try {
+                                                                addInstructor(sakaiSiteID,allInstructors.get(key));
+                                                        } catch (SubmissionException e) {
+                                                                log.error(e);
+                                                        } catch(TransientSubmissionException e){
+                                                                log.error(e);
+                                                        } catch(Exception e){
+                                                                log.error(e);
+                                                        }
+                                                }
+                                            }
 
 		for (String uid: enrollment.get("instructor")) {
 			if (!site.isAllowed(uid, "section.role.instructor")) {
@@ -279,10 +387,10 @@ public class TurnitinRosterSync {
 	}
 
 	/**
-	 * Utility method to create the Lock ID that will be used in the 
-	 * Content Review Lock table to hold on to a Sakai Site while we try to 
+	 * Utility method to create the Lock ID that will be used in the
+	 * Content Review Lock table to hold on to a Sakai Site while we try to
 	 * sync it.
-	 * 
+	 *
 	 * @param item
 	 * @return
 	 */
@@ -324,7 +432,7 @@ public class TurnitinRosterSync {
 					}
 				} catch (Exception e) {
 					item.setStatus(ContentReviewRosterSyncItem.FAILED_STATUS);
-					log.error("Unable to complete Turnitin Roster Sync for SyncItem id: " 
+					log.error("Unable to complete Turnitin Roster Sync for SyncItem id: "
 						+ item.getId() + " + siteid: " + item.getSiteId(), e);
 					StringBuilder sb = item.getMessages() == null ? new StringBuilder() : new StringBuilder(item.getMessages());
 					sb.append("\n"+item.getLastTried().toLocaleString()
