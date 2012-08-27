@@ -718,7 +718,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
          public void pushAdvisor() {
                 securityService.pushAdvisor(new SecurityAdvisor() {
-                        @Override
+                        
                         public SecurityAdvisor.SecurityAdvice isAllowed(String userId, String function,
                                 String reference) {
                                 return SecurityAdvisor.SecurityAdvice.ALLOWED;
