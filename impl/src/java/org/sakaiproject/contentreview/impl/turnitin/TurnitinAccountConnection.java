@@ -47,14 +47,14 @@ import org.w3c.dom.Document;
 /**
  * This class contains the properties and utility methods so it can be used to
  * make API calls and connections to a specific Turnitin Account.
- * 
+ *
  * Ideally you can make several of these in a single Sakai System in the event
  * that you need to use different different Turnitin Accounts for different
  * tools or provisioned user spaces (such as different campuses, etc).
- * 
+ *
  * A large portion of this was factored out of TurnitinReviewService where it
  * originally occurred.
- * 
+ *
  * @author sgithens
  *
  */
@@ -64,7 +64,7 @@ public class TurnitinAccountConnection {
 	private String aid = null;
 	private String said = null;
 	private String secretKey = null;
-	private String apiURL = "https://www.turnitin.com/api.asp?";
+	private String apiURL = "https://api.turnitin.com/api.asp?";
 	private String proxyHost = null;
 	private String proxyPort = null;
 	final static long LOCK_PERIOD = 12000000;
@@ -77,9 +77,11 @@ public class TurnitinAccountConnection {
 	private int sendAccountNotifications = 0;
 	private int sendSubmissionNotification = 0;
 	private Long maxRetry = null;
+                     private boolean useGrademark = false;
+                     private boolean migrate = false;
 
 	// Proxy if set
-	private Proxy proxy = null; 
+	private Proxy proxy = null;
 
 	//note that the assignment id actually has to be unique globally so use this as a prefix
 	// eg. assignid = defaultAssignId + siteId
@@ -94,7 +96,7 @@ public class TurnitinAccountConnection {
 
 		log.info("init()");
 
-		proxyHost = serverConfigurationService.getString("turnitin.proxyHost"); 
+		proxyHost = serverConfigurationService.getString("turnitin.proxyHost");
 
 		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
 
@@ -124,7 +126,7 @@ public class TurnitinAccountConnection {
 
 		secretKey = serverConfigurationService.getString("turnitin.secretKey");
 
-		apiURL = serverConfigurationService.getString("turnitin.apiURL","https://www.turnitin.com/api.asp?");
+		apiURL = serverConfigurationService.getString("turnitin.apiURL","https://api.turnitin.com/api.asp?");
 
 
 
@@ -138,16 +140,19 @@ public class TurnitinAccountConnection {
 
 		useSourceParameter = serverConfigurationService.getBoolean("turnitin.useSourceParameter", false);
 
+                                           migrate = serverConfigurationService.getBoolean("turnitin.migrate", false);
+
+		useGrademark = serverConfigurationService.getBoolean("turnitin.useGrademark", true);
 		/*
 		 * Previously, we only had the sendnotifications option. We're keeping it here,
 		 * and running it first for backwards compatibility. Because of functional
-		 * requirements we need more control over whether emails are sent for specific 
+		 * requirements we need more control over whether emails are sent for specific
 		 * operations, thus the new options.
 		 */
 		if (!serverConfigurationService.getBoolean("turnitin.sendnotifications", true)) {
 			sendAccountNotifications = 1;
 			sendSubmissionNotification = 1;
-		} 
+		}
 		else {
 			sendAccountNotifications = 0;
 			sendSubmissionNotification = 0;
@@ -197,23 +202,23 @@ public class TurnitinAccountConnection {
 	/**
 	 * Get's a Map of TII options that are the same for every one of these
 	 * calls. Things like encrpyt and diagnostic.
-	 * 
+	 *
 	 * This can be used as well for changing things dynamically and testing.
-	 * 
+	 *
 	 * @return
 	 */
 	public Map getBaseTIIOptions() {
 		String diagnostic = "0"; //0 = off; 1 = on
 		String encrypt = "0"; //encryption flag
 
-		Map togo = TurnitinAPIUtil.packMap(null, 
+		Map togo = TurnitinAPIUtil.packMap(null,
 				"diagnostic", diagnostic,
 				"encrypt", encrypt,
 				"said", said,
 				"aid", aid
 		);
 
-		if (useSourceParameter) {
+		if (useSourceParameter || migrate) {
 			togo.put("src", "9");
 		}
 
@@ -221,12 +226,12 @@ public class TurnitinAccountConnection {
 	}
 
 	/**
-	 * This will return a map of the information for the instructor such as 
-	 * uem, username, ufn, etc. If the system is configured to use src9 
+	 * This will return a map of the information for the instructor such as
+	 * uem, username, ufn, etc. If the system is configured to use src9
 	 * provisioning, this will draw information from the current thread based
 	 * user. Otherwise it will use the default Instructor information that has
 	 * been configured for the system.
-	 * 
+	 *
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -237,7 +242,54 @@ public class TurnitinAccountConnection {
 			togo.put("ufn", defaultInstructorFName);
 			togo.put("uln", defaultInstructorLName);
 			togo.put("uid", defaultInstructorId);
-		} 
+		}
+		else {
+			String INST_ROLE = "section.role.instructor";
+			User inst = null;
+			try {
+				Site site = siteService.getSite(siteId);
+				User user = userDirectoryService.getCurrentUser();
+				if (site.isAllowed(user.getId(), INST_ROLE)) {
+					inst = user;
+				}
+				else {
+					Set<String> instIds = getActiveInstructorIds(INST_ROLE,
+							site);
+					if (instIds.size() > 0) {
+						inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
+					}
+				}
+			} catch (IdUnusedException e) {
+				log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
+			} catch (UserNotDefinedException e) {
+				log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
+			}
+
+
+			if (inst == null) {
+				log.error("Instructor is null in getAbsoluteInstructorInfo");
+			}
+			else {
+				togo.put("uem", inst.getEmail());
+				togo.put("ufn", inst.getFirstName());
+				togo.put("uln", inst.getLastName());
+				togo.put("uid", inst.getId());
+				togo.put("username", inst.getDisplayName());
+			}
+		}
+
+		return togo;
+	}
+
+@SuppressWarnings("unchecked")
+	public Map getInstructorInfo(String siteId, boolean ignoreUseSource) {
+		Map togo = new HashMap();
+		if (!useSourceParameter && ignoreUseSource == false ) {
+			togo.put("uem", defaultInstructorEmail);
+			togo.put("ufn", defaultInstructorFName);
+			togo.put("uln", defaultInstructorLName);
+			togo.put("uid", defaultInstructorId);
+		}
 		else {
 			String INST_ROLE = "section.role.instructor";
 			User inst = null;
@@ -280,12 +332,12 @@ public class TurnitinAccountConnection {
 		Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
 		//the site could contain references to deleted users
 		List<User> activeUsers = userDirectoryService.getUsers(instIds);
-		Set<String> ret = Collections.emptySet();
+                                           Set<String> ret =  new java.util.HashSet<String>();
 		for (int i = 0; i < activeUsers.size(); i++) {
 			User user = activeUsers.get(i);
 			ret.add(user.getId());
 		}
-		
+
 		return ret;
 	}
 
@@ -341,8 +393,24 @@ public class TurnitinAccountConnection {
 		this.useSourceParameter = useSourceParameter;
 	}
 
+                     public boolean getUseGradeMark() {
+		return useGrademark;
+	}
+
+	public void setUseGradeMark(boolean useGrademark) {
+		this.useGrademark = useGrademark;
+	}
+
+	public boolean getMigrateSRC() {
+		return migrate;
+	}
+
+	public void setMigrateSRC(boolean migrate) {
+		this.migrate = migrate;
+	}
+        
 	// Dependency
-	private ServerConfigurationService serverConfigurationService; 
+	private ServerConfigurationService serverConfigurationService;
 	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
 		this.serverConfigurationService = serverConfigurationService;
 	}

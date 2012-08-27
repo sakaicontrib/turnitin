@@ -54,8 +54,16 @@ public enum TIIParam {
     uln,
     upw,
     username,
-    utp;
-    
+    utp,
+    erater,
+    ets_handbook,
+    ets_dictionary,
+    ets_spelling,
+    ets_style,
+    ets_grammar,
+    ets_mechanics,
+    ets_usage;
+
     public String toString() {
         // Unfortunately you can't put dashes in enum constant names, so this
         // special case is for the newly added session-id TII Parameter.
