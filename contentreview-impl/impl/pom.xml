@@ -180,21 +180,8 @@
 		<artifactId>sakai-kernel-util</artifactId>
 	</dependency>
         <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-gradebook-service-api</artifactId>
-            <version>2.6.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.sakaiproject</groupId>
-            <artifactId>sakai-gradebook-service-impl</artifactId>
-            <version>2.6.3</version>
-        </dependency>
-        <dependency>
             <groupId>org.sakaiproject.edu-services.gradebook</groupId>
             <artifactId>gradebook-service-api</artifactId>
-            <version>1.2-SNAPSHOT</version>
-            <type>jar</type>
         </dependency>
     </dependencies>
 
