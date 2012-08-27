@@ -303,7 +303,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		//USe the method to get the correct email
 		String uem = getEmail(user);
 		String ufn = getUserFirstName(user);
-		String uln = user.getLastName();
+		String uln = getUserLastName(user);
 		String uid = item.getUserId();
 		String utp = "1";
 
@@ -750,7 +750,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			throw new SubmissionException ("User has no first name");
 		}
 
-		String uln = user.getLastName();
+		String uln = getUserLastName(user);
 		if (uln == null) {
 			throw new SubmissionException ("User has no last name");
 		}
@@ -911,7 +911,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			String uln = user.getLastName().trim();
+			String uln = getUserLastName(user);
 			if (uln == null || uln.equals("")) {
 				log.debug("Submission attempt unsuccessful - User has no last name");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
@@ -1896,6 +1896,28 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return ufn;
 	}
 	
+	/**
+	 * Get user last Name. If turnitin.generate.last.name is set to true last name is
+	 * anonamised
+	 * @param user
+	 * @return
+	 */
+	private String getUserLastName(User user){
+		String uln = user.getLastName().trim();
+		if (uln == null || uln.equals("")) {
+			boolean genLN = serverConfigurationService.getBoolean("turnitin.generate.last.name", false);
+			if (genLN) {
+				String eid = user.getEid();
+				if (eid != null 
+						&& eid.length() > 0) {
+					uln = eid.substring(0,1);        
+				} else {
+					uln = "X";
+				}
+			}
+		}
+		return uln;
+	}
 	
 	public String getLocalizedStatusMessage(String messageCode, String userRef) {
 		
