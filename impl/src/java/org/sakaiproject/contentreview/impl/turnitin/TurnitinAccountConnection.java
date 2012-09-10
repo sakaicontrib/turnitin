@@ -24,8 +24,8 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -332,7 +332,7 @@ public class TurnitinAccountConnection {
 		Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
 		//the site could contain references to deleted users
 		List<User> activeUsers = userDirectoryService.getUsers(instIds);
-                                           Set<String> ret =  new java.util.HashSet<String>();
+		Set<String> ret =  new HashSet<String>();
 		for (int i = 0; i < activeUsers.size(); i++) {
 			User user = activeUsers.get(i);
 			ret.add(user.getId());
