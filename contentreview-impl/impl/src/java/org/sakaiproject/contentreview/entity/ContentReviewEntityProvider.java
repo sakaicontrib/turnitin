@@ -39,6 +39,9 @@ import org.sakaiproject.exception.OverQuotaException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.ServerOverloadException;
 import org.sakaiproject.genericdao.api.search.Restriction;
+import org.sakaiproject.user.api.UserDirectoryService;
+import org.sakaiproject.user.api.UserNotDefinedException;
+
 
 
 /**
@@ -53,25 +56,25 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 	private static final Log log = LogFactory.getLog(ContentReviewEntityProvider.class);
 	//Injected Services
-	
+
 	private ContentReviewService contentReviewService;	
 	public void setContentReviewService(ContentReviewService contentReviewService) {
 		this.contentReviewService = contentReviewService;
 	}
 
-	
+
 	private ContentReviewDao dao;
 	public void setDao(ContentReviewDao dao) {
 		this.dao = dao;
 	}
-	
-	
+
+
 	private DeveloperHelperService developerHelperService;	
 	public void setDeveloperHelperService(
 			DeveloperHelperService developerHelperService) {
 		this.developerHelperService = developerHelperService;
 	}
-	
+
 	private ContentHostingService contentHostingService;
 	public void setContentHostingService(ContentHostingService contentHostingService) {
 		this.contentHostingService = contentHostingService;
@@ -81,6 +84,12 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 	public void setServerConfigurationService(
 			ServerConfigurationService serverConfigurationService) {
 		this.serverConfigurationService = serverConfigurationService;
+	}
+
+
+	private UserDirectoryService userDirectoryService;
+	public void setUserDirectoryService(UserDirectoryService userDirectoryService) {
+		this.userDirectoryService = userDirectoryService;
 	}
 
 	/**
@@ -94,19 +103,19 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 	public boolean entityExists(String id) {
 		log.info("entityExists(" + id);
 		if (id == null) {
-            return false;
-        }
-        if ("".equals(id)) {
-            return true;
-        }
-        try {
+			return false;
+		}
+		if ("".equals(id)) {
+			return true;
+		}
+		try {
 			contentReviewService.getReviewStatus(id);
 			return true;
 		} catch (QueueException e) {
 			return false;
 		}
-        
-		
+
+
 	}
 
 	public String createEntity(EntityReference ref, Object entity,
@@ -117,20 +126,20 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		}
 		String userRef = developerHelperService.getUserRefFromUserEid(item.getUserEid());
 		String userId= EntityReference.getIdFromRef(userRef);
-		
+
 		String currentUserReference = developerHelperService.getCurrentUserReference();
-        if (currentUserReference == null) {
-            throw new SecurityException("anonymous user cannot create ContentReviewItem: " + ref);
-        }
+		if (currentUserReference == null) {
+			throw new SecurityException("anonymous user cannot create ContentReviewItem: " + ref);
+		}
 		if (!isValidForThisUser(currentUserReference, userRef)) {
 			throw new SecurityException("not authorized to create entity: " + ref);
 		}
-		
-		
-		
-		
+
+
+
+
 		String sakaiContentId = storeContentGetId(item.getContentUrl(), item.getMimeType(), item.getFileName());
-		
+
 		try {
 			contentReviewService.queueContent(userId, item.getSiteId(), item.getAssignmentReference(), sakaiContentId);
 			return "Success!";
@@ -149,24 +158,24 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 	 */
 	private boolean isValidForThisUser(String currentUserReference,
 			String userRef) {
-		
+
 		//are they equal?
 		if (currentUserReference.equals(userRef)) {
 			return true;
 		}
-		
+
 		//Admin always can
 		if (developerHelperService.isUserAdmin(currentUserReference)) {
 			return true;
 		}
-		//TODO we need a configurable user list that can do this for integrations
-		
+
+		//we need a configurable user list that can do this for integrations
 		String[] users = serverConfigurationService.getStrings("contentReview.ebSuperusers");
 		List<String> userList = Arrays.asList(users);
 		if (userList.contains(currentUserReference)) {
 			return true;
 		}
-		
+
 		return false;
 	}
 
@@ -179,7 +188,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		if (contentUrl == null) {
 			throw new IllegalArgumentException("content url must be provided");
 		}
-		
+
 		URL url;
 		try {
 			url = new URL(contentUrl);
@@ -187,7 +196,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			InputStream in = con.getInputStream();
 			String encoding = con.getContentEncoding();
 			encoding = encoding == null ? "UTF-8" : encoding;
-			
+
 			try {
 				ResourceProperties props = contentHostingService.newResourceProperties();
 				props.addProperty(props.getNamePropDisplayName(), fileName);
@@ -212,7 +221,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 				e.printStackTrace();
 				throw new RuntimeException("Unable to add content!", e);
 			}
-			
+
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -220,9 +229,9 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
-		
+
+
+
 		return null;
 	}
 
@@ -233,17 +242,17 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 	public void updateEntity(EntityReference ref, Object entity,
 			Map<String, Object> params) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	public Object getEntity(EntityReference ref) {
 		log.info("getEntiy(" + ref.toString());
 		String id = ref.getId();
-        if (id == null) {
-            return new ContentReviewItem();
-        }
-        //FIXME this should be a service method
-        org.sakaiproject.genericdao.api.search.Search search = new org.sakaiproject.genericdao.api.search.Search();
+		if (id == null) {
+			return new ContentReviewItem();
+		}
+		//FIXME this should be a service method
+		org.sakaiproject.genericdao.api.search.Search search = new org.sakaiproject.genericdao.api.search.Search();
 		search.addRestriction(new Restriction("id", id));
 		ContentReviewItem existingItems = dao.findOneBySearch(ContentReviewItem.class, search);
 		log.info("returning!");
@@ -252,35 +261,51 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 	public void deleteEntity(EntityReference ref, Map<String, Object> params) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	public List<?> getEntities(EntityReference ref,Search search) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	public String[] getHandledOutputFormats() {
-		 return new String[] {Formats.XML, Formats.JSON,  Formats.FORM};
+		return new String[] {Formats.XML, Formats.JSON,  Formats.FORM};
 	}
 
 	public String[] getHandledInputFormats() {
-		 return new String[] {Formats.XML, Formats.JSON,  Formats.FORM, Formats.HTML};
+		return new String[] {Formats.XML, Formats.JSON,  Formats.FORM, Formats.HTML};
 	}
-	
+
 	@EntityCustomAction(action = "assignment", viewKey = "")
-	public List<ContentReviewItem> getAssingmentObjects(EntityView entityView, Map<String, Object> params) {
-		//TODO we need a custom external POJO here
+	public List<ContentReviewResult> getAssingmentObjects(EntityView entityView, Map<String, Object> params) {
 		//TODO we need some security
+		//Admin always can
+		
+		//we need a configurable user list that can do this for integrations
+		String currentUserReference = developerHelperService.getCurrentUserReference();
+		String[] users = serverConfigurationService.getStrings("contentReview.ebSuperusers");
+		List<String> userList = new ArrayList<String>();
+		if (users != null) {
+			userList = Arrays.asList(users);
+		}
+		if (!userList.contains(currentUserReference) && !developerHelperService.isUserAdmin(currentUserReference)) {
+			throw new SecurityException("User not authorized");
+		}
+
+
+
+
+
 		String siteId = null;
 		if (params.containsKey("siteId")) {
 			siteId = (String)params.get("siteId");
 		}
 		String taskId = (String)params.get("taskId");
 		log.info("getting collection for site: " + siteId + " and task: " + taskId);
-		List<ContentReviewItem> ret = new ArrayList<ContentReviewItem>();
+		List<ContentReviewItem> reports = new ArrayList<ContentReviewItem>();
 		try {
-			ret = contentReviewService.getAllContentReviewItems(siteId, taskId);
+			reports = contentReviewService.getAllContentReviewItems(siteId, taskId);
 		} catch (QueueException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -291,6 +316,40 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		List<ContentReviewResult> ret = new ArrayList<ContentReviewResult>();
+
+		for (int i = 0; i < reports.size(); i++) {
+			ContentReviewItem item = reports.get(i);
+			ContentReviewResult result = new ContentReviewResult();
+
+			String eid = item.getUserId();
+			try {
+				eid = userDirectoryService.getUserEid(item.getUserId());
+			} catch (UserNotDefinedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			result.setUserEid(eid);
+			result.setTaskId(item.getTaskId());
+			result.setSiteId(item.getSiteId());
+			result.setStatus(item.getStatus());
+
+
+			if (item.getErrorCode() != null) {
+				result.setErrorCode(item.getErrorCode().toString());
+				result.setErrorMessage(contentReviewService.getLocalizedStatusMessage(item.getErrorCode().toString()));
+
+			}
+
+
+
+			result.setDateQueued(item.getDateQueued());
+			result.setDateReportReceived(item.getDateReportReceived());
+
+			ret.add(result);
+		}
+
 		return ret;
 	}
 
