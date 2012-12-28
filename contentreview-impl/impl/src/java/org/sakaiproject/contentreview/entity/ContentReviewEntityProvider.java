@@ -279,9 +279,8 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 	@EntityCustomAction(action = "assignment", viewKey = "")
 	public List<ContentReviewResult> getAssingmentObjects(EntityView entityView, Map<String, Object> params) {
-		//TODO we need some security
 		//Admin always can
-		
+
 		//we need a configurable user list that can do this for integrations
 		String currentUserReference = developerHelperService.getCurrentUserReference();
 		String[] users = serverConfigurationService.getStrings("contentReview.ebSuperusers");
@@ -321,50 +320,105 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 		for (int i = 0; i < reports.size(); i++) {
 			ContentReviewItem item = reports.get(i);
-			ContentReviewResult result = new ContentReviewResult();
-
-			String eid = item.getUserId();
-			try {
-				eid = userDirectoryService.getUserEid(item.getUserId());
-			} catch (UserNotDefinedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			result.setUserEid(eid);
-			result.setTaskId(item.getTaskId());
-			result.setSiteId(item.getSiteId());
-			Long status = item.getStatus();
-			result.setStatus(status);
-			if (ContentReviewItem.SUBMITTED_REPORT_AVAILABLE.equals(status)) {
-				try {
-					String report = contentReviewService.getReviewReportStudent(item.getContentId());
-					result.setReportUrl(report);
-				} catch (QueueException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (ReportException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-
-			if (item.getErrorCode() != null) {
-				result.setErrorCode(item.getErrorCode().toString());
-				result.setErrorMessage(contentReviewService.getLocalizedStatusMessage(item.getErrorCode().toString()));
-
-			}
-
-
-
-			result.setDateQueued(item.getDateQueued());
-			result.setDateReportReceived(item.getDateReportReceived());
+			ContentReviewResult result = itemToResult(item);
 
 			ret.add(result);
 		}
 
 		return ret;
 	}
-	
+
+	private ContentReviewResult itemToResult(ContentReviewItem item) {
+		ContentReviewResult result = new ContentReviewResult();
+
+		String eid = item.getUserId();
+		try {
+			eid = userDirectoryService.getUserEid(item.getUserId());
+		} catch (UserNotDefinedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		result.setUserEid(eid);
+		result.setTaskId(item.getTaskId());
+		result.setSiteId(item.getSiteId());
+		Long status = item.getStatus();
+		result.setStatus(status);
+		if (ContentReviewItem.SUBMITTED_REPORT_AVAILABLE.equals(status)) {
+			try {
+				String report = contentReviewService.getReviewReportStudent(item.getContentId());
+				result.setReportUrl(report);
+			} catch (QueueException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ReportException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		if (item.getErrorCode() != null) {
+			result.setErrorCode(item.getErrorCode().toString());
+			result.setErrorMessage(contentReviewService.getLocalizedStatusMessage(item.getErrorCode().toString()));
+
+		}
+
+
+
+		result.setDateQueued(item.getDateQueued());
+		result.setDateReportReceived(item.getDateReportReceived());
+		return result;
+	}
+
+
+	@EntityCustomAction(action = "userAssignment", viewKey = "")
+	public List<ContentReviewResult> getUserAssingmentObjects(EntityView entityView, Map<String, Object> params) {
+		List<ContentReviewResult> ret = new ArrayList<ContentReviewResult>();
+		//Admin always can
+
+		//we need a configurable user list that can do this for integrations
+		String currentUserReference = developerHelperService.getCurrentUserReference();
+		String[] users = serverConfigurationService.getStrings("contentReview.ebSuperusers");
+		List<String> userList = new ArrayList<String>();
+		if (users != null) {
+			userList = Arrays.asList(users);
+		}
+		if (!userList.contains(currentUserReference) && !developerHelperService.isUserAdmin(currentUserReference)) {
+			throw new SecurityException("User not authorized");
+		}
+
+		String userEid= (String)params.get("userEid");
+		String taskId = (String)params.get("taskId");
+
+		List<ContentReviewItem> vals = getItemsForUserinTask(userEid, taskId);
+		for (int i = 0; i < vals.size(); i++) {
+			ContentReviewItem item = vals.get(i);
+			ContentReviewResult result = itemToResult(item);
+
+			ret.add(result);
+		}
+
+		return ret;
+	}
+
+	//TODO this should be a service method
+	private List<ContentReviewItem> getItemsForUserinTask(String userEid, String taskId) {
+		log.info("getItemsForUserinTask(" + userEid + ", " + taskId);
+		org.sakaiproject.genericdao.api.search.Search search = new org.sakaiproject.genericdao.api.search.Search();
+		search.addRestriction(new Restriction("taskId", taskId));
+
+		try {
+			String userId = userDirectoryService.getUserId(userEid);
+			search.addRestriction(new Restriction("userId", userId));
+		} catch (UserNotDefinedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return new ArrayList<ContentReviewItem>();
+		}
+
+		List<ContentReviewItem>  existingItems = dao.findBySearch(ContentReviewItem.class, search);
+		log.info("returning " + existingItems.size() + " results");
+		return existingItems;
+	}
 
 
 }
