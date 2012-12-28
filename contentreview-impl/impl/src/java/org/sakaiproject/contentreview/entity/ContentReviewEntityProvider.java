@@ -333,8 +333,20 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			result.setUserEid(eid);
 			result.setTaskId(item.getTaskId());
 			result.setSiteId(item.getSiteId());
-			result.setStatus(item.getStatus());
-
+			Long status = item.getStatus();
+			result.setStatus(status);
+			if (ContentReviewItem.SUBMITTED_REPORT_AVAILABLE.equals(status)) {
+				try {
+					String report = contentReviewService.getReviewReportStudent(item.getContentId());
+					result.setReportUrl(report);
+				} catch (QueueException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ReportException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 
 			if (item.getErrorCode() != null) {
 				result.setErrorCode(item.getErrorCode().toString());
@@ -352,6 +364,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 		return ret;
 	}
+	
 
 
 }

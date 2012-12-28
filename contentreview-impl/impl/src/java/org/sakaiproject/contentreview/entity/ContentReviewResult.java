@@ -3,7 +3,7 @@ package org.sakaiproject.contentreview.entity;
 import java.util.Date;
 
 /**
- * A POJO ot expose the results of a content review item 
+ * A POJO to expose the results of a content review item 
  * in EB
  * @author dhorwitz
  *
@@ -21,6 +21,14 @@ public class ContentReviewResult {
 	private String reviewScore;
 	private String ErrorCode;
 	private String ErrorMessage;
+	private String reportUrl;
+	
+	public String getReportUrl() {
+		return reportUrl;
+	}
+	public void setReportUrl(String reportUrl) {
+		this.reportUrl = reportUrl;
+	}
 	public String getUserEid() {
 		return userEid;
 	}
