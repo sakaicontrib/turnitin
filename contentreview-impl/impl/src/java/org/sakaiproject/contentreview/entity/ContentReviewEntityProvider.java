@@ -7,6 +7,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -141,8 +142,8 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		String sakaiContentId = storeContentGetId(item.getContentUrl(), item.getMimeType(), item.getFileName());
 
 		try {
-			contentReviewService.queueContent(userId, item.getSiteId(), item.getAssignmentReference(), sakaiContentId);
-			return "Success!";
+			Long id = queueContent(userId, item.getSiteId(), item.getAssignmentReference(), sakaiContentId);
+			return id.toString();
 		} catch (QueueException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -251,6 +252,11 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		if (id == null) {
 			return new ContentReviewItem();
 		}
+		ContentReviewItem existingItems = getItemById(id);
+		return existingItems;
+	}
+
+	private ContentReviewItem getItemById(String id) {
 		//FIXME this should be a service method
 		org.sakaiproject.genericdao.api.search.Search search = new org.sakaiproject.genericdao.api.search.Search();
 		search.addRestriction(new Restriction("id", id));
@@ -420,5 +426,37 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		return existingItems;
 	}
 
+	//TODO should be in the service
+	public Long queueContent(String userId, String siteId, String taskId, String contentId)
+			throws QueueException {
+		log.debug("Method called queueContent(" + userId + "," + siteId + "," + contentId + ")");
 
+		if (userId == null) {
+			log.debug("Using current user");
+			userId = userDirectoryService.getCurrentUser().getId();
+		}
+
+		if (siteId == null) {
+			log.debug("Using current site");
+			siteId = developerHelperService.getCurrentLocationId();
+		}
+		
+		if (taskId == null) {
+			log.debug("Generating default taskId");
+			taskId = siteId + " " + "unkownAssignement";
+		}
+
+		log.debug("Adding content: " + contentId + " from site " + siteId
+				+ " and user: " + userId + " for task: " + taskId + " to submission queue");
+
+	
+		
+		
+		ContentReviewItem item = new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
+				ContentReviewItem.NOT_SUBMITTED_CODE);
+		item.setNextRetryTime(new Date());
+		dao.save(item);
+		return item.getId();
+	}
+	
 }
