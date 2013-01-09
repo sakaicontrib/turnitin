@@ -191,6 +191,8 @@
 			<property name="contentHostingService" ref="org.sakaiproject.content.api.ContentHostingService"/>
 			<property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService"/>
 			<property name="userDirectoryService" ref="org.sakaiproject.user.api.UserDirectoryService"/>
+			<property name="dao"
+			ref="org.sakaiproject.contentreview.dao.ContentReviewDao" />
 	</bean>
 
 </beans>
