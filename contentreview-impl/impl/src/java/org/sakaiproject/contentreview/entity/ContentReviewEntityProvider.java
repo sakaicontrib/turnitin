@@ -460,7 +460,9 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		ContentReviewItem item = new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
 				ContentReviewItem.NOT_SUBMITTED_CODE);
 		item.setNextRetryTime(new Date());
+		log.debug("about to save ...");
 		dao.save(item);
+		log.debug("object saved with id " + item.getId());
 		return item.getId();
 	}
 	
