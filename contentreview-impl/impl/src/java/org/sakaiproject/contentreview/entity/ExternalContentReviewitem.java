@@ -14,9 +14,6 @@ public class ExternalContentReviewitem {
 	private String mimeType;
 	private String fileName;
 	
-	
-	
-	
 	public String getFileName() {
 		return fileName;
 	}

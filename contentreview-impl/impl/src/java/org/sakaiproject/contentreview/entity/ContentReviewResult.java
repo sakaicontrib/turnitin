@@ -22,7 +22,15 @@ public class ContentReviewResult {
 	private String ErrorCode;
 	private String ErrorMessage;
 	private String reportUrl;
+	private Long id;
 	
+	
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
 	public String getReportUrl() {
 		return reportUrl;
 	}
