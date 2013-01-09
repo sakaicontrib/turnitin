@@ -143,7 +143,11 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 		try {
 			Long id = queueContent(userId, item.getSiteId(), item.getAssignmentReference(), sakaiContentId);
-			return id.toString();
+			if (id != null) {
+				return id.toString();
+			}
+			log.warn("id is null!");
+			
 		} catch (QueueException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
