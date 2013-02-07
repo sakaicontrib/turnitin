@@ -139,7 +139,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 
 
-		String sakaiContentId = storeContentGetId(item.getContentUrl(), item.getMimeType(), item.getFileName());
+		String sakaiContentId = storeContentGetId(item.getContentUrl(), item.getMimeType(), item.getFileName(), item.getAssignmentReference(), item.getUserEid());
 
 		try {
 			Long id = queueContent(userId, item.getSiteId(), item.getAssignmentReference(), sakaiContentId);
@@ -189,7 +189,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 	 * @param contentUrl
 	 * @return
 	 */
-	private String storeContentGetId(String contentUrl, String mimeType, String fileName) {
+	private String storeContentGetId(String contentUrl, String mimeType, String fileName, String taskId, String userEid) {
 		if (contentUrl == null) {
 			throw new IllegalArgumentException("content url must be provided");
 		}
@@ -204,8 +204,8 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 			try {
 				ResourceProperties props = contentHostingService.newResourceProperties();
-				props.addProperty(props.getNamePropDisplayName(), fileName);
-				ContentResource res = contentHostingService.addAttachmentResource("contentreview/external", mimeType, in, null);
+				props.addProperty(ResourceProperties.PROP_DISPLAY_NAME, fileName);
+				ContentResource res = contentHostingService.addAttachmentResource("contentreview/external" + taskId + "/" + userEid + "/" + fileName, mimeType, in, null);
 				return res.getId();
 			} catch (IdInvalidException e) {
 				// TODO Auto-generated catch block
