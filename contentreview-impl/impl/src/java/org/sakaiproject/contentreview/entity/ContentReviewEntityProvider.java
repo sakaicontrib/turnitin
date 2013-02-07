@@ -205,7 +205,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			try {
 				ResourceProperties props = contentHostingService.newResourceProperties();
 				props.addProperty(ResourceProperties.PROP_DISPLAY_NAME, fileName);
-				ContentResource res = contentHostingService.addAttachmentResource("contentreview/external" + taskId + "/" + userEid + "/" + fileName, mimeType, in, null);
+				ContentResource res = contentHostingService.addAttachmentResource("contentreview/external" + taskId + "/" + userEid + "/" + fileName, mimeType, in, props);
 				return res.getId();
 			} catch (IdInvalidException e) {
 				// TODO Auto-generated catch block
