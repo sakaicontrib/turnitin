@@ -355,10 +355,10 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		result.setStatus(status);
 		result.setId(item.getId());
 		if (ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE.equals(status)) {
-			log.info("report available!");
+			log.debug("report available!");
 			try {
 				String report = contentReviewService.getReviewReportStudent(item.getContentId());
-				log.info("report url: " + report);
+				log.debug("report url: " + report);
 				result.setReportUrl(report);
 			} catch (QueueException e) {
 				// TODO Auto-generated catch block
@@ -368,7 +368,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 				e.printStackTrace();
 			}
 		} else {
-			log.info("status is " + status + " so no report link");
+			log.debug("status is " + status + " so no report link");
 		}
 
 		if (item.getErrorCode() != null) {
