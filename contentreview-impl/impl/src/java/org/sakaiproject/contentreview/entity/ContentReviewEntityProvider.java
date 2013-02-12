@@ -354,7 +354,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		Long status = item.getStatus();
 		result.setStatus(status);
 		result.setId(item.getId());
-		if (ContentReviewItem.SUBMITTED_REPORT_AVAILABLE.equals(status)) {
+		if (ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE.equals(status)) {
 			log.info("report available!");
 			try {
 				String report = contentReviewService.getReviewReportStudent(item.getContentId());
