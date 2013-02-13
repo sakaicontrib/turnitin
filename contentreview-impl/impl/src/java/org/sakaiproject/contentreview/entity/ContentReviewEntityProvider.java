@@ -360,6 +360,11 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 				String report = contentReviewService.getReviewReportStudent(item.getContentId());
 				log.debug("report url: " + report);
 				result.setReportUrl(report);
+				
+				//The score
+				if (item.getReviewScore() != null) {
+					result.setReviewScore(item.getReviewScore().toString());
+				}
 			} catch (QueueException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
