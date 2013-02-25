@@ -915,6 +915,8 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		Calendar cal = Calendar.getInstance();
 		//set this to yesterday so we avoid timezone problems etc
 		//TII-143 seems this now causes problems may need a finner tweak than 1 day like midnight +1 min or something
+		cal.set(Calendar.HOUR, 0);
+		cal.set(Calendar.MINUTE, 1);
 		//cal.add(Calendar.DAY_OF_MONTH, -1);
 		String dtstart = dform.format(cal.getTime());
 		String today = dtstart;
