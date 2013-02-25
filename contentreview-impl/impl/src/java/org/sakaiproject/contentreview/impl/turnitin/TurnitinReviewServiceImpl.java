@@ -913,7 +913,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
 		dform.applyPattern(TURNITIN_DATETIME_FORMAT);
 		Calendar cal = Calendar.getInstance();
-		//set this to yesterday so we avoid timezine probelms etc
+		//set this to yesterday so we avoid timezone problems etc
 		cal.add(Calendar.DAY_OF_MONTH, -1);
 		String dtstart = dform.format(cal.getTime());
 		String today = dtstart;
@@ -990,45 +990,45 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			extraAsnnOpts.remove("s_view_report");
 		}
 
-                                           //erater
+		//erater
 		String erater = "0";
-                                           String ets_handbook ="1";
-                                           String ets_dictionary="en";
-                                           String ets_spelling = "1";
-                                           String ets_style = "1";
-                                           String ets_grammar = "1";
-                                           String ets_mechanics = "1";
-                                           String ets_usage = "1";
+		String ets_handbook ="1";
+		String ets_dictionary="en";
+		String ets_spelling = "1";
+		String ets_style = "1";
+		String ets_grammar = "1";
+		String ets_mechanics = "1";
+		String ets_usage = "1";
 
-                                           try{
-		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("erater")) {
-                                                    erater = extraAsnnOpts.get("erater").toString();
-                                                    extraAsnnOpts.remove("erater");
+		try{
+			if (extraAsnnOpts != null && extraAsnnOpts.containsKey("erater")) {
+				erater = extraAsnnOpts.get("erater").toString();
+				extraAsnnOpts.remove("erater");
 
-                                                    ets_handbook = extraAsnnOpts.get("ets_handbook").toString();
-                                                    extraAsnnOpts.remove("ets_handbook");
+				ets_handbook = extraAsnnOpts.get("ets_handbook").toString();
+				extraAsnnOpts.remove("ets_handbook");
 
-                                                    ets_dictionary = extraAsnnOpts.get("ets_dictionary").toString();
-                                                    extraAsnnOpts.remove("ets_dictionary");
+				ets_dictionary = extraAsnnOpts.get("ets_dictionary").toString();
+				extraAsnnOpts.remove("ets_dictionary");
 
-                                                    ets_spelling = extraAsnnOpts.get("ets_spelling").toString();
-                                                    extraAsnnOpts.remove("ets_spelling");
+				ets_spelling = extraAsnnOpts.get("ets_spelling").toString();
+				extraAsnnOpts.remove("ets_spelling");
 
-                                                    ets_style = extraAsnnOpts.get("ets_style").toString();
-                                                    extraAsnnOpts.remove("ets_style");
+				ets_style = extraAsnnOpts.get("ets_style").toString();
+				extraAsnnOpts.remove("ets_style");
 
-                                                    ets_grammar = extraAsnnOpts.get("ets_grammar").toString();
-                                                    extraAsnnOpts.remove("ets_grammar");
+				ets_grammar = extraAsnnOpts.get("ets_grammar").toString();
+				extraAsnnOpts.remove("ets_grammar");
 
-                                                    ets_mechanics = extraAsnnOpts.get("ets_mechanics").toString();
-                                                    extraAsnnOpts.remove("ets_mechanics");
+				ets_mechanics = extraAsnnOpts.get("ets_mechanics").toString();
+				extraAsnnOpts.remove("ets_mechanics");
 
-                                                    ets_usage = extraAsnnOpts.get("ets_usage").toString();
-                                                    extraAsnnOpts.remove("ets_usage");
+				ets_usage = extraAsnnOpts.get("ets_usage").toString();
+				extraAsnnOpts.remove("ets_usage");
+			}
+		}catch(Exception e){
+			log.info("(createAssignment)erater extraAsnnOpts. "+e);
 		}
-                                           }catch(Exception e){
-                                               log.info("(createAssignment)erater extraAsnnOpts. "+e);
-                                           }
 
 		String cid = siteId;
 		String assignid = taskId;
@@ -1067,15 +1067,15 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				"fid", fid,
 				"s_view_report", s_view_report,
 				"utp", utp,
-                                                                                      "erater",erater,
-                                                                                      "ets_handbook",ets_handbook,
-                                                                                      "ets_dictionary",ets_dictionary,
-                                                                                      "ets_spelling",ets_spelling,
-                                                                                      "ets_style",ets_style,
-                                                                                      "ets_grammar",ets_grammar,
-                                                                                      "ets_mechanics",ets_mechanics,
-                                                                                      "ets_usage",ets_usage
-		);
+				"erater",erater,
+				"ets_handbook",ets_handbook,
+				"ets_dictionary",ets_dictionary,
+				"ets_spelling",ets_spelling,
+				"ets_style",ets_style,
+				"ets_grammar",ets_grammar,
+				"ets_mechanics",ets_mechanics,
+				"ets_usage",ets_usage
+				);
 
 		// Save instructorInfo up here to reuse for calls in this
 		// method, since theoretically getInstructorInfo could return
@@ -1114,6 +1114,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			firstparams.put("dtstart", today);
 			firstparams.put("dtdue", dtdue);
 			log.debug("date due is: " + dtdue);
+			log.debug("Start date: " + today);
 			firstparams.put("fcmd", "2");
 			Document firstSaveDocument =
 				turnitinConn.callTurnitinReturnDocument(firstparams);
