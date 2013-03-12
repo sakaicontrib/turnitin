@@ -22,7 +22,11 @@ public class ContentReviewResult {
 	private String ErrorCode;
 	private String ErrorMessage;
 	private String reportUrl;
+	private String instructorReporturl;
 	private Long id;
+	
+	
+	
 	
 	
 	public Long getId() {
@@ -92,6 +96,13 @@ public class ContentReviewResult {
 		ErrorMessage = errorMessage;
 	}
 	
+
+	public String getInstructorReporturl() {
+		return instructorReporturl;
+	}
+	public void setInstructorReporturl(String instructorReporturl) {
+		this.instructorReporturl = instructorReporturl;
+	}
 	
 	
 }

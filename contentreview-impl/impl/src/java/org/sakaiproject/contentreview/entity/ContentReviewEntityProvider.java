@@ -175,15 +175,19 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		}
 
 		//we need a configurable user list that can do this for integrations
+		return isTrustedUser(currentUserReference);
+	}
+
+	
+	private boolean isTrustedUser(String currentUserReference) {
 		String[] users = serverConfigurationService.getStrings("contentReview.ebSuperusers");
 		List<String> userList = Arrays.asList(users);
 		if (userList.contains(currentUserReference)) {
 			return true;
 		}
-
 		return false;
 	}
-
+	
 	/**
 	 * Get an external piece of content store it in sakai and return the content id
 	 * @param contentUrl
@@ -361,6 +365,14 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 				log.debug("report url: " + report);
 				result.setReportUrl(report);
 				
+				//do we set the instructor report?
+				String currentUserReference = developerHelperService.getCurrentUserReference();
+				
+				if (developerHelperService.isUserAdmin(currentUserReference) || isTrustedUser(currentUserReference)) {
+					String instructorReport = contentReviewService.getReviewReportInstructor(item.getContentId());
+					result.setInstructorReporturl(instructorReport);
+				}
+
 				//The score
 				if (item.getReviewScore() != null) {
 					result.setReviewScore(item.getReviewScore().toString());
