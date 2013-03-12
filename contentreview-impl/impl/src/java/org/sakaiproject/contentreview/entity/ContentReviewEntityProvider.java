@@ -124,6 +124,8 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		ExternalContentReviewitem item = (ExternalContentReviewitem) entity;
 		if (item.getUserEid() == null ) {
 			throw new IllegalArgumentException("User EID must be set");
+		} else {
+			log.info("request to create new item for " + item.getUserEid());
 		}
 		String userRef = developerHelperService.getUserRefFromUserEid(item.getUserEid());
 		String userId= EntityReference.getIdFromRef(userRef);
