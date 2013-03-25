@@ -1328,7 +1328,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			try {
 				user = userDirectoryService.getUser(currentItem.getUserId());
 			} catch (UserNotDefinedException e1) {
-				log.debug("Submission attempt unsuccessful - User not found: " + e1.getMessage());
+				log.error("Submission attempt unsuccessful - User not found.", e1);
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				dao.update(currentItem);
 				releaseLock(currentItem);
@@ -1339,7 +1339,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 			String uem = getEmail(user);
 			if (uem == null ){
-				log.debug("User: " + user.getEid() + " has no valid email");
+				log.error("User: " + user.getEid() + " has no valid email");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("no valid email");
 				dao.update(currentItem);
@@ -1350,7 +1350,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 			String ufn = getUserFirstName(user);
 			if (ufn == null || ufn.equals("")) {
-				log.debug("Submission attempt unsuccessful - User has no first name");
+				log.error("Submission attempt unsuccessful - User has no first name");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no first name");
 				dao.update(currentItem);
@@ -1361,7 +1361,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 			String uln = getUserLastName(user);
 			if (uln == null || uln.equals("")) {
-				log.debug("Submission attempt unsuccessful - User has no last name");
+				log.error("Submission attempt unsuccessful - User has no last name");
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no last name");
 				dao.update(currentItem);
@@ -1374,7 +1374,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				try {
 					createClass(currentItem.getSiteId());
 				} catch (SubmissionException t) {
-					log.debug ("Submission attempt unsuccessful: Could not create class", t);
+					log.error ("Submission attempt unsuccessful: Could not create class", t);
 					currentItem.setLastError("Class creation error: " + t.getMessage());
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					dao.update(currentItem);
@@ -1394,7 +1394,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			try {
 				enrollInClass(currentItem.getUserId(), uem, currentItem.getSiteId());
 			} catch (Exception t) {
-				log.debug ("Submission attempt unsuccessful: Could not enroll user in class", t);
+				log.error("Submission attempt unsuccessful: Could not enroll user in class", t);
 
 				if (t.getClass() == IOException.class) {
 					currentItem.setLastError("Enrolment error: " + t.getMessage() );
@@ -1468,7 +1468,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				fileName = escapeFileName(fileName, resource.getId());
 			}
 			catch (PermissionException e2) {
-				log.debug("Submission failed due to permission error: " + e2.getMessage());
+				log.error("Submission failed due to permission error.", e2);
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				currentItem.setLastError("Permission exception: " + e2.getMessage());
 				dao.update(currentItem);
@@ -1477,7 +1477,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				continue;
 			}
 			catch (TypeException e) {
-				log.debug("Submission failed due to content Type error: " + e.getMessage());
+				log.error("Submission failed due to content Type error.", e);
 				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				currentItem.setLastError("Type Exception: " + e.getMessage());
 				dao.update(currentItem);
@@ -1596,6 +1596,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				if (rMessage.equals("User password does not match user email")
 						|| "1001".equals(rCode) || "".equals(rMessage) || "413".equals(rCode) || "1025".equals(rCode) || "250".equals(rCode)) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					log.warn("Submission not successful. It will be retried.");
 					errors++;
 				} else if (rCode.equals("423")) {
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
@@ -1603,6 +1604,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 				} else if (rCode.equals("301")) {
 					//this took a long time
+					log.warn("Submission not successful due to timeout. It will be retried.");
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					Calendar cal = Calendar.getInstance();
 					cal.set(Calendar.HOUR_OF_DAY, 22);
@@ -1610,6 +1612,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 					errors++;
 
 				}else {
+					log.error("Submission not successful. It will NOT be retried.");
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 					errors++;
 				}
