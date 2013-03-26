@@ -833,6 +833,10 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 				Entity ent = ep.getEntity(ref);
 				log.debug("got entity " + ent);
+				if (ent == null) {
+					log.warn("cant find assignment: " + taskId);
+					return togo;
+				}
 				String title =
 					ent.getClass().getMethod("getTitle").invoke(ent).toString();
 				log.debug("Got reflected assignemment title from entity " + title);
