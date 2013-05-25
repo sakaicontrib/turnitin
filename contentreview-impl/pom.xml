@@ -4,7 +4,7 @@
 	<name>Sakai Content Review - Turnitin</name>
 	<groupId>org.sakaiproject.contentreview</groupId>
 	<artifactId>content-review-impl-base</artifactId>
-	<version>0.8</version>
+	<version>0.9-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<!--
 		<parent> <artifactId>sakai-commons-tool</artifactId>
@@ -61,18 +61,18 @@
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>sakai-contentreview-impl</artifactId>
-				<version>0.8</version><!--turnitin.version-->
+				<version>0.9-SNAPSHOT</version><!--turnitin.version-->
 			</dependency>
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>sakai-contentreview-hbm</artifactId>
-				<version>0.8</version><!--turnitin.version-->
+				<version>0.9-SNAPSHOT</version><!--turnitin.version-->
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>contentreview-scheduler</artifactId>
-				<version>0.8</version><!--turnitin.version-->
+				<version>0.9-SNAPSHOT</version><!--turnitin.version-->
 			</dependency>
 			<dependency>
 				<groupId>org.sakaiproject.scheduler</groupId>
@@ -118,13 +118,13 @@
 
 	<scm>
 		<connection>
-            scm:svn:https://source.sakaiproject.org/contrib/turnitin/tags/content-review-0.8
+            scm:svn:https://source.sakaiproject.org/contrib/turnitin/trunk/contentreview-impl
         </connection>
 		<developerConnection>
-            scm:svn:https://source.sakaiproject.org/contrib/turnitin/tags/content-review-0.8
+            scm:svn:https://source.sakaiproject.org/contrib/turnitin/trunk/contentreview-impl
         </developerConnection>
 		<url>
-            https://source.sakaiproject.org/contrib/turnitin/tags/content-review-0.8
+            https://source.sakaiproject.org/contrib/turnitin/trunk/contentreview-impl
         </url>
 	</scm>
 	<repositories>
