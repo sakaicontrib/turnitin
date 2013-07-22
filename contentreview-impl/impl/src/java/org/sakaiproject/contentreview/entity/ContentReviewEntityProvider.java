@@ -459,6 +459,10 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			throws QueueException {
 		log.debug("Method called queueContent(" + userId + "," + siteId + "," + contentId + ")");
 
+		if (contentId == null) {
+			throw new IllegalArgumentException("contentId can't be null");
+		}
+
 		if (userId == null) {
 			log.debug("Using current user");
 			userId = userDirectoryService.getCurrentUser().getId();
@@ -473,7 +477,8 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			log.debug("Generating default taskId");
 			taskId = siteId + " " + "unkownAssignement";
 		}
-
+		
+		
 		log.debug("Adding content: " + contentId + " from site " + siteId
 				+ " and user: " + userId + " for task: " + taskId + " to submission queue");
 
