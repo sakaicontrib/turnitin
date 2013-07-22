@@ -215,16 +215,16 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 				return res.getId();
 			} catch (IdInvalidException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.warn(e);
 			} catch (InconsistentException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.warn(e);
 			} catch (IdUsedException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.warn(e);
 			} catch (PermissionException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.warn(e);
 			} catch (OverQuotaException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -235,10 +235,10 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn(e);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn(e);
 		}
 
 
