@@ -201,13 +201,14 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 		}
 
 		URL url;
+		InputStream in = null;
 		try {
 			url = new URL(contentUrl);
 			URLConnection con = url.openConnection();
-			InputStream in = con.getInputStream();
+			in = con.getInputStream();
 			String encoding = con.getContentEncoding();
 			encoding = encoding == null ? "UTF-8" : encoding;
-
+			
 			try {
 				ResourceProperties props = contentHostingService.newResourceProperties();
 				props.addProperty(ResourceProperties.PROP_DISPLAY_NAME, fileName);
@@ -234,11 +235,20 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			}
 
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
 			log.warn(e);
+			throw new RuntimeException("Unable to retrieve remote content!", e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			log.warn(e);
+			throw new RuntimeException("Unable to retrieve remote content!", e);
+		}
+		finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 
 
