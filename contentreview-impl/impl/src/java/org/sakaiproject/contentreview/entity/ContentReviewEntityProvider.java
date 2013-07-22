@@ -239,7 +239,7 @@ public class ContentReviewEntityProvider implements CoreEntityProvider, AutoRegi
 			throw new RuntimeException("Unable to retrieve remote content!", e);
 		} catch (IOException e) {
 			log.warn(e);
-			throw new RuntimeException("Unable to retrieve remote content!", e);
+			throw new RuntimeException("Unable to retrieve remote content!: " + e.getMessage(), e);
 		}
 		finally {
 			if (in != null) {
