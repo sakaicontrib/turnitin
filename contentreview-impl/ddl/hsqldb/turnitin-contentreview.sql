@@ -37,3 +37,4 @@
     );
 
     create index eval_lock_name on CONTENTREVIEW_LOCK (NAME);
+    create index contentreview_content_id on CONTENTREVIEW_ITEM (contentId);

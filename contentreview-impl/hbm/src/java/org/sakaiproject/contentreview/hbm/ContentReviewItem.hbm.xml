@@ -12,7 +12,7 @@
                 <param name="sequence">contentreview_ITEM_ID_SEQ</param>
 	    	</generator>
 		</id>
-		<property name="contentId" type="string" length="255" not-null="true"/>
+		<property name="contentId" type="string" length="255" not-null="true" index="contentreview_content_id"/>
 		<property name="userId" type="string" length="255" not-null="false" />
 		<property name="siteId" type="string" length="255" not-null="false" />
 		<property name="taskId" type="string" length="255" not-null="false" />
