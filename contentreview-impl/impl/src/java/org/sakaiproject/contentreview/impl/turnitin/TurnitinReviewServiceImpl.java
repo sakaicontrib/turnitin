@@ -834,7 +834,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				Entity ent = ep.getEntity(ref);
 				log.debug("got entity " + ent);
 				String title =
-					ent.getClass().getMethod("getTitle").invoke(ent).toString();
+                        scrubSpecialCharacters(ent.getClass().getMethod("getTitle").invoke(ent).toString());
 				log.debug("Got reflected assignemment title from entity " + title);
 				togo = URLDecoder.decode(title,"UTF-8");
 
@@ -846,6 +846,23 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		return togo;
 
 	}
+
+    private String scrubSpecialCharacters(String title) {
+
+        try {
+            if (title.contains("&")) {
+                title = title.replace('&', 'n');
+            }
+            if (title.contains("%")) {
+                title = title.replace("%", "percent");
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return title;
+    }
 
 	/**
 	 * @param siteId
@@ -1035,32 +1052,10 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 		String cid = siteId;
 		String assignid = taskId;
-		String assign = taskTitle;
 		String ctl = siteId;
 
-		/* TODO SWG
-		 * I'm not sure why this is encoding n's to & rather than just
-		 * encoding all parameters using urlencode, but I'm hesitant to change
-		 * without more knowledge to avoid introducing bugs with pre-existing
-		 * data.
-		 */
-		String assignEnc = assign;
-		try {
-			if (assign.contains("&")) {
-				//log.debug("replacing & in assingment title");
-				assign = assign.replace('&', 'n');
-			}
-			assignEnc = assign;
-			log.debug("Assign title is " + assignEnc);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-
-
-
 		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
-				"assign", assignEnc,
+				"assign", taskTitle,
 				"assignid", assignid,
 				"cid", cid,
 				"ctl", ctl,
