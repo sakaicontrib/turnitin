@@ -97,7 +97,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	final static long LOCK_PERIOD = 12000000;
 
-	private int sendAccountNotifications = 0;
+	private boolean studentAccountNotified = true;
 
 	private int sendSubmissionNotification = 0;
 
@@ -195,7 +195,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	public void init() {
 
-		sendAccountNotifications = turnitinConn.getSendAccountNotifications();
+		studentAccountNotified = turnitinConn.isStudentAccountNotified();
 		sendSubmissionNotification = turnitinConn.getSendSubmissionNotification();
 		maxRetry = turnitinConn.getMaxRetry();
 		defaultAssignId = turnitinConn.getDefaultAssignId();
@@ -1207,7 +1207,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				"cid", cid,
 				"tem", tem,
 				"ctl", ctl,
-				"dis", Integer.valueOf(sendAccountNotifications).toString(),
+				"dis", studentAccountNotified ? "0" : "1",
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,

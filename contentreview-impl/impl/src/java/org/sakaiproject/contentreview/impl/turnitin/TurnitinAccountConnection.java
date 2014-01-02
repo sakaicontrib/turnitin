@@ -74,7 +74,8 @@ public class TurnitinAccountConnection {
 	private String defaultInstructorPassword = null;
 	private boolean useSourceParameter = false;
 	private int turnitinConnTimeout = 0; // Default to 0, no timeout.
-	private int sendAccountNotifications = 0;
+	private boolean studentAccountNotified = true;
+	private boolean instructorAccountNotified = true;
 	private int sendSubmissionNotification = 0;
 	private Long maxRetry = null;
                      private boolean useGrademark = false;
@@ -149,21 +150,19 @@ public class TurnitinAccountConnection {
 		 * requirements we need more control over whether emails are sent for specific
 		 * operations, thus the new options.
 		 */
+		boolean sendAccountNotifications;
 		if (!serverConfigurationService.getBoolean("turnitin.sendnotifications", true)) {
-			sendAccountNotifications = 1;
+			sendAccountNotifications = false;
 			sendSubmissionNotification = 1;
 		}
 		else {
-			sendAccountNotifications = 0;
+			sendAccountNotifications=true;
 			sendSubmissionNotification = 0;
 		}
 
-		if  (!serverConfigurationService.getBoolean("turnitin.sendAccountNotifications", true)) {
-			sendAccountNotifications = 1;
-		}
-		else {
-			sendAccountNotifications = 0;
-		}
+		sendAccountNotifications = serverConfigurationService.getBoolean("turnitin.sendAccountNotifications", sendAccountNotifications);
+		instructorAccountNotified = serverConfigurationService.getBoolean("turnitin.sendAccountNotifications.instructors", sendAccountNotifications);
+		studentAccountNotified = serverConfigurationService.getBoolean("turnitin.sendAccountNotifications.student", sendAccountNotifications);
 
 		if  (!serverConfigurationService.getBoolean("turnitin.sendSubmissionNotifications", true)) {
 			sendSubmissionNotification = 1;
@@ -425,12 +424,12 @@ public class TurnitinAccountConnection {
 		this.userDirectoryService = userDirectoryService;
 	}
 
-	public int getSendAccountNotifications() {
-		return sendAccountNotifications;
+	public boolean isStudentAccountNotified() {
+		return studentAccountNotified;
 	}
 
-	public void setSendAccountNotifications(int sendAccountNotifications) {
-		this.sendAccountNotifications = sendAccountNotifications;
+	public void setStudentAccountNotified(boolean studentAccountNotified) {
+		this.studentAccountNotified = studentAccountNotified;
 	}
 
 	public int getSendSubmissionNotification() {
@@ -463,5 +462,13 @@ public class TurnitinAccountConnection {
 
 	public void setDefaultClassPassword(String defaultClassPassword) {
 		this.defaultClassPassword = defaultClassPassword;
+	}
+
+	public boolean isInstructorAccountNotified() {
+		return instructorAccountNotified;
+	}
+
+	public void setInstructorAccountNotified(boolean instructorAccountNotified) {
+		this.instructorAccountNotified = instructorAccountNotified;
 	}
 }

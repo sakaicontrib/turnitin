@@ -255,6 +255,7 @@ public class TurnitinRosterSync {
 		if (uln == null) {
 			throw new SubmissionException ("User has no last name");
 		}
+		String dis = (turnitinConn.isInstructorAccountNotified()) ? "0" : "1";
 
 		Document document = null;
 
@@ -268,7 +269,8 @@ public class TurnitinRosterSync {
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
-				"utp", utp
+				"utp", utp,
+				"dis", dis
 		);
 		document = turnitinConn.callTurnitinReturnDocument(params);
 
