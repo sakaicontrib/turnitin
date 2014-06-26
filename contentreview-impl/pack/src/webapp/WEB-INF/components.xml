@@ -20,7 +20,7 @@
 
 	<!-- create a logic bean, give it the dao from above and some sakai services -->
 	<bean
-		id="org.sakaiproject.contentreview.service.ContentReviewService"
+		id="org.sakaiproject.contentreview.service.ContentReviewServiceTii"
 		class="org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl"
 		init-method="init">
 		<property name="dao"
@@ -75,7 +75,7 @@
 		class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewQueue">
 		<property name="contentReviewService">
 			<ref
-				bean="org.sakaiproject.contentreview.service.ContentReviewService" />
+				bean="org.sakaiproject.contentreview.service.ContentReviewServiceTii" />
 		</property>
 		<property name="sessionManager">
 			<ref bean="org.sakaiproject.tool.api.SessionManager" />
@@ -102,7 +102,7 @@
 		class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewReports">
 		<property name="contentReviewService">
 			<ref
-				bean="org.sakaiproject.contentreview.service.ContentReviewService" />
+				bean="org.sakaiproject.contentreview.service.ContentReviewServiceTii" />
 		</property>
 	</bean>
 
@@ -149,7 +149,7 @@
 <bean class="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync"
     id="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync"
     init-method="init">
-    <property name="turnitinReviewServiceImpl" ref="org.sakaiproject.contentreview.service.ContentReviewService" />
+    <property name="turnitinReviewServiceImpl" ref="org.sakaiproject.contentreview.service.ContentReviewServiceTii" />
     <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
     <property name="userDirectoryService" ref="org.sakaiproject.user.api.UserDirectoryService" />
     <property name="turnitinConn" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection" />
@@ -172,7 +172,7 @@
     <property name="turnitinRosterSync" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync" />
     <property name="dao" ref="org.sakaiproject.contentreview.dao.ContentReviewDao" />
     <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
-    <property name="contentReviewService" ref="org.sakaiproject.contentreview.service.ContentReviewService" />
+    <property name="contentReviewService" ref="org.sakaiproject.contentreview.service.ContentReviewServiceTii" />
    </bean>
 
    <bean id="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection"
