@@ -11,7 +11,7 @@
 		<artifactId>master</artifactId>
 		<groupId>org.sakaiproject</groupId>
 		<version>11-SNAPSHOT</version>
-		<relativePath>../master/pom.xml</relativePath>
+		<relativePath>../../master/pom.xml</relativePath>
 	</parent>
 
 	<modules>
@@ -35,46 +35,27 @@
 
 	<properties>
 	  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	  <contentreview.version>11-SNAPSHOT</contentreview.version>
 	</properties>
 	
 	<!-- handles the management of all related dependencies -->
 	<dependencyManagement>
 		<dependencies>
-		  <!-- the API is seperately versioned from the impl -->
-			<dependency>
-				<groupId>org.sakaiproject.contentreview</groupId>
-				<artifactId>contentreview-model-api</artifactId>
-				<version>${contentreview.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.sakaiproject.contentreview</groupId>
-				<artifactId>contentreview-service-api</artifactId>
-				<version>${contentreview.version}</version>
-			</dependency>
 			<!-- internal dependencies -->
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>sakai-contentreview-impl-tii</artifactId>
-				<version>11-SNAPSHOT</version><!--turnitin.version-->
+			        <version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>sakai-contentreview-hbm</artifactId>
-				<version>11-SNAPSHOT</version><!--turnitin.version-->
+			        <version>${project.version}</version>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>contentreview-scheduler</artifactId>
-				<version>11-SNAPSHOT</version><!--turnitin.version-->
-			</dependency>
-			<dependency>
-				<groupId>org.sakaiproject.scheduler</groupId>
-				<artifactId>scheduler-api</artifactId>
-				<version>11-SNAPSHOT</version>
-				<scope>provided</scope>
+			        <version>${project.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

@@ -28,8 +28,6 @@
         <dependency>
             <groupId>org.sakaiproject.assignment2</groupId>
             <artifactId>sakai-assignment2-api</artifactId>
-            <version>11-SNAPSHOT</version>
-            <scope>provided</scope>
         </dependency>
         -->
 
