@@ -1019,7 +1019,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		}
 
 		//erater
-		String erater = "0";
+		String erater = (serverConfigurationService.getBoolean("turnitin.option.erater.default", false)) ? "1" : "0";
 		String ets_handbook ="1";
 		String ets_dictionary="en";
 		String ets_spelling = "1";
