@@ -1253,12 +1253,11 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 		List<ContentReviewItem> notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
 		for (int i =0; i < notSubmittedItems.size(); i++) {
-			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(0);
-			//can we get a lock
+			ContentReviewItem item = (ContentReviewItem) notSubmittedItems.get(i);
 
+			// can we get a lock?
 			if (dao.obtainLock("item." + Long.valueOf(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
-				return  item;
-
+				return item;
 		}
 
 		search = new Search();
