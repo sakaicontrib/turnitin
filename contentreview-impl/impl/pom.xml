@@ -47,12 +47,12 @@
         <!-- Spring and Hibernate dependencies. -->
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring</artifactId>
+            <artifactId>spring-core</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.hibernate</groupId>
-            <artifactId>hibernate</artifactId>
+            <artifactId>hibernate-core</artifactId>
         </dependency>
 
         <!-- Required for hibernate 3 HQL queries -->
@@ -70,10 +70,8 @@
         </dependency>
         <!-- Quartz dependencies -->
         <dependency>
-            <groupId>quartz</groupId>
+            <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
-            <version>1.5.2</version>
-	    <scope>provided</scope>
         </dependency>
 
         <!-- Various Sakai dependencies -->
@@ -122,7 +120,7 @@
         <dependency>
             <groupId>uk.org.ponder</groupId>
             <artifactId>ponderutilcore</artifactId>
-            <version>1.2.4</version>
+            <version>1.3.0</version>
         </dependency>
 
         <!-- testing dependencies -->
@@ -176,7 +174,6 @@
 		<dependency>
 		<groupId>org.sakaiproject.entitybroker</groupId>
 		<artifactId>entitybroker-utils</artifactId>
-		<version>${sakai.entitybroker.version}</version>
 	</dependency>
 	
 	<dependency>
@@ -187,6 +184,55 @@
             <groupId>org.sakaiproject.edu-services.gradebook</groupId>
             <artifactId>gradebook-service-api</artifactId>
         </dependency>
+
+      <!-- needed by hibernate unit tests -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-ehcache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>oro</groupId>
+            <artifactId>oro</artifactId>
+            <version>2.0.8</version>
+        </dependency>
+	<dependency>
+	  <groupId>org.slf4j</groupId>
+   	  <artifactId>slf4j-log4j12</artifactId>
+	  </dependency>
+    
+	
+	
     </dependencies>
 
     <build>
