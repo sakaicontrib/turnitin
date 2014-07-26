@@ -69,54 +69,57 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 	public void setSiteAdvisor(ContentReviewSiteAdvisor crsa) {
 		this.siteAdvisor = crsa;
 	}
-	
+
 	public void queueContent(String userId, String siteId, String taskId, List<ContentResource> content)
 			throws QueueException {
-		if(content == null || content.size() < 1){
+
+		if (content == null || content.size() < 1) {
 			return;
 		}
-		for(ContentResource contentRes : content){
-			String contentId = contentRes.getId();
 
-			log.debug("Method called queueContent(" + userId + "," + siteId + "," + contentId + ")");
-			if (userId == null) {
-				log.debug("Using current user");
-				userId = userDirectoryService.getCurrentUser().getId();
-			}
+		for (ContentResource contentRes : content) {
+			queueContent(userId, siteId, taskId, contentRes.getId());
+		}
+	}
 
-			if (siteId == null) {
-				log.debug("Using current site");
-				siteId = toolManager.getCurrentPlacement().getContext();
-			}
+	public void queueContent(String userId, String siteId, String taskId, String contentId)
+			throws QueueException {
+	
+		log.debug("Method called queueContent(" + userId + "," + siteId + "," + contentId + ")");
 
-			if (taskId == null) {
-				log.debug("Generating default taskId");
-				taskId = siteId + " " + defaultAssignmentName;
-			}
+		if (userId == null) {
+			log.debug("Using current user");
+			userId = userDirectoryService.getCurrentUser().getId();
+		}
 
-			log.debug("Adding content: " + contentId + " from site " + siteId
+		if (siteId == null) {
+			log.debug("Using current site");
+			siteId = toolManager.getCurrentPlacement().getContext();
+		}
+
+		if (taskId == null) {
+			log.debug("Generating default taskId");
+			taskId = siteId + " " + defaultAssignmentName;
+		}
+
+		log.debug("Adding content: " + contentId + " from site " + siteId
 					+ " and user: " + userId + " for task: " + taskId + " to submission queue");
 
+		/*
+		 * first check that this content has not been submitted before this may
+		 * not be the best way to do this - perhaps use contentId as the primary
+		 * key for now id is the primary key and so the database won't complain
+		 * if we put in repeats necessitating the check
+		 */
 
-
-			/*
-			 * first check that this content has not been submitted before this may
-			 * not be the best way to do this - perhaps use contentId as the primary
-			 * key for now id is the primary key and so the database won't complain
-			 * if we put in repeats necessitating the check
-			 * 
-			 * 
-			 */
-
-			List<ContentReviewItem> existingItems = getItemsByContentId(contentId);
-			if (existingItems.size() > 0) {
-				throw new QueueException("Content " + contentId + " is already queued, not re-queued");
-			}
-			ContentReviewItem item = new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
-					ContentReviewItem.NOT_SUBMITTED_CODE);
-			item.setNextRetryTime(new Date());
-			dao.save(item);
+		List<ContentReviewItem> existingItems = getItemsByContentId(contentId);
+		if (existingItems.size() > 0) {
+			throw new QueueException("Content " + contentId + " is already queued, not re-queued");
 		}
+		ContentReviewItem item = new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
+			ContentReviewItem.NOT_SUBMITTED_CODE);
+		item.setNextRetryTime(new Date());
+		dao.save(item);
 	}
 
 	private List<ContentReviewItem> getItemsByContentId(String contentId) {
