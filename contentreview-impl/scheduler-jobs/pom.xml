@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>content-review-impl-base-tii</artifactId>
 		<groupId>org.sakaiproject.contentreview</groupId>
-		<version>0.9-SNAPSHOT</version>
+		<version>11-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -17,14 +17,10 @@
 			<groupId>org.sakaiproject.contentreview</groupId>
 			<artifactId>contentreview-service-api</artifactId>
 		</dependency>
-
 		<dependency>
-			<groupId>quartz</groupId>
-			<artifactId>quartz</artifactId>
-			<version>1.5.2</version>
-			<scope>provided</scope>
-		</dependency>
-
+            		<groupId>org.quartz-scheduler</groupId>
+            		<artifactId>quartz</artifactId>
+        	</dependency>
 		<dependency>
 			<groupId>org.sakaiproject.scheduler</groupId>
 			<artifactId>scheduler-api</artifactId>

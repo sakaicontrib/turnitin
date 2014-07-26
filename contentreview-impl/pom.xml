@@ -4,20 +4,15 @@
 	<name>Sakai Content Review - Turnitin</name>
 	<groupId>org.sakaiproject.contentreview</groupId>
 	<artifactId>content-review-impl-base-tii</artifactId>
-	<version>0.9-SNAPSHOT</version>
+	<version>11-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<!--
-		<parent> <artifactId>sakai-commons-tool</artifactId>
-		<groupId>org.sakaiproject.purepoms</groupId>
-		<version>2.8-SNAPSHOT</version> </parent>
-	-->
-	<!-- for 2.6 based builds -->
-	<parent>
-		<artifactId>sakai-edu-tool</artifactId>
-		<groupId>org.sakaiproject.purepoms</groupId>
-		<version>2.8.1</version>
-	</parent>
 
+	<parent>
+		<artifactId>master</artifactId>
+		<groupId>org.sakaiproject</groupId>
+		<version>11-SNAPSHOT</version>
+		<relativePath>../master/pom.xml</relativePath>
+	</parent>
 
 	<modules>
 		<module>impl</module>
@@ -62,58 +57,25 @@
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>sakai-contentreview-impl-tii</artifactId>
-				<version>0.9-SNAPSHOT</version><!--turnitin.version-->
+				<version>11-SNAPSHOT</version><!--turnitin.version-->
 			</dependency>
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>sakai-contentreview-hbm</artifactId>
-				<version>0.9-SNAPSHOT</version><!--turnitin.version-->
+				<version>11-SNAPSHOT</version><!--turnitin.version-->
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.sakaiproject.contentreview</groupId>
 				<artifactId>contentreview-scheduler</artifactId>
-				<version>0.9-SNAPSHOT</version><!--turnitin.version-->
+				<version>11-SNAPSHOT</version><!--turnitin.version-->
 			</dependency>
 			<dependency>
 				<groupId>org.sakaiproject.scheduler</groupId>
 				<artifactId>scheduler-api</artifactId>
-				<version>2.8.0</version>
+				<version>11-SNAPSHOT</version>
 				<scope>provided</scope>
 			</dependency>
-			<!-- needed for 2.6 based builds -->
-			<!--
-			<dependency>
-				<groupId>org.sakaiproject.common</groupId>
-				<artifactId>sakai-common-composite-component-data</artifactId>
-				<version>[1.0.0, 1.1.0)</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.sakaiproject.common</groupId>
-				<artifactId>sakai-common-edu-person-api</artifactId>
-				<version>[1.0.0, 1.1.0)</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.sakaiproject.common</groupId>
-				<artifactId>sakai-common-manager-api</artifactId>
-				<version>[1.0.0, 1.1.0)</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.sakaiproject.common</groupId>
-				<artifactId>sakai-common-type-api</artifactId>
-				<version>[1.0.0, 1.1.0)</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.sakaiproject.common</groupId>
-				<artifactId>sakai-privacy-api</artifactId>
-				<version>[1.0.0, 1.1.0)</version>
-				<scope>provided</scope>
-			</dependency>
-			-->
 		</dependencies>
 	</dependencyManagement>
 

@@ -12,7 +12,7 @@
     <parent>
         <artifactId>content-review-impl-base-tii</artifactId>
         <groupId>org.sakaiproject.contentreview</groupId>
-        <version>0.1-SNAPSHOT</version>
+        <version>11-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.sakaiproject.assignment2</groupId>
             <artifactId>sakai-assignment2-api</artifactId>
-            <version>2.8-SNAPSHOT</version>
+            <version>11-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         -->
