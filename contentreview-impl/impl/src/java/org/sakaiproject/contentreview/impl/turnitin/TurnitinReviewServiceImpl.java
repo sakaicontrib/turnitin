@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -178,6 +179,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public void setTurnitinContentValidator(TurnitinContentValidator turnitinContentValidator) {
 		this.turnitinContentValidator = turnitinContentValidator;
 	}
+	
+	/**
+	 *  If set to true in properties, will result in 3 random digits being appended
+	 *  to the email name. In other words, adrian.r.fish@gmail.com will become something
+	 *  like adrian.r.fish593@gmail.com
+	 */
+	private boolean spoilEmailAddresses = false;
 
                private GradebookService gradebookService = (GradebookService)
                             ComponentManager.get("org.sakaiproject.service.gradebook.GradebookService");
@@ -206,6 +214,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
 				doAssignments();
 		}
+
+		spoilEmailAddresses = serverConfigurationService.getBoolean("turnitin.spoilEmailAddresses", false);
+		if (log.isDebugEnabled()) log.debug("SPOIL EMAIL ADDRESSES: " + spoilEmailAddresses);
 	}
 
 	public String getServiceName() {
@@ -2135,6 +2146,24 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				if (uem == null || uem.equals("") || !isValidEmail(uem))
 					uem = null;
 			}
+		}
+
+		if (spoilEmailAddresses && uem != null) {
+			// Scramble it
+			String[] parts = uem.split("@");
+
+			String emailName = parts[0];
+
+			Random random = new Random();
+			int int1 = random.nextInt();
+			int int2 = random.nextInt();
+			int int3 = random.nextInt();
+
+			emailName += (int1 + int2 + int3);
+
+			uem = emailName + "@" + parts[1];
+
+			if (log.isDebugEnabled()) log.debug("SCRAMBLED EMAIL:" + uem);
 		}
 
 		return uem;
