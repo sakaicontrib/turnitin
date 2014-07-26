@@ -214,7 +214,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	public String getIconUrlforScore(Long score) {
 
-		String urlBase = "/sakai-contentreview-tool/images/score_";
+		String urlBase = "/sakai-contentreview-tool-tii/images/score_";
 		String suffix = ".gif";
 
 		if (score.equals(Long.valueOf(0))) {
@@ -239,7 +239,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 *
 	 * @see org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl#getReviewReportInstructor(java.lang.String)
 	 */
-	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
+	public String getReviewReportInstructor(String contentId, String assignmentRef) throws QueueException, ReportException {
 
 		Search search = new Search();
 		search.addRestriction(new Restriction("contentId", contentId));
@@ -285,7 +285,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return turnitinConn.buildTurnitinURL(params);
 	}
 
-	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
+	public String getReviewReportStudent(String contentId, String assignmentRef) throws QueueException, ReportException {
 
 		Search search = new Search();
 		search.addRestriction(new Restriction("contentId", contentId));
@@ -342,13 +342,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return turnitinConn.buildTurnitinURL(params);
 	}
 
-	public String getReviewReport(String contentId)
+	public String getReviewReport(String contentId, String assignmentRef)
 	throws QueueException, ReportException {
 
 		// first retrieve the record from the database to get the externalId of
 		// the content
 		log.warn("Deprecated Methog getReviewReport(String contentId) called");
-		return this.getReviewReportInstructor(contentId);
+		return this.getReviewReportInstructor(contentId, assignmentRef);
 	}
 
 private List<ContentReviewItem> getItemsByContentId(String contentId) {
@@ -373,8 +373,16 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
         return assignData;
     }
 
-    @Override
-    public int getReviewScore(String contentId)throws QueueException, ReportException, Exception {
+    public String getInlineTextId(String assignmentReference, String userId, long submissionTime){
+	return "";
+    } 	
+
+    public boolean acceptInlineAndMultipleAttachments(){
+	return false;
+    }
+
+    public int getReviewScore(String contentId, String assignmentRef, String userId) throws QueueException,
+                        ReportException, Exception {
             ContentReviewItem item=null;
             try{
                         List<ContentReviewItem> matchingItems = getItemsByContentId(contentId);

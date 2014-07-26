@@ -70,47 +70,53 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		this.siteAdvisor = crsa;
 	}
 	
-	public void queueContent(String userId, String siteId, String taskId, String contentId)
+	public void queueContent(String userId, String siteId, String taskId, List<ContentResource> content)
 			throws QueueException {
-		log.debug("Method called queueContent(" + userId + "," + siteId + "," + contentId + ")");
-
-		if (userId == null) {
-			log.debug("Using current user");
-			userId = userDirectoryService.getCurrentUser().getId();
+		if(content == null || content.size() < 1){
+			return;
 		}
+		for(ContentResource contentRes : content){
+			String contentId = contentRes.getId();
 
-		if (siteId == null) {
-			log.debug("Using current site");
-			siteId = toolManager.getCurrentPlacement().getContext();
-		}
-		
-		if (taskId == null) {
-			log.debug("Generating default taskId");
-			taskId = siteId + " " + defaultAssignmentName;
-		}
+			log.debug("Method called queueContent(" + userId + "," + siteId + "," + contentId + ")");
+			if (userId == null) {
+				log.debug("Using current user");
+				userId = userDirectoryService.getCurrentUser().getId();
+			}
 
-		log.debug("Adding content: " + contentId + " from site " + siteId
-				+ " and user: " + userId + " for task: " + taskId + " to submission queue");
+			if (siteId == null) {
+				log.debug("Using current site");
+				siteId = toolManager.getCurrentPlacement().getContext();
+			}
 
-	
-		
-		/*
-		 * first check that this content has not been submitted before this may
-		 * not be the best way to do this - perhaps use contentId as the primary
-		 * key for now id is the primary key and so the database won't complain
-		 * if we put in repeats necessitating the check
-		 * 
-		 * 
-		 */
+			if (taskId == null) {
+				log.debug("Generating default taskId");
+				taskId = siteId + " " + defaultAssignmentName;
+			}
 
-		List<ContentReviewItem> existingItems = getItemsByContentId(contentId);
-		if (existingItems.size() > 0) {
+			log.debug("Adding content: " + contentId + " from site " + siteId
+					+ " and user: " + userId + " for task: " + taskId + " to submission queue");
+
+
+
+			/*
+			 * first check that this content has not been submitted before this may
+			 * not be the best way to do this - perhaps use contentId as the primary
+			 * key for now id is the primary key and so the database won't complain
+			 * if we put in repeats necessitating the check
+			 * 
+			 * 
+			 */
+
+			List<ContentReviewItem> existingItems = getItemsByContentId(contentId);
+			if (existingItems.size() > 0) {
 				throw new QueueException("Content " + contentId + " is already queued, not re-queued");
+			}
+			ContentReviewItem item = new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
+					ContentReviewItem.NOT_SUBMITTED_CODE);
+			item.setNextRetryTime(new Date());
+			dao.save(item);
 		}
-		ContentReviewItem item = new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
-				ContentReviewItem.NOT_SUBMITTED_CODE);
-		item.setNextRetryTime(new Date());
-		dao.save(item);
 	}
 
 	private List<ContentReviewItem> getItemsByContentId(String contentId) {

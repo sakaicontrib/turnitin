@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <name>Turnitin ContentReview IMPL</name>
     <groupId>org.sakaiproject.contentreview</groupId>
-    <artifactId>sakai-contentreview-impl</artifactId>
+    <artifactId>sakai-contentreview-impl-tii</artifactId>
     <organization>
         <name>Sakai Project</name>
         <url>http://www.sakaiproject.org/</url>
@@ -13,7 +13,7 @@
     <packaging>jar</packaging>
 
     <parent>
-        <artifactId>content-review-impl-base</artifactId>
+        <artifactId>content-review-impl-base-tii</artifactId>
         <groupId>org.sakaiproject.contentreview</groupId>
         <version>0.9-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
