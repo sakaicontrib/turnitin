@@ -250,7 +250,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 *
 	 * @see org.sakaiproject.contentreview.impl.hbm.BaseReviewServiceImpl#getReviewReportInstructor(java.lang.String)
 	 */
-	public String getReviewReportInstructor(String contentId, String assignmentRef) throws QueueException, ReportException {
+	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
 
 		Search search = new Search();
 		search.addRestriction(new Restriction("contentId", contentId));
@@ -296,7 +296,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return turnitinConn.buildTurnitinURL(params);
 	}
 
-	public String getReviewReportStudent(String contentId, String assignmentRef) throws QueueException, ReportException {
+	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
 
 		Search search = new Search();
 		search.addRestriction(new Restriction("contentId", contentId));
@@ -353,13 +353,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return turnitinConn.buildTurnitinURL(params);
 	}
 
-	public String getReviewReport(String contentId, String assignmentRef)
+	public String getReviewReport(String contentId)
 	throws QueueException, ReportException {
 
 		// first retrieve the record from the database to get the externalId of
 		// the content
 		log.warn("Deprecated Methog getReviewReport(String contentId) called");
-		return this.getReviewReportInstructor(contentId, assignmentRef);
+		return this.getReviewReportInstructor(contentId);
 	}
 
 private List<ContentReviewItem> getItemsByContentId(String contentId) {

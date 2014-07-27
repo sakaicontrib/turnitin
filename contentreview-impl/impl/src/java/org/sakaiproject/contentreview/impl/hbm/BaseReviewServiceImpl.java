@@ -281,53 +281,42 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 	}
 	
 
-
 	public boolean allowResubmission() {
 		return true;
 	}
 
+	// All of the following methods should be extended, and these versions should never be called
+
 	public void checkForReports() {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	public String getIconUrlforScore(Long score) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	public String getReviewReport(String contentId) throws QueueException, ReportException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	public String getReviewReportInstructor(String contentId) throws QueueException, ReportException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	public String getReviewReportStudent(String contentId) throws QueueException, ReportException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 	
 	public String getServiceName() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	public boolean isAcceptableContent(ContentResource resource) {
-		throw new UnsupportedOperationException("This is not yet implemented");
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	public void processQueue() {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Not implemented");
 	}
-
-	
-
-
-	
 
 }
