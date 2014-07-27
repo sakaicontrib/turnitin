@@ -4,13 +4,13 @@
 	<name>Sakai Content Review - Turnitin</name>
 	<groupId>org.sakaiproject.contentreview</groupId>
 	<artifactId>content-review-impl-base-tii</artifactId>
-	<version>11-SNAPSHOT</version>
+	<version>10-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<parent>
 		<artifactId>master</artifactId>
 		<groupId>org.sakaiproject</groupId>
-		<version>11-SNAPSHOT</version>
+		<version>10-SNAPSHOT</version>
 		<relativePath>../../master/pom.xml</relativePath>
 	</parent>
 
