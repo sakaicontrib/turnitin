@@ -90,7 +90,6 @@ public class TurnitinAccountConnection {
 
 	private String defaultClassPassword = null;
 
-	//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
 	private String defaultInstructorId = null;
 
 	public void init() {
@@ -100,8 +99,6 @@ public class TurnitinAccountConnection {
 		proxyHost = serverConfigurationService.getString("turnitin.proxyHost");
 
 		proxyPort = serverConfigurationService.getString("turnitin.proxyPort");
-
-
 
 		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
 			try {
@@ -128,8 +125,6 @@ public class TurnitinAccountConnection {
 		secretKey = serverConfigurationService.getString("turnitin.secretKey");
 
 		apiURL = serverConfigurationService.getString("turnitin.apiURL","https://api.turnitin.com/api.asp?");
-
-
 
 		defaultInstructorEmail = serverConfigurationService.getString("turnitin.defaultInstructorEmail");
 
@@ -178,17 +173,9 @@ public class TurnitinAccountConnection {
 
 		defaultClassPassword = serverConfigurationService.getString("turnitin.defaultClassPassword","changeit");;
 
-		//private static final String defaultInstructorId = defaultInstructorFName + " " + defaultInstructorLName;
 		defaultInstructorId = serverConfigurationService.getString("turnitin.defaultInstructorId","admin");
 
 		maxRetry = Long.valueOf(serverConfigurationService.getInt("turnitin.maxRetry",100));
-
-		/* TODO This still needs to happen in the TurnitinReviewServiceImpl
-		if (!useSourceParameter) {
-			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
-				doAssignments();
-		}
-		 */
 
 		turnitinConnTimeout = serverConfigurationService.getInt("turnitin.networkTimeout", 0);
 
