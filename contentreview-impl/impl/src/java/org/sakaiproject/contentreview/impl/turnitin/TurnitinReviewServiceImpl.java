@@ -772,34 +772,21 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		String ctl = siteId;
 		String fcmd = "2";
 		String fid = "2";
-		//String uem = defaultInstructorEmail;
-		//String ufn = defaultInstructorFName;
-		//String uln = defaultInstructorLName;
 		String utp = "2"; 					//user type 2 = instructor
-		/* String upw = defaultInstructorPassword; */
 		String cid = siteId;
-		//String uid = defaultInstructorId;
 
 		Document document = null;
 
 		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
-				//"uid", uid,
 				"cid", cid,
 				"cpw", cpw,
 				"ctl", ctl,
 				"fcmd", fcmd,
 				"fid", fid,
-				//"uem", uem,
-				//"ufn", ufn,
-				//"uln", uln,
 				"utp", utp
 		);
 
 		params.putAll(turnitinConn.getInstructorInfo(siteId));
-
-		//if (!useSourceParameter) {
-			/* params = TurnitinAPIUtil.packMap(params, "upw", upw); */
-		//}
 
 		document = turnitinConn.callTurnitinReturnDocument(params);
 
@@ -909,7 +896,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 		Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 			"assign", taskTitle, "assignid", taskId, "cid", siteId, "ctl", siteId,
-			"fcmd", "7", "fid", "4", "utp", "2" ); // "upw", defaultInstructorPassword,
+			"fcmd", "7", "fid", "4", "utp", "2" );
 
 		params.putAll(turnitinConn.getInstructorInfo(siteId));
 
@@ -1021,8 +1008,6 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 		String fid = "4";						//function id
 		String utp = "2"; 					//user type 2 = instructor
-		// String upw = defaultInstructorPassword;  TODO Is the upw actually
-		// required at all? It says optional in the API.
 		String s_view_report = "1";
 		if (extraAsnnOpts != null && extraAsnnOpts.containsKey("s_view_report")) {
 			s_view_report = extraAsnnOpts.get("s_view_report").toString();
@@ -1199,13 +1184,6 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		}
 
 		log.debug("Enrolling user " + user.getEid() + "(" + userId + ")  in class " + siteId);
-
-		/* not using this as we may be getting email from profile
-		String uem = user.getEmail();
-		if (uem == null) {
-			throw new SubmissionException ("User has no email address");
-		}
-		 */
 
 		String ufn = getUserFirstName(user);
 		if (ufn == null) {
@@ -1704,10 +1682,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 	}
 
 	public void checkForReports() {
-		//if (serverConfigurationService.getBoolean("turnitin.getReportsBulk", true))
-			checkForReportsBulk();
-		//else
-		//	checkForReportsIndividual();
+		checkForReportsBulk();
 	}
 
 	/*
@@ -1931,176 +1906,6 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			}
 		}
 	}
-/*
-	public void checkForReportsIndividual() {
-		log.debug("Checking for updated reports from Turnitin in individual mode");
-
-		// get the list of all items that are waiting for reports
-		List<ContentReviewItem> awaitingReport = dao.findByProperties(ContentReviewItem.class,
-				new String[] { "status" },
-				new Object[] { ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE});
-
-		awaitingReport.addAll(dao.findByProperties(ContentReviewItem.class,
-				new String[] { "status" },
-				new Object[] { ContentReviewItem.REPORT_ERROR_RETRY_CODE}));
-
-		Iterator<ContentReviewItem> listIterator = awaitingReport.iterator();
-		HashMap<String, Integer> reportTable = new HashMap();
-
-		log.debug("There are " + awaitingReport.size() + " submissions awaiting reports");
-
-		ContentReviewItem currentItem;
-		while (listIterator.hasNext()) {
-			currentItem = (ContentReviewItem) listIterator.next();
-
-			// has the item reached its next retry time?
-			if (currentItem.getNextRetryTime() == null)
-				currentItem.setNextRetryTime(new Date());
-
-			if (currentItem.getNextRetryTime().after(new Date())) {
-				//we haven't reached the next retry time
-				log.info("next retry time not yet reached for item: " + currentItem.getId());
-				dao.update(currentItem);
-				continue;
-			}
-
-			if (currentItem.getRetryCount() == null ) {
-				currentItem.setRetryCount(Long.valueOf(0));
-				currentItem.setNextRetryTime(this.getNextRetryTime(0));
-			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
-				dao.update(currentItem);
-				continue;
-			} else {
-				long l = currentItem.getRetryCount().longValue();
-				l++;
-				currentItem.setRetryCount(Long.valueOf(l));
-				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
-				dao.update(currentItem);
-			}
-
-			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
-				currentItem.setStatus(Long.valueOf(4));
-				dao.update(currentItem);
-				continue;
-			}
-
-			// get the list from turnitin and see if the review is available
-
-			String fcmd = "2";
-			String fid = "10";
-
-			String cid = currentItem.getSiteId();
-
-			String tem = getTEM(cid);
-
-			//String uem = defaultInstructorEmail;
-			//String ufn = defaultInstructorFName;
-			//String uln = defaultInstructorLName;
-			//String ufn = "Sakai";
-			//String uln = "Instructor";
-			String utp = "2";
-
-			//String uid = defaultInstructorId;
-
-			String assignid = currentItem.getTaskId();
-
-			String assign = currentItem.getTaskId();
-			String ctl = currentItem.getSiteId();
-
-			String oid = currentItem.getExternalId();
-
-			Map params = new HashMap();
-
-			try {
-				params = TurnitinAPIUtil.packMap(getBaseTIIOptions(),
-						"fid", fid,
-						"fcmd", fcmd,
-						"tem", tem,
-						"assign", assign,
-						"assignid", assignid,
-						"cid", cid,
-						"ctl", ctl,
-						"oid", oid,
-						//"uem", URLEncoder.encode(uem, "UTF-8"),
-						//"ufn", ufn,
-						//"uln", uln,
-						"utp", utp
-				);
-			}
-			catch (java.io.UnsupportedEncodingException e) {
-				log.debug("Unable to encode a URL param as UTF-8: " + e.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError(e.getMessage());
-				dao.update(currentItem);
-				break;
-			}
-
-			Document document = null;
-			try {
-				document = TurnitinAPIUtil.callTurnitinReturnDocument(apiURL, params, secretKey, turnitinConnTimeout, proxy);
-			}
-			catch (TransientSubmissionException e) {
-				log.debug("Fid10fcmd2 failed due to TransientSubmissionException error: " + e.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError(e.getMessage());
-				dao.update(currentItem);
-				break;
-			}
-			catch (SubmissionException e) {
-				log.debug("Fid10fcmd2 failed due to SubmissionException error: " + e.toString());
-				currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-				currentItem.setLastError(e.getMessage());
-				dao.update(currentItem);
-				break;
-			}
-
-			Element root = document.getDocumentElement();
-			if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
-				log.debug("Report list returned successfully");
-
-				NodeList objects = root.getElementsByTagName("object");
-				String objectId;
-				String similarityScore;
-				String overlap = "";
-				log.debug(objects.getLength() + " objects in the returned list");
-				for (int i=0; i<objects.getLength(); i++) {
-					similarityScore = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("similarityScore").item(0).getFirstChild())).getData().trim();
-					objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
-					if (similarityScore.compareTo("-1") != 0) {
-						overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
-						reportTable.put(objectId, Integer.valueOf(overlap));
-					} else {
-						reportTable.put(objectId, Integer.valueOf(-1));
-					}
-
-					log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
-				}
-			} else {
-				log.debug("Report list request not successful");
-				log.debug(document.toString());
-			}
-
-			int reportVal;
-			// check if the report value is now there (there may have been a
-			// failure to get the list above)
-			if (reportTable.containsKey(currentItem.getExternalId())) {
-				reportVal = ((Integer) (reportTable.get(currentItem
-						.getExternalId()))).intValue();
-				log.debug("reportVal for " + currentItem.getExternalId() + ": " + reportVal);
-				if (reportVal != -1) {
-					currentItem.setReviewScore(reportVal);
-					currentItem
-					.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
-					currentItem.setDateReportReceived(new Date());
-					dao.update(currentItem);
-					log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
-				}
-			}
-		}
-
-	}
-*/
 
 	// returns null if no valid email exists
 	public String getEmail(User user) {
