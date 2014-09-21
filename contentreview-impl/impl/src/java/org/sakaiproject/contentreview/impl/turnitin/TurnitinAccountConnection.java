@@ -321,7 +321,12 @@ public class TurnitinAccountConnection {
 		Set<String> ret =  new HashSet<String>();
 		for (int i = 0; i < activeUsers.size(); i++) {
 			User user = activeUsers.get(i);
-			ret.add(user.getId());
+			// Ignore users who do not have a first and/or last name set, as this will
+			// cause a TII API call to fail
+			if (user.getFirstName() != null && !user.getFirstName().trim().isEmpty() && 
+		   	    user.getLastName() != null && !user.getLastName().trim().isEmpty()) {
+				ret.add(user.getId());
+			}
 		}
 
 		return ret;
