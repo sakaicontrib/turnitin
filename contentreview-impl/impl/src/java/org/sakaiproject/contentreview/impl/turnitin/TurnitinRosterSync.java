@@ -343,14 +343,15 @@ public class TurnitinRosterSync {
 	public boolean syncSiteWithTurnitin(String sakaiSiteID) {
 		boolean success = true;
 
-		Map<String, List<String>> enrollment = getInstructorsStudentsForSite(sakaiSiteID);
-
 		Site site = null;
 		try {
 			site = siteService.getSite(sakaiSiteID);
 		} catch (IdUnusedException e) {
-			throw new IllegalArgumentException("The Sakai Site with ID: " + sakaiSiteID + " does not exist.");
+			log.info("Ignoring site " + sakaiSiteID + " which no longer exists.");
+			return false;
 		}
+
+		Map<String, List<String>> enrollment = getInstructorsStudentsForSite(sakaiSiteID);
 
                                             //Only run if using SRC 9
                                             if(turnitinConn.isUseSourceParameter()){
