@@ -930,7 +930,12 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts) throws SubmissionException, TransientSubmissionException {
 
 		//get the assignment reference
-		String taskTitle = getAssignmentTitle(taskId);
+		String taskTitle = "";
+		if(extraAsnnOpts.containsKey("title")){
+			taskTitle = extraAsnnOpts.get("title").toString();
+		}else{
+			getAssignmentTitle(taskId);
+		}
 		log.debug("Creating assignment for site: " + siteId + ", task: " + taskId +" tasktitle: " + taskTitle);
 
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
