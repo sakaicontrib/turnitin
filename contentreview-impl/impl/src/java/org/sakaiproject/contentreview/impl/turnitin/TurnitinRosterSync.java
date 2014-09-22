@@ -245,7 +245,11 @@ public class TurnitinRosterSync {
 		String fid = "2";
 		String utp = "2";
 		String cid = siteId;
-                                           String uem = turnitinReviewServiceImpl.getEmail(user);
+		String uem = turnitinReviewServiceImpl.getEmail(user);
+		if (uem == null || uem.trim().isEmpty()) {
+			log.debug("User " + userId + " has no email address");
+			throw new SubmissionException ("User has no email address");
+		}
                                            String uid = user.getId();
 		String ufn = user.getFirstName();
 		if (ufn == null || ufn.trim().isEmpty()) {
@@ -361,11 +365,11 @@ public class TurnitinRosterSync {
                                                         try {
                                                                 addInstructor(sakaiSiteID,allInstructors.get(key));
                                                         } catch (SubmissionException e) {
-                                                                log.error(e);
+                                                                log.warn(e);
                                                         } catch(TransientSubmissionException e){
-                                                                log.error(e);
+                                                                log.warn(e);
                                                         } catch(Exception e){
-                                                                log.error(e);
+                                                                log.error("Unknown error", e);
                                                         }
                                                 }
                                             }
