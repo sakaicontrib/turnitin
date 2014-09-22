@@ -348,7 +348,7 @@ public class TurnitinRosterSync {
 			site = siteService.getSite(sakaiSiteID);
 		} catch (IdUnusedException e) {
 			log.info("Ignoring site " + sakaiSiteID + " which no longer exists.");
-			return false;
+			return true;
 		}
 
 		Map<String, List<String>> enrollment = getInstructorsStudentsForSite(sakaiSiteID);
@@ -417,6 +417,9 @@ public class TurnitinRosterSync {
 	 * have been put in the queue due to site updates or something.
 	 */
 	public void processSyncQueue() {
+
+		log.info("Running Turnitin Roster Sync");
+
 		Restriction notStarted = new Restriction("status", ContentReviewRosterSyncItem.NOT_STARTED_STATUS, Restriction.EQUALS);
 		Restriction failed = new Restriction("status", ContentReviewRosterSyncItem.FAILED_STATUS, Restriction.EQUALS);
 		Order order = new Order("status", true);
