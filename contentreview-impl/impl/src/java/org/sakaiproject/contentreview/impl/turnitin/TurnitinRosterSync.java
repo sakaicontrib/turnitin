@@ -404,7 +404,8 @@ public class TurnitinRosterSync {
 	}
 
 	private boolean obtainLock(ContentReviewRosterSyncItem item) {
-		return dao.obtainLock(makeLockID(item), serverConfigurationService.getServerId(), LOCK_PERIOD);
+		Boolean lock = dao.obtainLock(makeLockID(item), serverConfigurationService.getServerId(), LOCK_PERIOD);
+		return (lock != null) ? lock : false;
 	}
 
 	private void releaseLock(ContentReviewRosterSyncItem item) {

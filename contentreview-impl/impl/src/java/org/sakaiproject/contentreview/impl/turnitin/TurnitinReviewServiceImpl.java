@@ -1231,6 +1231,14 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 	}
 
 	/*
+	 * Obtain a lock on the item
+	 */
+	private boolean obtainLock(String itemId) {
+		Boolean lock = dao.obtainLock(itemId, serverConfigurationService.getServerId(), LOCK_PERIOD);
+		return (lock != null) ? lock : false;
+	}
+
+	/*
 	 * Get the next item that needs to be submitted
 	 *
 	 */
@@ -1245,7 +1253,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			ContentReviewItem item = (ContentReviewItem) notSubmittedItems.get(i);
 
 			// can we get a lock?
-			if (dao.obtainLock("item." + Long.valueOf(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
+			if (obtainLock("item." + Long.valueOf(item.getId()).toString()))
 				return item;
 		}
 
@@ -1256,7 +1264,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		//we need the next one whose retry time has not been reached
 		for  (int i =0; i < notSubmittedItems.size(); i++ ) {
 			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(i);
-			if (hasReachedRetryTime(item) && dao.obtainLock("item." + Long.valueOf(item.getId()).toString(), serverConfigurationService.getServerId(), LOCK_PERIOD))
+			if (hasReachedRetryTime(item) && obtainLock("item." + Long.valueOf(item.getId()).toString()))
 				return item;
 
 		}
