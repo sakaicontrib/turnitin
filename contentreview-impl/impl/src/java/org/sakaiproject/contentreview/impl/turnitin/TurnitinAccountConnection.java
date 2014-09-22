@@ -139,33 +139,21 @@ public class TurnitinAccountConnection {
                                            migrate = serverConfigurationService.getBoolean("turnitin.migrate", false);
 
 		useGrademark = serverConfigurationService.getBoolean("turnitin.useGrademark", true);
-		/*
-		 * Previously, we only had the sendnotifications option. We're keeping it here,
-		 * and running it first for backwards compatibility. Because of functional
-		 * requirements we need more control over whether emails are sent for specific
-		 * operations, thus the new options.
-		 */
-		boolean sendAccountNotifications;
-		if (!serverConfigurationService.getBoolean("turnitin.sendnotifications", true)) {
-			sendAccountNotifications = false;
-			sendSubmissionNotification = 1;
-		}
-		else {
-			sendAccountNotifications=true;
-			sendSubmissionNotification = 0;
-		}
 
-		sendAccountNotifications = serverConfigurationService.getBoolean("turnitin.sendAccountNotifications", sendAccountNotifications);
+		// Account notification options (default value is false)
+		boolean sendAccountNotifications = (serverConfigurationService.getBoolean("turnitin.sendnotifications", false) ||
+		                                   serverConfigurationService.getBoolean("turnitin.sendAccountNotifications", false));
+
 		instructorAccountNotified = serverConfigurationService.getBoolean("turnitin.sendAccountNotifications.instructors", sendAccountNotifications);
 		studentAccountNotified = serverConfigurationService.getBoolean("turnitin.sendAccountNotifications.student", sendAccountNotifications);
 
-		if  (!serverConfigurationService.getBoolean("turnitin.sendSubmissionNotifications", true)) {
-			sendSubmissionNotification = 1;
-		}
-		else {
-			sendSubmissionNotification = 0;
-		}
+		// Submission notification options (default value is false)
+		sendSubmissionNotification = serverConfigurationService.getBoolean("turnitin.sendSubmissionNotifications", false) ? 1 : 0;
 
+		log.debug("Notification options:" + 
+		         " instructorAccountNotified=" + instructorAccountNotified +
+		         " studentAccountNotified=" + studentAccountNotified + 
+			 " sendSubmissionNotification=" + sendSubmissionNotification);
 
 		//note that the assignment id actually has to be unique globally so use this as a prefix
 		// assignid = defaultAssignId + siteId
