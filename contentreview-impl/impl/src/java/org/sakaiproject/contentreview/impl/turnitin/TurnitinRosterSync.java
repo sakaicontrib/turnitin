@@ -188,10 +188,9 @@ public class TurnitinRosterSync {
 		boolean togo = false;
 
 		if (user != null) {
-			// TODO We need to centralize packing user options since sometimes the
-			// email address may come from their Profile Tool profile
+                	String uem = turnitinReviewServiceImpl.getEmail(user);
 			Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
-					"fid","19","fcmd", "3", "uem", user.getEmail(), "uid", user.getId(),
+					"fid","19","fcmd", "3", "uem", uem, "uid", user.getId(),
 					"ufn", user.getFirstName(), "uln", user.getLastName(),
 					"username", user.getDisplayName(), "ctl", siteId, "cid", siteId,
 					"utp", currentRole+"",
@@ -209,8 +208,10 @@ public class TurnitinRosterSync {
 			// A Successful return should look like:
 			// {rmessage=Successful!, rcode=93}
 			if (ret.containsKey("rcode") && ret.get("rcode").equals("93")) {
-				log.info("Successfully swapped roles for site: " + siteId + " user: " + user.getEid() + " oldRole: " + currentRole);
+				log.info("Successfully swapped user roles for site: " + siteId + " user: " + user.getEid() + " oldRole: " + currentRole);
 				togo = true;
+			} else {
+				log.warn("Unable to swap user roles for site: " + siteId + " user: " + user.getEid() + " oldRole: " + currentRole);
 			}
 		}
 		else {
@@ -232,7 +233,7 @@ public class TurnitinRosterSync {
          */
                      @SuppressWarnings("unchecked")
 	public void addInstructor(String siteId, String userId) throws SubmissionException, TransientSubmissionException {
-		log.info("Adding Instructor("+userId+") to site: " + siteId);
+		log.info("Adding Instructor ("+userId+") to site: " + siteId);
 		User user;
 		try {
 			user = userDirectoryService.getUser(userId);
@@ -357,10 +358,11 @@ public class TurnitinRosterSync {
 
 		Map<String, List<String>> enrollment = getInstructorsStudentsForSite(sakaiSiteID);
 
-                                            //Only run if using SRC 9
-                                            if(turnitinConn.isUseSourceParameter()){
-                                               //Enroll all instructors
-                                                Map<String,String> allInstructors = getAllUsers(sakaiSiteID,"instructor");
+		// Only run if using SRC 9
+		if (turnitinConn.isUseSourceParameter()) {
+			// Enroll all instructors
+			log.debug("Enrolling all instructors");
+			Map<String,String> allInstructors = getAllUsers(sakaiSiteID,"instructor");
                                                 for (String key : allInstructors.keySet()) {
                                                         try {
                                                                 addInstructor(sakaiSiteID,allInstructors.get(key));
@@ -372,20 +374,24 @@ public class TurnitinRosterSync {
                                                                 log.error("Unknown error", e);
                                                         }
                                                 }
-                                            }
-
-		for (String uid: enrollment.get("instructor")) {
-			if (!site.isAllowed(uid, "section.role.instructor")) {
-				boolean status = swapTurnitinRoles(sakaiSiteID, getUser(uid), 2);
-				if (status == false) {
-					success = false;
+		} else {
+			log.debug("Checking users with Turnitin student role");
+			for (String uid: enrollment.get("student")) {
+				if (site.isAllowed(uid, "section.role.instructor")) {
+					// User has an instructor role in Sakai - change Turnitin role from student to instructor
+					boolean status = swapTurnitinRoles(sakaiSiteID, getUser(uid), 1);
+					if (status == false) {
+						success = false;
+					}
 				}
 			}
 		}
 
-		for (String uid: enrollment.get("student")) {
-			if (site.isAllowed(uid, "section.role.instructor")) {
-				boolean status = swapTurnitinRoles(sakaiSiteID, getUser(uid), 1);
+		log.debug("Checking users with Turnitin instructor role");
+		for (String uid: enrollment.get("instructor")) {
+			if (!site.isAllowed(uid, "section.role.instructor")) {
+				// User does not have instructor role in Sakai - change Turnitin role from instructor to student
+				boolean status = swapTurnitinRoles(sakaiSiteID, getUser(uid), 2);
 				if (status == false) {
 					success = false;
 				}
@@ -441,6 +447,7 @@ public class TurnitinRosterSync {
 						item.setStatus(ContentReviewRosterSyncItem.FINISHED_STATUS);
 					}
 					else {
+						log.warn("Turnitin Sync failed, queuing for retry: " + item.getId() + " , " + item.getSiteId() + " , " + item.getStatus());
 						item.setStatus(ContentReviewRosterSyncItem.FAILED_STATUS);
 					}
 				} catch (Exception e) {
@@ -458,5 +465,7 @@ public class TurnitinRosterSync {
 				}
 			}
 		}
+
+		log.info("Completed Turnitin Roster Sync");
 	}
 }
