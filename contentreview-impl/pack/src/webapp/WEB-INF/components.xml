@@ -180,9 +180,6 @@
     init-method="init">
         <property name="serverConfigurationService"
             ref="org.sakaiproject.component.api.ServerConfigurationService" />
-        <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
-        <property name="userDirectoryService"
-            ref="org.sakaiproject.user.api.UserDirectoryService" />
    </bean>
 
 
