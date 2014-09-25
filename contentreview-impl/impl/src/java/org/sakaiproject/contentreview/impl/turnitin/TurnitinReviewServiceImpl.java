@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -73,6 +74,7 @@ import org.sakaiproject.genericdao.api.search.Search;
 import org.sakaiproject.service.gradebook.shared.GradebookExternalAssessmentService;
 import org.sakaiproject.service.gradebook.shared.GradebookService;
 import org.sakaiproject.service.gradebook.shared.GradebookNotFoundException;
+import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.service.gradebook.shared.Assignment;
 import org.sakaiproject.tool.api.Session;
@@ -291,7 +293,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				"utp", utp
 		);
 
-		params.putAll(turnitinConn.getInstructorInfo(item.getSiteId()));
+		params.putAll(getInstructorInfo(item.getSiteId()));
 
 		return turnitinConn.buildTurnitinURL(params);
 	}
@@ -556,14 +558,14 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
                     params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
                                 "fid", "10",
                                 "fcmd", "2",
-                                "tem", turnitinConn.getTEM(siteId),
+                                "tem", getTEM(siteId),
                                 "assign", assign,
                                 "assignid", taskId,
                                 "cid", siteId,
                                 "ctl", siteId,
                                 "utp", "2"
                     );
-                    params.putAll(turnitinConn.getInstructorInfo(siteId));
+                    params.putAll(getInstructorInfo(siteId));
 
                     Document document = null;
                     try {
@@ -698,7 +700,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
                 String tiiExternalId="";//the ID sakai stores
                 String tiiInternalId="";//Turnitin internal ID
                 User user = null;
-                Map instructorInfo = turnitinConn.getInstructorInfo(siteId,true);
+                Map instructorInfo = getInstructorInfo(siteId,true);
                 try{
                     user = userDirectoryService.getUser(instructorInfo.get("uid").toString());
                 }catch(UserNotDefinedException e){
@@ -707,7 +709,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
                 params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
                                 "fid", "19",
                                 "fcmd", "5",
-                                "tem", turnitinConn.getTEM(siteId),
+                                "tem", getTEM(siteId),
                                 "ctl", siteId,
                                 "cid", siteId,
                                 "utp", "2",
@@ -786,7 +788,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				"utp", utp
 		);
 
-		params.putAll(turnitinConn.getInstructorInfo(siteId));
+		params.putAll(getInstructorInfo(siteId));
 
 		document = turnitinConn.callTurnitinReturnDocument(params);
 
@@ -898,7 +900,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			"assign", taskTitle, "assignid", taskId, "cid", siteId, "ctl", siteId,
 			"fcmd", "7", "fid", "4", "utp", "2" );
 
-		params.putAll(turnitinConn.getInstructorInfo(siteId));
+		params.putAll(getInstructorInfo(siteId));
 
 		return turnitinConn.callTurnitinReturnMap(params);
 	}
@@ -1083,7 +1085,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		// method, since theoretically getInstructorInfo could return
 		// different instructors for different invocations and we need
 		// the same one since we're using a session id.
-		Map instructorInfo = turnitinConn.getInstructorInfo(siteId);
+		Map instructorInfo = getInstructorInfo(siteId);
 		params.putAll(instructorInfo);
 
 		if (extraAsnnOpts != null) {
@@ -1174,7 +1176,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		String ctl = siteId;
 		String fid = "3";
 		String fcmd = "2";
-		String tem = turnitinConn.getTEM(cid);
+		String tem = getTEM(cid);
 
 		User user;
 		try {
@@ -1296,7 +1298,6 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 	public void processQueue() {
 
 		log.info("Processing submission queue");
-		int total = 0;
 		int errors = 0;
 		int success = 0;
 
@@ -1507,7 +1508,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			String assignid = currentItem.getTaskId();
 
 			// TODO ONC-1292 How to get this, and is it still required with src=9?
-			String tem = turnitinConn.getTEM(cid);
+			String tem = getTEM(cid);
 
 			String utp = "1";
 
@@ -1624,8 +1625,8 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			releaseLock(currentItem);
 			getNextItemInSubmissionQueue();
 		}
-		log.info("Queue run completed " + total + " items submitted " + errors + ", " + success + " successes");
 
+		log.info("Submission queue run completed: " + success + " items submitted, " + errors + " errors.");
 	}
 
 	public String escapeFileName(String fileName, String contentId) {
@@ -1702,7 +1703,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
 		dform.applyPattern(TURNITIN_DATETIME_FORMAT);
 
-		log.debug("Checking for updated reports from Turnitin in bulk mode");
+		log.info("Fetching reports from Turnitin");
 
 		// get the list of all items that are waiting for reports
 		List<ContentReviewItem> awaitingReport = dao.findByProperties(ContentReviewItem.class,
@@ -1771,7 +1772,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				}
 
 				String cid = currentItem.getSiteId();
-				String tem = turnitinConn.getTEM(cid);
+				String tem = getTEM(cid);
 
 				String utp = "2";
 
@@ -1795,7 +1796,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 							"assign", getAssignmentTitle(currentItem.getTaskId()), "assignid", currentItem.getTaskId(), "cid", currentItem.getSiteId(), "ctl", currentItem.getSiteId(),
 							"fcmd", "7", "fid", "4", "utp", "2" );
 
-					getAsnnParams.putAll(turnitinConn.getInstructorInfo(currentItem.getSiteId()));
+					getAsnnParams.putAll(getInstructorInfo(currentItem.getSiteId()));
 
 					Map curasnn = turnitinConn.callTurnitinReturnMap(getAsnnParams);
 
@@ -1846,7 +1847,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 							"ctl", ctl,
 							"utp", utp
 					);
-					params.putAll(turnitinConn.getInstructorInfo(currentItem.getSiteId()));
+					params.putAll(getInstructorInfo(currentItem.getSiteId()));
 
 				Document document = null;
 
@@ -1913,6 +1914,8 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				}
 			}
 		}
+
+		log.info("Finished fetching reports from Turnitin");
 	}
 
 	// returns null if no valid email exists
@@ -2125,7 +2128,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
                                                                                       "ets_usage",ets_usage
 		);
 
-		params.putAll(turnitinConn.getInstructorInfo(siteId));
+		params.putAll(getInstructorInfo(siteId));
 
 		Document document = null;
 
@@ -2273,4 +2276,134 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		}
 		return getLocalizedStatusMessage(errorCode.toString());
 	}
+
+        private String getTEM(String cid) {
+                if (turnitinConn.isUseSourceParameter()) {
+                        return getInstructorInfo(cid).get("uem").toString();
+                } else {
+                        return turnitinConn.getDefaultInstructorEmail();
+                }
+        }
+
+	/**
+	 * This will return a map of the information for the instructor such as
+	 * uem, username, ufn, etc. If the system is configured to use src9
+	 * provisioning, this will draw information from the current thread based
+	 * user. Otherwise it will use the default Instructor information that has
+	 * been configured for the system.
+	 *
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public Map getInstructorInfo(String siteId) {
+		Map togo = new HashMap();
+		if (!turnitinConn.isUseSourceParameter()) {
+			togo.put("uem", turnitinConn.getDefaultInstructorEmail());
+			togo.put("ufn", turnitinConn.getDefaultInstructorFName());
+			togo.put("uln", turnitinConn.getDefaultInstructorLName());
+			togo.put("uid", turnitinConn.getDefaultInstructorId());
+		}
+		else {
+			String INST_ROLE = "section.role.instructor";
+			User inst = null;
+			try {
+				Site site = siteService.getSite(siteId);
+				User user = userDirectoryService.getCurrentUser();
+				if (site.isAllowed(user.getId(), INST_ROLE)) {
+					inst = user;
+				}
+				else {
+					Set<String> instIds = getActiveInstructorIds(INST_ROLE,
+							site);
+					if (instIds.size() > 0) {
+						inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
+					}
+				}
+			} catch (IdUnusedException e) {
+				log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
+			} catch (UserNotDefinedException e) {
+				log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
+			}
+
+
+			if (inst == null) {
+				log.error("Instructor is null in getAbsoluteInstructorInfo");
+			}
+			else {
+				togo.put("uem", getEmail(inst));
+				togo.put("ufn", inst.getFirstName());
+				togo.put("uln", inst.getLastName());
+				togo.put("uid", inst.getId());
+				togo.put("username", inst.getDisplayName());
+			}
+		}
+
+		return togo;
+	}
+
+@SuppressWarnings("unchecked")
+	public Map getInstructorInfo(String siteId, boolean ignoreUseSource) {
+		Map togo = new HashMap();
+		if (!turnitinConn.isUseSourceParameter() && ignoreUseSource == false ) {
+			togo.put("uem", turnitinConn.getDefaultInstructorEmail());
+			togo.put("ufn", turnitinConn.getDefaultInstructorFName());
+			togo.put("uln", turnitinConn.getDefaultInstructorLName());
+			togo.put("uid", turnitinConn.getDefaultInstructorId());
+		}
+		else {
+			String INST_ROLE = "section.role.instructor";
+			User inst = null;
+			try {
+				Site site = siteService.getSite(siteId);
+				User user = userDirectoryService.getCurrentUser();
+				if (site.isAllowed(user.getId(), INST_ROLE)) {
+					inst = user;
+				}
+				else {
+					Set<String> instIds = getActiveInstructorIds(INST_ROLE,
+							site);
+					if (instIds.size() > 0) {
+						inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
+					}
+				}
+			} catch (IdUnusedException e) {
+				log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
+			} catch (UserNotDefinedException e) {
+				log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
+			}
+
+
+			if (inst == null) {
+				log.error("Instructor is null in getAbsoluteInstructorInfo");
+			}
+			else {
+				togo.put("uem", getEmail(inst));
+				togo.put("ufn", inst.getFirstName());
+				togo.put("uln", inst.getLastName());
+				togo.put("uid", inst.getId());
+				togo.put("username", inst.getDisplayName());
+			}
+		}
+
+		return togo;
+	}
+
+	private Set<String> getActiveInstructorIds(String INST_ROLE, Site site) {
+		Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
+		//the site could contain references to deleted users
+		List<User> activeUsers = userDirectoryService.getUsers(instIds);
+		Set<String> ret =  new HashSet<String>();
+		for (int i = 0; i < activeUsers.size(); i++) {
+			User user = activeUsers.get(i);
+			// Ignore users who do not have a first and/or last name set, as this will
+			// cause a TII API call to fail
+			if (user.getFirstName() != null && !user.getFirstName().trim().isEmpty() && 
+		   	    user.getLastName() != null && !user.getLastName().trim().isEmpty()) {
+				ret.add(user.getId());
+			}
+		}
+
+		return ret;
+	}
+
 }

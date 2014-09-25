@@ -106,7 +106,7 @@ public class TurnitinRosterSync {
 	 * @return
 	 */
 	public Document getEnrollmentDocument(String sakaiSiteID) {
-		Map instinfo = turnitinConn.getInstructorInfo(sakaiSiteID);
+		Map instinfo = turnitinReviewServiceImpl.getInstructorInfo(sakaiSiteID);
 
 		Map params = TurnitinAPIUtil.packMap(null,
 				"fid","19",
@@ -194,7 +194,7 @@ public class TurnitinRosterSync {
 					"ufn", user.getFirstName(), "uln", user.getLastName(),
 					"username", user.getDisplayName(), "ctl", siteId, "cid", siteId,
 					"utp", currentRole+"",
-					"tem", turnitinConn.getInstructorInfo(siteId).get("uem"));
+					"tem", turnitinReviewServiceImpl.getInstructorInfo(siteId).get("uem"));
 
 			Map ret = new HashMap();
 			try {

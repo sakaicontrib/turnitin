@@ -24,24 +24,14 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
-import org.sakaiproject.exception.IdUnusedException;
-import org.sakaiproject.site.api.Site;
-import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
-import org.sakaiproject.user.api.User;
-import org.sakaiproject.user.api.UserDirectoryService;
-import org.sakaiproject.user.api.UserNotDefinedException;
 import org.w3c.dom.Document;
 
 /**
@@ -67,7 +57,6 @@ public class TurnitinAccountConnection {
 	private String apiURL = "https://api.turnitin.com/api.asp?";
 	private String proxyHost = null;
 	private String proxyPort = null;
-	final static long LOCK_PERIOD = 12000000;
 	private String defaultInstructorEmail = null;
 	private String defaultInstructorFName = null;
 	private String defaultInstructorLName = null;
@@ -78,8 +67,8 @@ public class TurnitinAccountConnection {
 	private boolean instructorAccountNotified = true;
 	private int sendSubmissionNotification = 0;
 	private Long maxRetry = null;
-                     private boolean useGrademark = false;
-                     private boolean migrate = false;
+	private boolean useGrademark = false;
+	private boolean migrate = false;
 
 	// Proxy if set
 	private Proxy proxy = null;
@@ -136,7 +125,7 @@ public class TurnitinAccountConnection {
 
 		useSourceParameter = serverConfigurationService.getBoolean("turnitin.useSourceParameter", false);
 
-                                           migrate = serverConfigurationService.getBoolean("turnitin.migrate", false);
+		migrate = serverConfigurationService.getBoolean("turnitin.migrate", false);
 
 		useGrademark = serverConfigurationService.getBoolean("turnitin.useGrademark", true);
 
@@ -199,136 +188,6 @@ public class TurnitinAccountConnection {
 		return togo;
 	}
 
-	/**
-	 * This will return a map of the information for the instructor such as
-	 * uem, username, ufn, etc. If the system is configured to use src9
-	 * provisioning, this will draw information from the current thread based
-	 * user. Otherwise it will use the default Instructor information that has
-	 * been configured for the system.
-	 *
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public Map getInstructorInfo(String siteId) {
-		Map togo = new HashMap();
-		if (!useSourceParameter) {
-			togo.put("uem", defaultInstructorEmail);
-			togo.put("ufn", defaultInstructorFName);
-			togo.put("uln", defaultInstructorLName);
-			togo.put("uid", defaultInstructorId);
-		}
-		else {
-			String INST_ROLE = "section.role.instructor";
-			User inst = null;
-			try {
-				Site site = siteService.getSite(siteId);
-				User user = userDirectoryService.getCurrentUser();
-				if (site.isAllowed(user.getId(), INST_ROLE)) {
-					inst = user;
-				}
-				else {
-					Set<String> instIds = getActiveInstructorIds(INST_ROLE,
-							site);
-					if (instIds.size() > 0) {
-						inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
-					}
-				}
-			} catch (IdUnusedException e) {
-				log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
-			} catch (UserNotDefinedException e) {
-				log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
-			}
-
-
-			if (inst == null) {
-				log.error("Instructor is null in getAbsoluteInstructorInfo");
-			}
-			else {
-				togo.put("uem", inst.getEmail());
-				togo.put("ufn", inst.getFirstName());
-				togo.put("uln", inst.getLastName());
-				togo.put("uid", inst.getId());
-				togo.put("username", inst.getDisplayName());
-			}
-		}
-
-		return togo;
-	}
-
-@SuppressWarnings("unchecked")
-	public Map getInstructorInfo(String siteId, boolean ignoreUseSource) {
-		Map togo = new HashMap();
-		if (!useSourceParameter && ignoreUseSource == false ) {
-			togo.put("uem", defaultInstructorEmail);
-			togo.put("ufn", defaultInstructorFName);
-			togo.put("uln", defaultInstructorLName);
-			togo.put("uid", defaultInstructorId);
-		}
-		else {
-			String INST_ROLE = "section.role.instructor";
-			User inst = null;
-			try {
-				Site site = siteService.getSite(siteId);
-				User user = userDirectoryService.getCurrentUser();
-				if (site.isAllowed(user.getId(), INST_ROLE)) {
-					inst = user;
-				}
-				else {
-					Set<String> instIds = getActiveInstructorIds(INST_ROLE,
-							site);
-					if (instIds.size() > 0) {
-						inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
-					}
-				}
-			} catch (IdUnusedException e) {
-				log.error("Unable to fetch site in getAbsoluteInstructorInfo: " + siteId, e);
-			} catch (UserNotDefinedException e) {
-				log.error("Unable to fetch user in getAbsoluteInstructorInfo", e);
-			}
-
-
-			if (inst == null) {
-				log.error("Instructor is null in getAbsoluteInstructorInfo");
-			}
-			else {
-				togo.put("uem", inst.getEmail());
-				togo.put("ufn", inst.getFirstName());
-				togo.put("uln", inst.getLastName());
-				togo.put("uid", inst.getId());
-				togo.put("username", inst.getDisplayName());
-			}
-		}
-
-		return togo;
-	}
-
-	private Set<String> getActiveInstructorIds(String INST_ROLE, Site site) {
-		Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
-		//the site could contain references to deleted users
-		List<User> activeUsers = userDirectoryService.getUsers(instIds);
-		Set<String> ret =  new HashSet<String>();
-		for (int i = 0; i < activeUsers.size(); i++) {
-			User user = activeUsers.get(i);
-			// Ignore users who do not have a first and/or last name set, as this will
-			// cause a TII API call to fail
-			if (user.getFirstName() != null && !user.getFirstName().trim().isEmpty() && 
-		   	    user.getLastName() != null && !user.getLastName().trim().isEmpty()) {
-				ret.add(user.getId());
-			}
-		}
-
-		return ret;
-	}
-
-	public String getTEM(String cid) {
-		if (useSourceParameter) {
-			//return cid + "_" + this.aid + "@tiisakai.com";
-			return getInstructorInfo(cid).get("uem").toString();
-		} else {
-			return defaultInstructorEmail;
-		}
-	}
-
 	public Map callTurnitinReturnMap(Map params) throws TransientSubmissionException, SubmissionException {
 		return TurnitinAPIUtil.callTurnitinReturnMap(apiURL, params, secretKey, turnitinConnTimeout, proxy);
 	}
@@ -372,7 +231,7 @@ public class TurnitinAccountConnection {
 		this.useSourceParameter = useSourceParameter;
 	}
 
-                     public boolean getUseGradeMark() {
+	public boolean getUseGradeMark() {
 		return useGrademark;
 	}
 
@@ -392,16 +251,6 @@ public class TurnitinAccountConnection {
 	private ServerConfigurationService serverConfigurationService;
 	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
 		this.serverConfigurationService = serverConfigurationService;
-	}
-
-	private SiteService siteService;
-	public void setSiteService(SiteService siteService) {
-		this.siteService = siteService;
-	}
-
-	private UserDirectoryService userDirectoryService;
-	public void setUserDirectoryService(UserDirectoryService userDirectoryService) {
-		this.userDirectoryService = userDirectoryService;
 	}
 
 	public boolean isStudentAccountNotified() {
@@ -450,5 +299,21 @@ public class TurnitinAccountConnection {
 
 	public void setInstructorAccountNotified(boolean instructorAccountNotified) {
 		this.instructorAccountNotified = instructorAccountNotified;
+	}
+
+  	public String getDefaultInstructorEmail() {
+		return defaultInstructorEmail;
+	}
+
+  	public String getDefaultInstructorFName() {
+		return defaultInstructorFName;
+	}
+
+  	public String getDefaultInstructorLName() {
+		return defaultInstructorLName;
+	}
+
+  	public String getDefaultInstructorId() {
+		return defaultInstructorId;
 	}
 }
