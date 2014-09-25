@@ -1817,6 +1817,12 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 						if (reportGenSpeed != null && duedateObj != null &&
 							reportGenSpeed.equals("2") && duedateObj.after(new Date())) {
 							log.info("Report generate speed is 2, skipping for now. ItemID: " + currentItem.getId());
+							// If there was previously a transient error for this item, reset the status
+							if (ContentReviewItem.REPORT_ERROR_RETRY_CODE.equals(currentItem.getStatus())) {
+								currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
+								currentItem.setLastError(null);
+								dao.update(currentItem);
+							}
 							continue;
 						}
 						else {
