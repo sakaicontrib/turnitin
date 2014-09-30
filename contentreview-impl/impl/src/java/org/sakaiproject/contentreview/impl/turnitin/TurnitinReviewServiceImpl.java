@@ -1580,6 +1580,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 					currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
 					currentItem.setRetryCount(Long.valueOf(0));
 					currentItem.setLastError(null);
+					currentItem.setErrorCode(null);
 					currentItem.setDateSubmitted(new Date());
 					success++;
 					dao.update(currentItem);
@@ -1821,6 +1822,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 							if (ContentReviewItem.REPORT_ERROR_RETRY_CODE.equals(currentItem.getStatus())) {
 								currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
 								currentItem.setLastError(null);
+								currentItem.setErrorCode(null);
 								dao.update(currentItem);
 							}
 							continue;
