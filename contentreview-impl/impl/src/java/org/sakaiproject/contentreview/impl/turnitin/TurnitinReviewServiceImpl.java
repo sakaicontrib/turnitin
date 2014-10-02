@@ -1121,7 +1121,13 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			firstparams.putAll(params);
 			firstparams.put("session-id", sessionid);
 			firstparams.put("dtstart", today);
-			firstparams.put("dtdue", dtdue);
+
+			// Make the due date in the future
+			Calendar caldue = Calendar.getInstance();
+			caldue.add(Calendar.MONTH, 5);
+			String dtdue_first = dform.format(caldue.getTime());
+			firstparams.put("dtdue", dtdue_first);
+
 			log.debug("date due is: " + dtdue);
 			log.debug("Start date: " + today);
 			firstparams.put("fcmd", "2");
@@ -2063,6 +2069,9 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		}
 	}
 
+	/**
+	 * Update Assignment. This method is not currently called by Assignments 1.
+	 */
 	public void updateAssignment(String siteId, String taskId) throws SubmissionException {
 		log.info("updateAssignment(" + siteId +" , " + taskId + ")");
 		//get the assignment reference
