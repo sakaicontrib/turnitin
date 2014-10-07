@@ -143,12 +143,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		this.sakaiPersonManager = s;
 	}
 
-	//Should the service prefer the system profile email address for users if set?
-	private boolean preferSystemProfileEmail;
-	public void setPreferSystemProfileEmail(boolean b) {
-		preferSystemProfileEmail = b;
-	}
-
 	private ContentReviewDao dao;
 	public void setDao(ContentReviewDao dao) {
 		super.setDao(dao);
@@ -189,6 +183,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 	private boolean spoilEmailAddresses = false;
 
+	/** Prefer system profile email addresses */
+	private boolean preferSystemProfileEmail = true;
+
+	/** Use guest account eids as email addresses */
+	private boolean preferGuestEidEmail = true;
+
                private GradebookService gradebookService = (GradebookService)
                             ComponentManager.get("org.sakaiproject.service.gradebook.GradebookService");
                     private GradebookExternalAssessmentService gradebookExternalAssessmentService =
@@ -211,14 +211,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		defaultAssignId = turnitinConn.getDefaultAssignId();
 		defaultClassPassword = turnitinConn.getDefaultClassPassword();
 
-		log.info("init()");
+		spoilEmailAddresses = serverConfigurationService.getBoolean("turnitin.spoilEmailAddresses", false);
+		preferSystemProfileEmail = serverConfigurationService.getBoolean("turnitin.preferSystemProfileEmail", true);
+		preferGuestEidEmail = serverConfigurationService.getBoolean("turnitin.preferGuestEidEmail", true);
+
+		log.info("init(): spoilEmailAddresses=" + spoilEmailAddresses + 
+		          " preferSystemProfileEmail=" + preferSystemProfileEmail + 
+		          " preferGuestEidEmail=" + preferGuestEidEmail);
+
 		if (!turnitinConn.isUseSourceParameter()) {
 			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
 				doAssignments();
 		}
 
-		spoilEmailAddresses = serverConfigurationService.getBoolean("turnitin.spoilEmailAddresses", false);
-		if (log.isDebugEnabled()) log.debug("SPOIL EMAIL ADDRESSES: " + spoilEmailAddresses);
 	}
 
 	public String getServiceName() {
@@ -1939,50 +1944,39 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 	// returns null if no valid email exists
 	public String getEmail(User user) {
+
 		String uem = null;
-		log.debug("Looking for email for " + user.getEid() + " with prefer system profile email set to " + this.preferSystemProfileEmail);
-		if (!this.preferSystemProfileEmail) {
-			uem = user.getEmail().trim();
-			log.debug("got email of " + uem);
-			if (uem == null || uem.equals("") || !isValidEmail(uem)) {
-				//try the systemProfile
-				SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
-				if (sp != null ) {
-					String uem2 = sp.getMail().trim();
-					log.debug("Got system profile email of " + uem2);
-					if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
-						uem = null;
-					} else {
-						uem =  uem2;
-					}
-				} else {
-					log.debug("this user has no systemMutable profile");
-					uem = null;
-				}
-			}
-		} else {
-			//try sakaiperson first
-			log.debug("try system profile email first");
+
+		// Check account email address
+		String account_email = null;
+
+		if (isValidEmail(user.getEmail())) {
+			account_email = user.getEmail().trim();
+		}
+
+		// Lookup system profile email address if necessary
+		String profile_email = null;
+		if (account_email == null || preferSystemProfileEmail) {
 			SakaiPerson sp = sakaiPersonManager.getSakaiPerson(user.getId(), sakaiPersonManager.getSystemMutableType());
-			if (sp != null && sp.getMail()!=null && sp.getMail().length()>0 ) {
-				String uem2 = sp.getMail().trim();
-				if (uem2 == null || uem2.equals("") || !isValidEmail(uem2)) {
-					uem = user.getEmail().trim();
-					log.debug("Got system profile email of " + uem2);
-					if (uem == null || uem.equals("") || !isValidEmail(uem))
-						uem = user.getEmail().trim();
-					if (uem == null || uem.equals("") || !isValidEmail(uem))
-						uem = null;
-				} else {
-					uem =  uem2;
-				}
-			} else {
-				uem = user.getEmail().trim();
-				if (uem == null || uem.equals("") || !isValidEmail(uem))
-					uem = null;
+			if (sp != null && isValidEmail(sp.getMail())) {
+				profile_email = sp.getMail().trim();
 			}
 		}
 
+		// Check guest accounts and use eid as the email if preferred
+		if (this.preferGuestEidEmail && isValidEmail(user.getEid())) {
+			uem = user.getEid();
+		}
+
+		if (uem == null && preferSystemProfileEmail && profile_email != null) {
+			uem = profile_email;
+		}
+
+		if (uem == null && account_email != null) {
+			uem = account_email;
+		}
+
+		// Randomize the email address if preferred
 		if (spoilEmailAddresses && uem != null) {
 			// Scramble it
 			String[] parts = uem.split("@");
@@ -2001,6 +1995,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			if (log.isDebugEnabled()) log.debug("SCRAMBLED EMAIL:" + uem);
 		}
 
+		log.debug("Using email " + uem + " for user eid " + user.getEid() + " id " + user.getId());
 		return uem;
 	}
 

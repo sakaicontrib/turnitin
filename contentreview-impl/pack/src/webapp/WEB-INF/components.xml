@@ -37,9 +37,6 @@
 			ref="org.sakaiproject.entity.api.EntityManager" />
 		<property name="sakaiPersonManager"
 			ref="org.sakaiproject.api.common.edu.person.SakaiPersonManager" />
-		<property name="preferSystemProfileEmail">
-			<value>true</value>
-		</property>
 		<property name="siteAdvisor"
 			ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" />
 		<property name="sqlService"

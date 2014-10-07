@@ -185,7 +185,6 @@ public class TurnitinRosterSync {
 	 * @return
 	 */
 	public boolean swapTurnitinRoles(String siteId, User user, int currentRole ) {
-		boolean togo = false;
 
 		if (user != null) {
                 	String uem = turnitinReviewServiceImpl.getEmail(user);
@@ -200,27 +199,34 @@ public class TurnitinRosterSync {
 			try {
 				ret = turnitinConn.callTurnitinWDefaultsReturnMap(params);
 			} catch (SubmissionException e) {
-				log.error("Error syncing Turnitin site: " + siteId + " userid: " + user.getId(), e);
+				log.error("Error syncing Turnitin site: " + siteId + " user: " + user.getEid(), e);
 			} catch (TransientSubmissionException e) {
-				log.error("Error syncing Turnitin site: " + siteId + " userid: " + user.getId(), e);
+				log.error("Error syncing Turnitin site: " + siteId + " user: " + user.getEid(), e);
 			}
 
 			// A Successful return should look like:
 			// {rmessage=Successful!, rcode=93}
 			if (ret.containsKey("rcode") && ret.get("rcode").equals("93")) {
 				log.info("Successfully swapped user roles for site: " + siteId + " user: " + user.getEid() + " oldRole: " + currentRole);
-				togo = true;
-			} else {
-				log.warn("Unable to swap user roles for site: " + siteId + " user: " + user.getEid() + " oldRole: " + currentRole);
+				return true;
+			}
+
+			// Special case: ignore return code 450 (unable to swap role because the user is the only instructor)
+			// This is typically because there is more than one Sakai user in the site with the same email address,
+			// and Turnitin is not distinguishing between them despite the uid being supplied.
+			if (ret.containsKey("rcode") && ret.get("rcode").equals("450")) {
+				log.info("Response code 450 (user is only instructor in the site); not changing user role for site: " + siteId + " user: " + user.getEid());
+				return true;
 			}
 		}
 		else {
 			// This was successful because the user doesn't exist in our Sakai
 			// installation, and so we don't need to sync them at all.
-			togo = true;
+			return true;
 		}
 
-		return togo;
+		log.warn("Unable to swap user roles for site: " + siteId + " user: " + user.getEid() + " oldRole: " + currentRole);
+		return false;
 	}
 
                            /**
