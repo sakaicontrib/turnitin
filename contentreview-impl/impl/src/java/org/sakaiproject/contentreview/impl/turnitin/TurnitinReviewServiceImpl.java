@@ -856,6 +856,11 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			}
 		}
 
+		// Turnitin requires Assignment titles to be at least two characters long
+		if (togo.length() == 1) {
+			togo = togo + "_";
+		}
+
 		return togo;
 
 	}
