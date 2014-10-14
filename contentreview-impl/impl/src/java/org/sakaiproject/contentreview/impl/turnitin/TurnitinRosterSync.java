@@ -142,11 +142,15 @@ public class TurnitinRosterSync {
 	 * the second element is a List<String> of student ids.
 	 */
 	public Map<String, List<String>> getInstructorsStudentsForSite(String sakaiSiteID) {
-		Map togo = null;
 
 		List<String> instructorIds = new ArrayList<String>();
 		List<String> studentIds = new ArrayList<String>();
 		Document doc = getEnrollmentDocument(sakaiSiteID);
+
+		if (doc == null) {
+			return null;
+		}
+
 		NodeList instructors = doc.getElementsByTagName("instructor");
 
 		for (int i = 0; i < instructors.getLength(); i++) {
@@ -163,7 +167,7 @@ public class TurnitinRosterSync {
 			studentIds.add(studUID);
 		}
 
-		togo = new HashMap<String, List<String>>();
+		Map togo = new HashMap<String, List<String>>();
 		togo.put("instructor", instructorIds);
 		togo.put("student", studentIds);
 
@@ -363,6 +367,10 @@ public class TurnitinRosterSync {
 		}
 
 		Map<String, List<String>> enrollment = getInstructorsStudentsForSite(sakaiSiteID);
+
+		if (enrollment == null) {
+			return false;
+		}
 
 		// Only run if using SRC 9
 		if (turnitinConn.isUseSourceParameter()) {

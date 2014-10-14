@@ -185,9 +185,15 @@ public class TurnitinAPIUtil {
 	{
 		InputStream inputStream = callTurnitinReturnInputStream(apiURL, parameters, secretKey, timeout, proxy, false);
 		XMLTranscoder xmlt = new XMLTranscoder();
-		Map togo = xmlt.decode(StreamCopyUtil.streamToString(inputStream));
-		apiTraceLog.debug("Turnitin Result Payload: " + togo);
-		return togo;
+
+		try {
+			Map togo = xmlt.decode(StreamCopyUtil.streamToString(inputStream));
+			apiTraceLog.debug("Turnitin Result Payload: " + togo);
+			return togo;
+		} catch (Exception t) {
+			// Could be 'java.lang.IllegalArgumentException: xml cannot be null or empty' from IO errors
+			throw new TransientSubmissionException ("Cannot parse Turnitin response. Assuming call was unsuccessful", t);
+		}
 	}
 
 	public static Document callTurnitinReturnDocument(String apiURL, Map<String,Object> parameters, 
