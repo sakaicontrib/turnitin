@@ -154,7 +154,8 @@ public class TurnitinAccountConnection {
 
 		maxRetry = Long.valueOf(serverConfigurationService.getInt("turnitin.maxRetry",100));
 
-		turnitinConnTimeout = serverConfigurationService.getInt("turnitin.networkTimeout", 0);
+		// Timeout period in ms for network connections (default 180s). Set to 0 to disable timeout.
+		turnitinConnTimeout = serverConfigurationService.getInt("turnitin.networkTimeout", 180000);
 
 	}
 
