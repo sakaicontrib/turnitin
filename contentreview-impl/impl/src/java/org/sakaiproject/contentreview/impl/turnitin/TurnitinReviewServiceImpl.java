@@ -2318,6 +2318,9 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 	 */
 	@SuppressWarnings("unchecked")
 	public Map getInstructorInfo(String siteId) {
+
+		log.debug("Getting instructor info for site " + siteId);
+
 		Map togo = new HashMap();
 		if (!turnitinConn.isUseSourceParameter()) {
 			togo.put("uem", turnitinConn.getDefaultInstructorEmail());
@@ -2331,6 +2334,9 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			try {
 				Site site = siteService.getSite(siteId);
 				User user = userDirectoryService.getCurrentUser();
+	
+				log.debug("Current user: " + user.getId());
+
 				if (site.isAllowed(user.getId(), INST_ROLE)) {
 					inst = user;
 				}
@@ -2411,16 +2417,21 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 	}
 
 	private Set<String> getActiveInstructorIds(String INST_ROLE, Site site) {
+
+		log.debug("Getting active instructor IDs for permission " + INST_ROLE + " in site " + site.getId());
+
 		Set<String> instIds = site.getUsersIsAllowed(INST_ROLE);
+
 		//the site could contain references to deleted users
 		List<User> activeUsers = userDirectoryService.getUsers(instIds);
 		Set<String> ret =  new HashSet<String>();
 		for (int i = 0; i < activeUsers.size(); i++) {
 			User user = activeUsers.get(i);
-			// Ignore users who do not have a first and/or last name set, as this will
-			// cause a TII API call to fail
+			// Ignore users who do not have a first and/or last name set or do not have
+			// a valid email address, as this will cause a TII API call to fail
 			if (user.getFirstName() != null && !user.getFirstName().trim().isEmpty() && 
-		   	    user.getLastName() != null && !user.getLastName().trim().isEmpty()) {
+		   	    user.getLastName() != null && !user.getLastName().trim().isEmpty() &&
+			    getEmail(user) != null) {
 				ret.add(user.getId());
 			}
 		}
