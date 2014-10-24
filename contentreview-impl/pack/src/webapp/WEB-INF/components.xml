@@ -37,20 +37,25 @@
 			ref="org.sakaiproject.entity.api.EntityManager" />
 		<property name="sakaiPersonManager"
 			ref="org.sakaiproject.api.common.edu.person.SakaiPersonManager" />
-		<property name="siteAdvisor"
-			ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" />
 		<property name="sqlService"
 			ref="org.sakaiproject.db.api.SqlService" />
 		<property name="turnitinContentValidator"
 			ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator" />
 		<property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
 		<property name="turnitinConn" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection" />
+		<!--
+		<property name="siteAdvisor"
+			ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" />
+		-->
 	</bean>
 
+	<!--  Uncomment this to allow all sites to use Turnitin regardless of site type or property -->
+	<!--
 	<bean
 		id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"
 		class="org.sakaiproject.contentreview.impl.adivisors.DefaultSiteAdvisor">
 	</bean>
+	-->
 
 	<!--  Uncomment this to use a site property to define which sites use c-r -->
 	<!--
@@ -63,7 +68,6 @@
 		<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.adivisors.SiteCourseTypeAdvisor">
 		</bean>
 	-->
-
 
 	<!-- QueuProcessing jobs -->
 	<!-- Content review Queue Process -->

@@ -65,7 +65,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		this.userDirectoryService = userDirectoryService;
 	}
 	
-	private ContentReviewSiteAdvisor siteAdvisor;
+	protected ContentReviewSiteAdvisor siteAdvisor;
 	public void setSiteAdvisor(ContentReviewSiteAdvisor crsa) {
 		this.siteAdvisor = crsa;
 	}
@@ -276,14 +276,14 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		
 	}
 
-	public boolean isSiteAcceptable(Site s) {
-		return siteAdvisor.siteCanUseReviewService(s);
-	}
-	
 
 
 	public boolean allowResubmission() {
 		return true;
+	}
+
+	public boolean isSiteAcceptable(Site s) {
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	public void checkForReports() {
