@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -91,12 +93,15 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
-	private static final Log log = LogFactory
-	.getLog(TurnitinReviewServiceImpl.class);
+
+	private static final Log log = LogFactory.getLog(TurnitinReviewServiceImpl.class);
 
 	public static final String TURNITIN_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
 	private static final String SERVICE_NAME="Turnitin";
+
+	// Site property to enable or disable use of Turnitin for the site
+	private static final String TURNITIN_SITE_PROPERTY = "turnitin";
 
 	final static long LOCK_PERIOD = 12000000;
 
@@ -111,6 +116,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String defaultAssignId = null;
 
 	private String defaultClassPassword = null;
+
+	private List<String> enabledSiteTypes;
 
 	private TurnitinAccountConnection turnitinConn;
 	public void setTurnitinConn(TurnitinAccountConnection turnitinConn) {
@@ -215,9 +222,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		preferSystemProfileEmail = serverConfigurationService.getBoolean("turnitin.preferSystemProfileEmail", true);
 		preferGuestEidEmail = serverConfigurationService.getBoolean("turnitin.preferGuestEidEmail", true);
 
+		enabledSiteTypes = Arrays.asList(ArrayUtils.nullToEmpty(serverConfigurationService.getStrings("turnitin.sitetypes")));
+
 		log.info("init(): spoilEmailAddresses=" + spoilEmailAddresses + 
 		          " preferSystemProfileEmail=" + preferSystemProfileEmail + 
 		          " preferGuestEidEmail=" + preferGuestEidEmail);
+
+		if (siteAdvisor != null) {
+			log.info("Using siteAdvisor: " + siteAdvisor.getClass().getName());
+		}
+
+		if (enabledSiteTypes != null) {
+			log.info("Turnitin is enabled for site types: " + StringUtils.join(enabledSiteTypes, ","));
+		}
 
 		if (!turnitinConn.isUseSourceParameter()) {
 			if (serverConfigurationService.getBoolean("turnitin.updateAssingments", false))
@@ -229,6 +246,42 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public String getServiceName() {
 		return SERVICE_NAME;
 	}
+
+	/**
+ 	 * Allow Turnitin for this site?
+	 */
+	public boolean isSiteAcceptable(Site s) {
+
+		if (s == null) {
+			return false;
+		}
+
+		log.debug("isSiteAcceptable: " + s.getId() + " / " + s.getTitle());
+
+		// Delegated to another bean
+		if (siteAdvisor != null) {
+			return siteAdvisor.siteCanUseReviewService(s);
+		}
+
+		// Check site property
+		ResourceProperties properties = s.getProperties();
+
+                String prop = (String) properties.get(TURNITIN_SITE_PROPERTY);
+                if (prop != null) {
+			log.debug("Using site property: " + prop);
+                        return Boolean.parseBoolean(prop);
+                }
+
+		// Check list of allowed site types, if defined
+		if (enabledSiteTypes != null) {
+			log.debug("Using site type: " + s.getType());
+			return enabledSiteTypes.contains(s.getType());
+		}
+
+		// No property set, no restriction on site types, so allow
+                return true; 
+        }
+
 
 	public String getIconUrlforScore(Long score) {
 
