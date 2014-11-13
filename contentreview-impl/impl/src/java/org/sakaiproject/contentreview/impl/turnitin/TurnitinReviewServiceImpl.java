@@ -232,7 +232,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.info("Using siteAdvisor: " + siteAdvisor.getClass().getName());
 		}
 
-		if (enabledSiteTypes != null) {
+		if (enabledSiteTypes != null && !enabledSiteTypes.isEmpty()) {
 			log.info("Turnitin is enabled for site types: " + StringUtils.join(enabledSiteTypes, ","));
 		}
 
@@ -273,7 +273,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
                 }
 
 		// Check list of allowed site types, if defined
-		if (enabledSiteTypes != null) {
+		if (enabledSiteTypes != null && !enabledSiteTypes.isEmpty()) {
 			log.debug("Using site type: " + s.getType());
 			return enabledSiteTypes.contains(s.getType());
 		}
