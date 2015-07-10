@@ -38,7 +38,7 @@ import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 
 /**
- * This Observer will watch for site.upd.site.mbrshp events. When these happen
+ * This Observer will watch for site.upd.site.mbrshp and site.upd events. When these happen
  * and the site is enabled for use with Turnitin, an entry will be added to a
  * queue table for a quartz job or other script to run through and sync.
  * 
@@ -49,6 +49,7 @@ public class MembershipChangeObserver implements Observer {
 	private static final Log log = LogFactory.getLog(MembershipChangeObserver.class);
 
 	public static final String MEMBERSHIP_EVENT = "site.upd.site.mbrshp";
+	public static final String SITE_UPDATE_EVENT = "site.upd";
 
 	private EventTrackingService eventTrackingService;
 	public void setEventTrackingService(EventTrackingService eventTrackingService) {
@@ -83,7 +84,7 @@ public class MembershipChangeObserver implements Observer {
 	public void update(Observable o, Object arg) {
 		if (arg instanceof Event) {
 			Event event = (Event) arg;
-			if (event.getEvent().equals(MEMBERSHIP_EVENT)) {
+			if (event.getEvent().equals(MEMBERSHIP_EVENT) || event.getEvent().equals(SITE_UPDATE_EVENT)) {
 				Site site = null;
 				try {
 					site = siteService.getSite(event.getContext());
