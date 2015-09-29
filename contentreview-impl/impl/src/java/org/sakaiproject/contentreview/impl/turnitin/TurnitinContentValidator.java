@@ -21,6 +21,12 @@
 package org.sakaiproject.contentreview.impl.turnitin;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,6 +57,12 @@ public class TurnitinContentValidator {
 	 */
 	private static int TII_DEFAULT_MAX_FILE_SIZE = 20971520;
 	
+	ContentReviewService contentReviewService = null;
+	public void setContentReviewService(ContentReviewService contentReviewService)
+	{
+		this.contentReviewService = contentReviewService;
+	}
+
 	private ServerConfigurationService serverConfigurationService; 
 	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
 		this.serverConfigurationService = serverConfigurationService;
@@ -112,8 +124,7 @@ public class TurnitinContentValidator {
 	}
 	
 	public boolean isAcceptableContent(ContentResource resource) {
-		//for now we accept all content
-		// TODO: Check against content types accepted by Turnitin
+		// Check against content types accepted by Turnitin
 		/*
 		 * Turnitin currently accepts the following file types for submission: MS Word (.doc), WordPerfect (.wpd), PostScript (.eps), Portable Document Format (.pdf), HTML (.htm), Rich Text (.rtf) and Plain Text (.txt)
 		 * text/plain
@@ -126,11 +137,24 @@ public class TurnitinContentValidator {
 		String mime = resource.getContentType();
 		log.debug("Got a content type of " + mime);
 
+		// TII-157	--bbailla2
+		Map<String, SortedSet<String>> acceptableExtensionsToMimeTypes = contentReviewService.getAcceptableExtensionsToMimeTypes();
+		Set<String> acceptableMimeTypes = new HashSet<String>();
+		for (SortedSet<String> mimeTypes : acceptableExtensionsToMimeTypes.values())
+		{
+			acceptableMimeTypes.addAll(mimeTypes);
+		}
+
 		Boolean fileTypeOk = false;
-		if ((mime.equals("text/plain") || mime.equals("text/html") || mime.equals("application/msword") || 
-				mime.equals("application/postscript") || mime.equals("application/pdf") || mime.equals("text/rtf")) ) {
+		if (acceptableMimeTypes.contains(mime))
+		{
 			fileTypeOk =  true;
 			log.debug("FileType matches a known mime");
+		}
+		else
+		{
+			log.debug("FileType doesn't match a known mime");
+			//TODO: return false here if we're confident that CRS.getAcceptableExtensionsToMimeTypes() gets us all of TII's acceptable mime types
 		}
 
 		//as mime's can be tricky check the extensions
@@ -141,14 +165,21 @@ public class TurnitinContentValidator {
 
 				String extension = fileName.substring(fileName.lastIndexOf("."));
 				log.debug("file has an extension of " + extension);
-				if (extension.equals(".doc") || extension.equals(".wpd") || extension.equals(".eps") 
-						||  extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") 
-						|| extension.equals(".pdf") || extension.equals(".docx") || ".rtf".equals(extension))
+				Set<String> extensions = acceptableExtensionsToMimeTypes.keySet();
+				if (extensions.contains(extension))
+				{
 					fileTypeOk = true;
+				}
+				else
+				{
+					// Neither the mime type nor the file extension are accepted
+					return false;
+				}
 
 			} else {
-				//we don't know what this is so lets submit it anyway
-				fileTypeOk = true;
+				// No extension is not accepted
+				// TODO: Make this configurable
+				return false;
 			}
 		}
 

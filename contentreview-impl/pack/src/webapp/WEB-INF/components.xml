@@ -14,6 +14,8 @@
 	<bean id="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator"
 		class="org.sakaiproject.contentreview.impl.turnitin.TurnitinContentValidator"
 		init-method="init">
+		<property name="contentReviewService"
+			ref="org.sakaiproject.contentreview.service.ContentReviewServiceTii" />
 		<property name="serverConfigurationService"
 			ref="org.sakaiproject.component.api.ServerConfigurationService" />
 	</bean>
