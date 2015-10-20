@@ -1282,7 +1282,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				"cid", cid,
 				"tem", tem,
 				"ctl", ctl,
-				"dis", studentAccountNotified ? "0" : "1",
+				"dis", studentAccountNotified ? "1" : "0",
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
