@@ -1282,7 +1282,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				"cid", cid,
 				"tem", tem,
 				"ctl", ctl,
-				"dis", studentAccountNotified ? "1" : "0",
+				"dis", studentAccountNotified ? "0" : "1", // dis=1 means disable sending email
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
@@ -1599,7 +1599,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 					"cid", cid,
 					"assign", assign,
 					"ctl", ctl,
-					"dis", Integer.valueOf(sendSubmissionNotification).toString(),
+					"dis", sendSubmissionNotification > 0 ? "0" : "1", // dis=1 means disable sending email
 					"fcmd", fcmd,
 					"fid", fid,
 					"ptype", ptype,
