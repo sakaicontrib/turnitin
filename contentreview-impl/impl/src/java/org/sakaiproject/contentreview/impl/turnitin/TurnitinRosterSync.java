@@ -35,6 +35,7 @@ import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.SubmissionException;
 import org.sakaiproject.contentreview.exception.TransientSubmissionException;
 import org.sakaiproject.contentreview.model.ContentReviewRosterSyncItem;
+import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.genericdao.api.search.Order;
 import org.sakaiproject.genericdao.api.search.Restriction;
@@ -66,6 +67,11 @@ public class TurnitinRosterSync {
 	private TurnitinReviewServiceImpl turnitinReviewServiceImpl;
 	public void setTurnitinReviewServiceImpl(TurnitinReviewServiceImpl turnitinReviewServiceImpl) {
 		this.turnitinReviewServiceImpl = turnitinReviewServiceImpl;
+	}
+	
+	private ContentReviewSiteAdvisor contentReviewSiteAdvisor;
+	public void setContentReviewSiteAdvisor(ContentReviewSiteAdvisor contentReviewSiteAdvisor) {
+		this.contentReviewSiteAdvisor = contentReviewSiteAdvisor;
 	}
 
 	private SiteService siteService;
@@ -272,7 +278,7 @@ public class TurnitinRosterSync {
 			log.debug("User " + userId + " has no last name");
 			throw new SubmissionException ("User has no last name");
 		}
-		String dis = turnitinConn.isInstructorAccountNotified() ? "1" : "0";
+		String dis = (turnitinConn.isInstructorAccountNotified()) ? "0" : "1";
 
 		Document document = null;
 
@@ -366,6 +372,10 @@ public class TurnitinRosterSync {
 			return true;
 		}
 
+		if(contentReviewSiteAdvisor.siteCanUseLTIReviewService(site)){
+			return false;
+		}
+		
 		Map<String, List<String>> enrollment = getInstructorsStudentsForSite(sakaiSiteID);
 
 		if (enrollment == null) {

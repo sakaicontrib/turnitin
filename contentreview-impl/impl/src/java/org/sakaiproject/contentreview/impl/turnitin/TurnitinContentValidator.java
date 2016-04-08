@@ -49,7 +49,7 @@ public class TurnitinContentValidator {
 	/**
 	 * Default max allowed filesize - should match turnitins own setting (surrently 20Mb)
 	 */
-	private static int TII_DEFAULT_MAX_FILE_SIZE = 20971520;
+	private static int TII_DEFAULT_MAX_FILE_SIZE = 41943040;
 	
 	private ServerConfigurationService serverConfigurationService; 
 	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {
@@ -121,6 +121,7 @@ public class TurnitinContentValidator {
 		 * application/msword
 		 * application/msword
 		 * application/postscript
+		 * UPDATED 15/03/2016 https://guides.turnitin.com/01_Manuals_and_Guides/Student/Student_User_Manual/09_Submitting_a_Paper
 		 */
 
 		String mime = resource.getContentType();
@@ -141,10 +142,12 @@ public class TurnitinContentValidator {
 
 				String extension = fileName.substring(fileName.lastIndexOf("."));
 				log.debug("file has an extension of " + extension);
-				if (extension.equals(".doc") || extension.equals(".wpd") || extension.equals(".eps") 
-						||  extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") 
-						|| extension.equals(".pdf") || extension.equals(".docx") || ".rtf".equals(extension))
+				if (extension.equals(".doc") || extension.equals(".wpd") || extension.equals(".eps") || extension.equals(".ps") 
+						|| extension.equals(".txt") || extension.equals(".htm") || extension.equals(".html") || extension.equals(".odt") 
+						|| extension.equals(".pdf") || extension.equals(".docx") || ".rtf".equals(extension) || ".hwp".equals(extension)
+						|| extension.equals(".ppt") || extension.equals(".pptx") || extension.equals(".ppsx") || extension.equals(".pps")){
 					fileTypeOk = true;
+				}
 
 			} else {
 				//we don't know what this is so lets submit it anyway
@@ -154,20 +157,23 @@ public class TurnitinContentValidator {
 
         // for files like .png we'd like to get a status code from TII so we can display an error message
         // other than "An unknown error occurred"
-//      if (!fileTypeOk) {
-//          return false;
-//      }
+		if (!fileTypeOk) {
+			return false;
+		} else {
+			return true;
+		}
+	}
 
-		//TODO: if file is too big reject here 10.48576 MB
+	public boolean isAcceptableSize(ContentResource resource) {
 
 		if (resource.getContentLength() > tii_Max_Fil_Size) {
-			log.debug("File is too big: " + resource.getContentLength());
+			log.warn("File " + resource.getId() + " is too big: " + resource.getContentLength());
 			return false;
 		}
 
 		//TII-93 content length must be > o
 		if (resource.getContentLength() == 0) {
-			log.debug("File is Ob");
+			log.warn("File " + resource.getId() + " is Ob");
 			return false;
 		}
 		
@@ -177,7 +183,6 @@ public class TurnitinContentValidator {
 				return false;
 			}
 		}
-
 
 		return true;
 	}
