@@ -29,6 +29,7 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.model.ContentReviewRosterSyncItem;
 import org.sakaiproject.contentreview.service.ContentReviewService;
+import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
 import org.sakaiproject.event.api.EventTrackingService;
 import org.sakaiproject.event.api.Event;
 import org.sakaiproject.exception.IdUnusedException;
@@ -70,6 +71,11 @@ public class MembershipChangeObserver implements Observer {
 	public void setContentReviewService(ContentReviewService contentReviewService) {
 		this.contentReviewService = contentReviewService;
 	}
+	
+	private ContentReviewSiteAdvisor contentReviewSiteAdvisor;
+	public void setContentReviewSiteAdvisor(ContentReviewSiteAdvisor contentReviewSiteAdvisor) {
+		this.contentReviewSiteAdvisor = contentReviewSiteAdvisor;
+	}
 
 	private SiteService siteService;
 	public void setSiteService(SiteService siteService) {
@@ -91,7 +97,7 @@ public class MembershipChangeObserver implements Observer {
 				} catch (IdUnusedException e) {
 					log.error("Error observing Turnitin Membership update because we couldn't look up site: " + event.getContext(), e);
 				}
-				if (site != null && contentReviewService.isSiteAcceptable(site)) {
+				if (site != null && contentReviewService.isSiteAcceptable(site) && !contentReviewSiteAdvisor.siteCanUseLTIReviewService(site)) {
 					Restriction notFinished = new Restriction("status", ContentReviewRosterSyncItem.FINISHED_STATUS, Restriction.NOT_EQUALS);
 					Restriction siteIdEquals = new Restriction("siteId", event.getContext(), Restriction.EQUALS);
 					Search search = new Search(new Restriction[] {notFinished,siteIdEquals});

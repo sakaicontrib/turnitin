@@ -18,29 +18,22 @@
  * limitations under the License.
  *
  **********************************************************************************/
-package org.sakaiproject.contentreview.impl.adivisors;
+package org.sakaiproject.contentreview.impl.advisors;
 
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
-import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.site.api.Site;
 
-public class SitePropertyAdvisor implements ContentReviewSiteAdvisor {
+public class DefaultSiteAdvisor implements ContentReviewSiteAdvisor {
 
-	private String siteProperty;
-	public void setSiteProperty(String p){
-		siteProperty = p;
+	public boolean siteCanUseReviewService(Site site) {
+		return true;
 	}
 	
+	public boolean siteCanUseLTIReviewService(Site site) {
+		return true;
+	}
 	
-	public boolean siteCanUseReviewService(Site site) {
-		
-		ResourceProperties properties = site.getProperties();
-		
-		String prop = (String) properties.get(siteProperty);
-		if (prop != null) {
-			return Boolean.valueOf(prop).booleanValue();
-		}
-		
+	public boolean siteCanUseLTIDirectSubmission(Site site) {
 		return false;
 	}
 

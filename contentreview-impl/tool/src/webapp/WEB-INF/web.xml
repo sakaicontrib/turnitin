@@ -1,8 +1,89 @@
-<?xml version="1.0"?>
-<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
-	  http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
-  version="2.4">
+<?xml version="1.0" encoding="UTF-8"?>
+         <web-app xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee  http://java.sun.com/xml/ns/j2ee/web-app_2_5.xsd"
+	version="2.5">
+	
+	<display-name>Content Review</display-name>
+	<description>Content Review Servlets</description>
 
+	<!-- Sakai request filter -->
+	<filter>
+		<filter-name>sakai.request</filter-name>
+		<filter-class>org.sakaiproject.util.RequestFilter</filter-class>
+		<!-- If you need to do uploads you will need this -->
+		<init-param>
+			<param-name>upload.enabled</param-name>
+			<param-value>false</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>sakai.request</filter-name>
+		<servlet-name>TIICallbackServlet</servlet-name>
+		<dispatcher>REQUEST</dispatcher>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>INCLUDE</dispatcher>
+	</filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>sakai.request</filter-name>
+		<servlet-name>SubmissionCallbackServlet</servlet-name>
+		<dispatcher>REQUEST</dispatcher>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>INCLUDE</dispatcher>
+	</filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>sakai.request</filter-name>
+		<servlet-name>GradingCallbackServlet</servlet-name>
+		<dispatcher>REQUEST</dispatcher>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>INCLUDE</dispatcher>
+	</filter-mapping>
+	
+	<!-- TII Servlet -->
+	<servlet>
+		<servlet-name>TIICallbackServlet</servlet-name>
+		<servlet-class>org.sakaiproject.contentreview.servlet.TIICallbackServlet</servlet-class>
+		<!-- use this to specify a starting page location if needed -->
+		<!--  
+		<init-param>
+			<param-name>main-page</param-name>
+			<param-value>/</param-value>
+		</init-param>
+		-->
+	</servlet>
+	<servlet-mapping>
+    	<servlet-name>TIICallbackServlet</servlet-name>
+    	<url-pattern>/tii-servlet/*</url-pattern>
+  	</servlet-mapping>
+	
+	<!-- Submission Servlet -->
+	<servlet>
+		<servlet-name>SubmissionCallbackServlet</servlet-name>
+		<servlet-class>org.sakaiproject.contentreview.servlet.SubmissionCallbackServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+    	<servlet-name>SubmissionCallbackServlet</servlet-name>
+    	<url-pattern>/submission-servlet/*</url-pattern>
+  	</servlet-mapping>
+	
+	<!-- Grading Servlet -->
+	<servlet>
+		<servlet-name>GradingCallbackServlet</servlet-name>
+		<servlet-class>org.sakaiproject.contentreview.servlet.GradingCallbackServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+    	<servlet-name>GradingCallbackServlet</servlet-name>
+    	<url-pattern>/grading-servlet/*</url-pattern>
+  	</servlet-mapping>
+	
+	<!-- Sakai listeners -->
+	<!--<listener>
+		<listener-class>org.sakaiproject.util.ToolListener</listener-class>
+	</listener>-->
+	<listener>
+		<listener-class>org.sakaiproject.util.SakaiContextLoaderListener</listener-class>
+	</listener>
+  
 </web-app>
