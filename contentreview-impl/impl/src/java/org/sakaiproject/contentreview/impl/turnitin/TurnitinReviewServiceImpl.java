@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -37,16 +38,25 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.EmailValidator;
+import org.tsugi.basiclti.BasicLTIConstants;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
+//import org.sakaiproject.assignment.api.Assignment;
+import org.sakaiproject.assignment.api.AssignmentContent;
+import org.sakaiproject.assignment.api.AssignmentContentEdit;
+import org.sakaiproject.assignment.api.AssignmentEdit;
+import org.sakaiproject.assignment.api.AssignmentService;
+import org.sakaiproject.assignment.api.AssignmentSubmission;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
@@ -67,12 +77,14 @@ import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.EntityProducer;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
+import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.entitybroker.EntityReference;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.TypeException;
 import org.sakaiproject.genericdao.api.search.Restriction;
 import org.sakaiproject.genericdao.api.search.Search;
+import org.sakaiproject.lti.api.LTIService;
 import org.sakaiproject.service.gradebook.shared.GradebookExternalAssessmentService;
 import org.sakaiproject.service.gradebook.shared.GradebookService;
 import org.sakaiproject.service.gradebook.shared.GradebookNotFoundException;
@@ -82,6 +94,7 @@ import org.sakaiproject.service.gradebook.shared.Assignment;
 import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
+import org.sakaiproject.turnitin.util.TurnitinLTIUtil;
 import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
@@ -110,6 +123,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private int sendSubmissionNotification = 0;
 
 	private Long maxRetry = null;
+	public void setMaxRetry(Long maxRetry) {
+		this.maxRetry = maxRetry;
+	}
 
 	//note that the assignment id actually has to be unique globally so use this as a prefix
 	// eg. assignid = defaultAssignId + siteId
@@ -183,6 +199,26 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		this.turnitinContentValidator = turnitinContentValidator;
 	}
 	
+	private AssignmentService assignmentService;
+	public void setAssignmentService(AssignmentService assignmentService) {
+		this.assignmentService = assignmentService;
+	}
+	
+	private TurnitinLTIUtil tiiUtil;
+	public void setTiiUtil(TurnitinLTIUtil tiiUtil) {
+		this.tiiUtil = tiiUtil;
+	}
+	
+	private SessionManager sessionManager;
+	public void setSessionManager(SessionManager sessionManager) {
+		this.sessionManager = sessionManager;
+	}
+	
+	private SecurityService securityService;
+	public void setSecurityService(SecurityService securityService) {
+		this.securityService = securityService;
+	}
+	
 	/**
 	 *  If set to true in properties, will result in 3 random digits being appended
 	 *  to the email name. In other words, adrian.r.fish@gmail.com will become something
@@ -201,10 +237,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
                     private GradebookExternalAssessmentService gradebookExternalAssessmentService =
                             (GradebookExternalAssessmentService)ComponentManager.get("org.sakaiproject.service.gradebook.GradebookExternalAssessmentService");
 
-                    private SecurityService securityService = (SecurityService)
-                            ComponentManager.get(SecurityService.class.getName());
-                    private SessionManager sessionManager = (SessionManager)
-                            ComponentManager.get(SessionManager.class.getName());
 	/**
 	 * Place any code that should run when this class is initialized by spring
 	 * here
@@ -279,8 +311,23 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		// No property set, no restriction on site types, so allow
-                return true; 
-        }
+        return true; 
+    }
+	
+	public boolean isDirectAccess(Site s) {
+		if (s == null) {
+			return false;
+		}
+
+		log.debug("isDirectAccess: " + s.getId() + " / " + s.getTitle());
+
+		// Delegated to another bean
+		if (siteAdvisor != null && siteAdvisor.siteCanUseReviewService(s) && siteAdvisor.siteCanUseLTIReviewService(s) && siteAdvisor.siteCanUseLTIDirectSubmission(s)) {
+			return true;
+		}
+		
+		return false;
+	}
 
 
 	public String getIconUrlforScore(Long score) {
@@ -298,6 +345,22 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return urlBase + "orange" + suffix;
 		} else {
 			return urlBase + "red" + suffix;
+		}
+
+	}
+	
+	public String getIconColorforScore(Long score) {
+
+		if (score.equals(Long.valueOf(0))) {
+			return "blue";
+		} else if (score.compareTo(Long.valueOf(25)) < 0 ) {
+			return "green";
+		} else if (score.compareTo(Long.valueOf(50)) < 0  ) {
+			return "yellow";
+		} else if (score.compareTo(Long.valueOf(75)) < 0 ) {
+			return "orange";
+		} else {
+			return "red";
 		}
 
 	}
@@ -416,18 +479,28 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public String getReviewReport(String contentId, String assignmentRef, String userId)
 	throws QueueException, ReportException {
 
-		// first retrieve the record from the database to get the externalId of
-		// the content
-		log.warn("Deprecated Methog getReviewReport(String contentId) called");
-		return this.getReviewReportInstructor(contentId, assignmentRef, userId);
-	}
+		log.debug("getReviewReport for LTI integration");
+		//should have already checked lti integration on assignments tool
+		Search search = new Search();
+		search.addRestriction(new Restriction("contentId", contentId));
+		List<ContentReviewItem> matchingItems = dao.findBySearch(ContentReviewItem.class, search);
+		if (matchingItems.size() == 0) {
+			log.debug("Content " + contentId + " has not been queued previously");
+			throw new QueueException("Content " + contentId + " has not been queued previously");
+		}
 
-private List<ContentReviewItem> getItemsByContentId(String contentId) {
-        Search search = new Search();
-        search.addRestriction(new Restriction("contentId", contentId));
-        List<ContentReviewItem> existingItems = dao.findBySearch(ContentReviewItem.class, search);
-        return existingItems;
-    }
+		if (matchingItems.size() > 1)
+			log.debug("More than one matching item found - using first item found");
+
+		// check that the report is available
+		ContentReviewItem item = (ContentReviewItem) matchingItems.iterator().next();
+		if (item.getStatus().compareTo(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE) != 0) {
+			log.debug("Report not available: " + item.getStatus());
+			throw new ReportException("Report not available: " + item.getStatus());
+		}
+		
+		return getLTIAccess(item.getTaskId(), item.getSiteId());
+	}
 
     /**
     * Get additional data from String if available
@@ -470,8 +543,22 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
             }catch(Exception e){
                 log.error("(getReviewScore)"+e);
             }
-
-            String[] assignData = null;
+			
+			Site s = null;
+			try {
+				s = siteService.getSite(item.getSiteId());
+				
+				//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
+				if(siteAdvisor.siteCanUseLTIReviewService(s)){
+					log.debug("getReviewScore using the LTI integration");			
+					return item.getReviewScore().intValue();
+				}
+				//////////////////////////////  OLD API INTEGRATION  ///////////////////////////////
+			} catch (IdUnusedException iue) {
+				log.warn("getReviewScore: Site " + item.getSiteId() + " not found!" + iue.getMessage());
+			}
+			
+			String[] assignData = null;
             try{
                    assignData = getAssignData(contentId);
             }catch(Exception e){
@@ -903,8 +990,6 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
                         scrubSpecialCharacters(ent.getClass().getMethod("getTitle").invoke(ent).toString());
 				log.debug("Got reflected assignemment title from entity " + title);
 				togo = URLDecoder.decode(title,"UTF-8");
-				
-				togo=togo.replaceAll("\\W+","");
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -996,6 +1081,221 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 	@SuppressWarnings("unchecked")
 	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts) throws SubmissionException, TransientSubmissionException {
 
+		Site s = null;
+		try {
+			s = siteService.getSite(siteId);
+		}
+		catch (IdUnusedException iue) {
+			log.warn("createAssignment: Site " + siteId + " not found!" + iue.getMessage());
+			throw new TransientSubmissionException("Create Assignment not successful. Site " + siteId + " not found");
+		}
+		
+		//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
+		if(siteAdvisor.siteCanUseLTIReviewService(s)){
+			log.debug("Creating new TII assignment using the LTI integration");
+			
+			if (extraAsnnOpts == null){
+				throw new TransientSubmissionException("Create Assignment not successful. Empty extraAsnnOpts map");
+			}
+			taskId = extraAsnnOpts.get("assignmentContentId").toString();
+		
+			//check if it was already created
+			String tiiId = null;
+			String ltiId = null;
+			try {
+				AssignmentContent ac = assignmentService.getAssignmentContent(taskId);
+				ResourceProperties aProperties = ac.getProperties();
+				tiiId = aProperties.getProperty("turnitin_id");
+				log.debug("This assignment has associated the following TII id: " + tiiId);				
+				ltiId = aProperties.getProperty("lti_id");
+				log.debug("This assignment has associated the following LTI id: " + ltiId);
+			} catch (Exception e) {
+				log.debug("New TII assignment: " + taskId);
+			}
+		
+			Map<String,String> ltiProps = new HashMap<String,String> ();			
+			ltiProps.put("context_id", siteId);
+			ltiProps.put("context_title", s.getTitle());
+			String contextLabel = s.getTitle();
+			if(s.getShortDescription() != null){
+				contextLabel = s.getShortDescription();
+			}
+			ltiProps.put("context_label", contextLabel);
+			ltiProps.put("resource_link_id", taskId);
+			String title = extraAsnnOpts.get("title").toString();
+			ltiProps.put("resource_link_title", title);
+			String description = extraAsnnOpts.get("instructions").toString();
+			if(description != null){
+				description = description.replaceAll("\\<.*?>","");//TODO improve this
+				int instructionsMax = serverConfigurationService.getInt("contentreview.instructions.max", 1000);
+				if(description.length() > instructionsMax){
+					description = description.substring(0, instructionsMax);
+				}
+			}
+			ltiProps.put("resource_link_description", description);
+			ltiProps.put("custom_startdate", extraAsnnOpts.get("isostart").toString());//TODO take care of null values
+			ltiProps.put("custom_duedate", extraAsnnOpts.get("isodue").toString());
+			ltiProps.put("custom_feedbackreleasedate", extraAsnnOpts.get("isodue").toString());
+			
+			String custom = BasicLTIConstants.RESOURCE_LINK_ID + "=" + taskId;
+			custom += ";" + BasicLTIConstants.RESOURCE_LINK_TITLE + "=" + title;
+			custom += ";" + BasicLTIConstants.RESOURCE_LINK_DESCRIPTION + "=" + description;
+			custom += ";" + "custom_startdate=" + extraAsnnOpts.get("isostart").toString();
+			custom += ";" + "custom_duedate=" + extraAsnnOpts.get("isodue").toString();
+			custom += ";" + "custom_feedbackreleasedate=" + extraAsnnOpts.get("isodue").toString();
+			
+			ltiProps = putInstructorInfo(ltiProps, siteId);
+
+			ltiProps.put("custom_maxpoints", extraAsnnOpts.get("points").toString());
+	        ltiProps.put("custom_studentpapercheck", extraAsnnOpts.get("s_paper_check").toString());
+	        ltiProps.put("custom_journalcheck",extraAsnnOpts.get("journal_check").toString());
+
+	        ltiProps.put("custom_internetcheck", extraAsnnOpts.get("internet_check").toString());
+	        ltiProps.put("custom_institutioncheck",extraAsnnOpts.get("institution_check").toString());
+			ltiProps.put("custom_allow_non_or_submissions", extraAsnnOpts.get("allow_any_file").toString());
+
+			//ONLY FOR TII UK
+			//ltiProps.setProperty("custom_anonymous_marking_enabled", extraAsnnOpts.get("s_paper_check"));
+			
+			custom += ";" + "custom_maxpoints=" + extraAsnnOpts.get("points").toString();
+			custom += ";" + "custom_studentpapercheck=" + extraAsnnOpts.get("s_paper_check").toString();
+			custom += ";" + "custom_journalcheck=" + extraAsnnOpts.get("journal_check").toString();
+			custom += ";" + "custom_internetcheck=" + extraAsnnOpts.get("internet_check").toString();
+			custom += ";" + "custom_institutioncheck=" + extraAsnnOpts.get("institution_check").toString();
+			custom += ";" + "custom_allow_non_or_submissions=" + extraAsnnOpts.get("allow_any_file").toString();
+ 
+			if (extraAsnnOpts.containsKey("exclude_type") && extraAsnnOpts.containsKey("exclude_value")){
+				//exclude type 0=none, 1=words, 2=percentages
+				String typeAux = "words";
+				if(extraAsnnOpts.get("exclude_type").toString().equals("2")){
+					typeAux = "percentage";
+				}
+				ltiProps.put("custom_exclude_type", typeAux);
+				ltiProps.put("custom_exclude_value", extraAsnnOpts.get("exclude_value").toString());
+				custom += ";" + "custom_exclude_type=" + typeAux;
+				custom += ";" + "custom_exclude_value=" + extraAsnnOpts.get("exclude_value").toString();
+			}
+
+	        ltiProps.put("custom_late_accept_flag", extraAsnnOpts.get("late_accept_flag").toString());
+	        ltiProps.put("custom_report_gen_speed", extraAsnnOpts.get("report_gen_speed").toString());
+	        ltiProps.put("custom_s_view_reports", extraAsnnOpts.get("s_view_report").toString());			
+	        ltiProps.put("custom_submit_papers_to", extraAsnnOpts.get("submit_papers_to").toString());
+			
+			custom += ";" + "custom_late_accept_flag=" + extraAsnnOpts.get("late_accept_flag").toString();			
+			custom += ";" + "custom_report_gen_speed=" + extraAsnnOpts.get("report_gen_speed").toString();
+			custom += ";" + "custom_s_view_reports=" + extraAsnnOpts.get("s_view_report").toString();
+			custom += ";" + "custom_submit_papers_to=" + extraAsnnOpts.get("submit_papers_to").toString();
+
+			if (extraAsnnOpts.containsKey("exclude_biblio")){
+				ltiProps.put("custom_use_biblio_exclusion", extraAsnnOpts.get("exclude_biblio").toString());
+				custom += ";" + "custom_use_biblio_exclusion=" + extraAsnnOpts.get("exclude_biblio").toString();
+			}
+			if (extraAsnnOpts.containsKey("exclude_quoted")){
+				ltiProps.put("custom_use_quoted_exclusion", extraAsnnOpts.get("exclude_quoted").toString());
+				custom += ";" + "custom_use_quoted_exclusion=" + extraAsnnOpts.get("exclude_quoted").toString();
+			}
+ 			
+			//adding callback url
+			String callbackUrl = serverConfigurationService.getServerUrl() + "/sakai-contentreview-tool-tii/tii-servlet";
+			log.debug("callbackUrl: " + callbackUrl);
+			ltiProps.put("ext_resource_tool_placement_url", callbackUrl);
+			
+			int result = tiiUtil.makeLTIcall(tiiUtil.BASIC_ASSIGNMENT, null, ltiProps);
+			if(result < 0){
+				log.error("Error making LTI call");
+				throw new TransientSubmissionException("Create Assignment not successful. Check the logs to see message.");
+			}
+			
+			Properties sakaiProps = new Properties();
+			String globalId = tiiUtil.getGlobalTurnitinLTIToolId();
+			if(globalId == null){
+				throw new TransientSubmissionException("Create Assignment not successful. TII LTI global id not set");
+			}
+
+			sakaiProps.setProperty(LTIService.LTI_TOOL_ID,globalId);				
+			sakaiProps.setProperty(LTIService.LTI_SITE_ID,siteId);
+			sakaiProps.setProperty(LTIService.LTI_TITLE,title);
+
+			log.debug("Storing custom params: " + custom);
+			sakaiProps.setProperty(LTIService.LTI_CUSTOM,custom);
+
+			SecurityAdvisor advisor = new SimpleSecurityAdvisor(sessionManager.getCurrentSessionUserId(), "site.upd", "/site/!admin");
+			Object ltiContent = null;
+			try{
+				securityService.pushAdvisor(advisor);
+				if(ltiId == null){
+					ltiContent = tiiUtil.insertTIIToolContent(globalId, sakaiProps);
+				} else {//don't create lti tool if exists
+					ltiContent = tiiUtil.updateTIIToolContent(ltiId, sakaiProps);
+				}				
+			} catch(Exception e){
+				throw new TransientSubmissionException("Create Assignment not successful. Error trying to insert TII tool content: " + e.getMessage());
+			} finally {
+				securityService.popAdvisor(advisor);
+			}
+				
+			if(ltiContent == null){
+				throw new TransientSubmissionException("Create Assignment not successful. Could not create LTI tool for the task: " + custom);
+			} else if(ltiId != null){
+				if(ltiContent instanceof String){
+					throw new TransientSubmissionException("Update Assignment not successful. Error updating LTI stealthed tool: " + ltiId);
+				}//boolean if everything went fine
+			} else if(!(ltiContent instanceof Long)){
+				throw new TransientSubmissionException("Create Assignment not successful. Error creating LTI stealthed tool: " + ltiContent);
+			} else {//long if everything went fine
+				log.debug("LTI content tool id: " + ltiContent);
+				try{
+					AssignmentContentEdit ace = assignmentService.editAssignmentContent(taskId);
+					ResourcePropertiesEdit aPropertiesEdit = ace.getPropertiesEdit();
+					aPropertiesEdit.addProperty("lti_id", String.valueOf(ltiContent));
+					assignmentService.commitEdit(ace);
+				}catch(Exception e){
+					log.error("Could not store LTI tool ID " + ltiContent +" for assignment " + taskId);
+					log.error(e.getClass().getName() + " : " + e.getMessage());
+					throw new TransientSubmissionException("Create Assignment not successful. Error storing LTI stealthed tool: " + ltiContent);
+				}
+			}
+			
+			//add submissions to the queue if there is any
+			try{
+				log.debug("Adding previous submissions");
+				//this will be done always - no problem, extra checks
+				Iterator it = assignmentService.getAssignments(assignmentService.getAssignmentContent(taskId));
+				org.sakaiproject.assignment.api.Assignment a = null;
+				while(it.hasNext()){
+					a = (org.sakaiproject.assignment.api.Assignment) it.next();
+					break;
+				}
+				if(a == null) return;
+				log.debug("Assignment " + a.getId() + " - " + a.getTitle());
+				List<AssignmentSubmission> submissions = assignmentService.getSubmissions(a);
+				if(submissions != null){
+					for(AssignmentSubmission sub : submissions){
+						//if submitted
+						if(sub.getSubmitted()){
+							log.debug("Submission " + sub.getId());
+							boolean allowAnyFile = a.getContent().isAllowAnyFile();
+							List<ContentResource> resources = getAllAcceptableAttachments(sub,allowAnyFile);
+							for(ContentResource resource : resources){
+								//if it wasnt added
+								if(getFirstItemByContentId(resource.getId()) == null){
+									log.debug("was not added");								
+									queueContent(sub.getSubmitterId(), null, a.getReference(), resource.getId(), sub.getId(), false);
+								}
+								//else - is there anything or any status we should check?
+							}
+						}
+					}
+				}	
+			} catch(Exception e){
+				log.warn("Error while tying to queue previous submissions.");
+			}
+			
+			return;
+		}
+		
+		//////////////////////////////  OLD API INTEGRATION  ///////////////////////////////
+	
 		//get the assignment reference
 		String taskTitle = "";
 		if(extraAsnnOpts.containsKey("title")){
@@ -1282,7 +1582,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				"cid", cid,
 				"tem", tem,
 				"ctl", ctl,
-				"dis", studentAccountNotified ? "1" : "0",
+				"dis", studentAccountNotified ? "0" : "1",
 				"uem", uem,
 				"ufn", ufn,
 				"uln", uln,
@@ -1405,9 +1705,10 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				user = userDirectoryService.getUser(currentItem.getUserId());
 			} catch (UserNotDefinedException e1) {
 				log.error("Submission attempt unsuccessful - User not found.", e1);
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
 				dao.update(currentItem);
-				releaseLock(currentItem);
+				releaseLock(currentItem);*/
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, null);
 				errors++;
 				continue;
 			}
@@ -1416,10 +1717,11 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			String uem = getEmail(user);
 			if (uem == null ){
 				log.error("User: " + user.getEid() + " has no valid email");
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
+				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("no valid email");
 				dao.update(currentItem);
-				releaseLock(currentItem);
+				releaseLock(currentItem);*/
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "no valid email");
 				errors++;
 				continue;
 			}
@@ -1427,10 +1729,11 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			String ufn = getUserFirstName(user);
 			if (ufn == null || ufn.equals("")) {
 				log.error("Submission attempt unsuccessful - User has no first name");
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
+				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no first name");
 				dao.update(currentItem);
-				releaseLock(currentItem);
+				releaseLock(currentItem);*/
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "has no first name");
 				errors++;
 				continue;
 			}
@@ -1438,13 +1741,210 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 			String uln = getUserLastName(user);
 			if (uln == null || uln.equals("")) {
 				log.error("Submission attempt unsuccessful - User has no last name");
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
+				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
 				currentItem.setLastError("has no last name");
 				dao.update(currentItem);
-				releaseLock(currentItem);
+				releaseLock(currentItem);*/
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "has no last name");
 				errors++;
 				continue;
 			}
+			
+			Site s = null;
+			try {
+				s = siteService.getSite(currentItem.getSiteId());
+			}
+			catch (IdUnusedException iue) {
+				log.error("processQueue: Site " + currentItem.getSiteId() + " not found!" + iue.getMessage());
+				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+				currentItem.setLastError("IdUnusedException: site not found. " + iue.getMessage());
+				dao.update(currentItem);
+				releaseLock(currentItem);*/
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "site not found");
+				errors++;
+				continue;
+			}
+			
+			//to get the name of the initial submited file we need the title
+			ContentResource resource = null;
+			ResourceProperties resourceProperties = null;
+			String fileName = null;
+			try {
+				try {
+					resource = contentHostingService.getResource(currentItem.getContentId());
+				} catch (IdUnusedException e4) {
+					//ToDo we should probably remove these from the Queue
+					log.warn("IdUnusedException: no resource with id " + currentItem.getContentId());
+					dao.delete(currentItem);
+					releaseLock(currentItem);
+					errors++;
+					continue;
+				}
+				resourceProperties = resource.getProperties();
+				fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
+				fileName = escapeFileName(fileName, resource.getId());
+			}
+			catch (PermissionException e2) {
+				log.error("Submission failed due to permission error.", e2);
+				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+				currentItem.setLastError("Permission exception: " + e2.getMessage());
+				dao.update(currentItem);
+				releaseLock(currentItem);*/
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "permission exception");
+				errors++;
+				continue;
+			}
+			catch (TypeException e) {
+				log.error("Submission failed due to content Type error.", e);
+				/*urrentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
+				currentItem.setLastError("Type Exception: " + e.getMessage());
+				dao.update(currentItem);
+				releaseLock(currentItem);*/
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "Type Exception: " + e.getMessage());
+				errors++;
+				continue;
+			}
+
+			//TII-97 filenames can't be longer than 200 chars
+			if (fileName != null && fileName.length() >=200 ) {
+				fileName = truncateFileName(fileName, 198);
+			}
+		
+			//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
+			if(siteAdvisor.siteCanUseLTIReviewService(s) && currentItem.getSubmissionId()!=null){
+				
+				Map<String,String> ltiProps = new HashMap<String,String> ();	
+				ltiProps.put("context_id", currentItem.getSiteId());
+				ltiProps.put("resource_link_id", currentItem.getTaskId());
+				ltiProps.put("roles", "Learner");
+				//student
+				ltiProps.put("lis_person_name_family", uln);
+				ltiProps.put("lis_person_contact_email_primary", uem);
+				ltiProps.put("lis_person_name_full", ufn + " " + uln);
+				ltiProps.put("lis_person_name_given", ufn);
+				ltiProps.put("user_id", currentItem.getUserId());
+
+				String[] parts = currentItem.getTaskId().split("/");
+				log.debug(parts[parts.length -1] + " " + parts.length);
+				String httpAccess = serverConfigurationService.getServerUrl() + "/access/assignment/s/" + currentItem.getSiteId() + "/" + parts[parts.length -1] + "/" + currentItem.getSubmissionId();
+				httpAccess += ":" + currentItem.getId();
+				log.debug("httpAccess url: " + httpAccess);//debug
+				ltiProps.put("custom_submission_url", httpAccess);
+				ltiProps.put("custom_submission_title", fileName);
+				ltiProps.put("custom_submission_filename", fileName);
+				ltiProps.put("ext_outcomes_tool_placement_url", serverConfigurationService.getServerUrl() + "/sakai-contentreview-tool-tii/submission-servlet");
+				ltiProps.put("lis_outcome_service_url", serverConfigurationService.getServerUrl() + "/sakai-contentreview-tool-tii/grading-servlet");
+				ltiProps.put("lis_result_sourcedid", currentItem.getContentId());
+				ltiProps.put("custom_xmlresponse","1");//mandatatory
+				
+				String tiiId = null;
+				try {
+					org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(currentItem.getTaskId());
+					AssignmentContent ac = a.getContent();
+					ResourceProperties aProperties = ac.getProperties();
+					tiiId = aProperties.getProperty("turnitin_id");
+				} catch (IdUnusedException e) {
+					log.error("IdUnusedException: no assignment with id: " + currentItem.getTaskId());
+					/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					currentItem.setLastError("IdUnusedException: no assignment found. " + e.getMessage());
+					dao.update(currentItem);
+					releaseLock(currentItem);*/
+					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "IdUnusedException: no assignment found. " + e.getMessage());
+					errors++;
+					continue;
+				} catch (PermissionException e) {
+					log.error("PermissionException: no permission for assignment with id: " + currentItem.getTaskId());
+					/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					currentItem.setLastError("PermissionException: no permission for assignment. " + e.getMessage());
+					dao.update(currentItem);
+					releaseLock(currentItem);*/
+					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "PermissionException: no permission for assignment. " + e.getMessage());
+					errors++;
+					continue;
+				}
+				
+				if(tiiId == null){
+					log.error("Could not find tiiId for assignment: " + currentItem.getTaskId());
+					/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);//TODO we can add more info, change it here and getreviewreport on assignments
+					currentItem.setLastError("Could not find tiiId");
+					dao.update(currentItem);
+					releaseLock(currentItem);*/
+					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Could not find tiiId");
+					errors++;
+					continue;
+				}
+				
+				int result = -1;
+				if(currentItem.isResubmission()){//TODO decide resubmission process
+					log.debug("It's a resubmission");
+					//check we have TII id
+					String tiiPaperId = null;
+					try{
+						org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(currentItem.getTaskId());
+						AssignmentContent ac = a.getContent();
+						if(ac == null){
+							log.debug("Could not find the assignment content " + currentItem.getTaskId());
+						} else {
+							log.debug("Got assignment content " + currentItem.getTaskId());
+							//1 - inline, 2 - attach, 3 - both, 4 - non elec, 5 - single file
+							if(ac.getTypeOfSubmission() == 5 || ac.getTypeOfSubmission() == 1){
+								AssignmentSubmission as = assignmentService.getSubmission(currentItem.getSubmissionId());						
+								ResourceProperties aProperties = as.getProperties();
+								tiiPaperId = aProperties.getProperty("turnitin_id");
+							} else if(ac.getTypeOfSubmission() == 2 || ac.getTypeOfSubmission() == 3){//won't work as files are different
+								ContentResource content = contentHostingService.getResource(currentItem.getContentId());
+								ResourceProperties aProperties = content.getProperties();
+								tiiPaperId = aProperties.getProperty("turnitin_id");
+							} else {
+								log.debug("Not valid type of assignment " + ac.getTypeOfSubmission());
+							}
+						}
+					} catch(Exception e){
+						log.error("Couldn't get TII paper id for content " + currentItem.getContentId() + ": " + e.getMessage());
+					}
+					if(tiiPaperId != null){
+						log.debug("This content has associated the following TII id: " + tiiPaperId);
+						currentItem.setExternalId(tiiPaperId);
+						result = tiiUtil.makeLTIcall(tiiUtil.RESUBMIT, tiiPaperId, ltiProps);
+					} else {//normal submission?
+						log.debug("doing a submission instead");
+						result = tiiUtil.makeLTIcall(tiiUtil.SUBMIT, tiiId, ltiProps);
+					}
+				} else {
+					result = tiiUtil.makeLTIcall(tiiUtil.SUBMIT, tiiId, ltiProps);
+				}
+				
+				if(result >= 0){
+					log.debug("LTI submission successful");
+					//problems overriding this on callback
+					//currentItem.setExternalId(externalId);
+					currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
+					currentItem.setRetryCount(Long.valueOf(0));
+					currentItem.setLastError(null);
+					currentItem.setErrorCode(null);
+					currentItem.setDateSubmitted(new Date());
+					success++;
+					dao.update(currentItem);
+				} else {
+					//log.warn("invalid external id");
+					//currentItem.setLastError("Submission error: no external id received");
+					
+					long l = currentItem.getRetryCount().longValue();
+					l++;
+					currentItem.setRetryCount(Long.valueOf(l));
+					currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+					currentItem.setLastError(switchLTIError(result, "LTI Submission Error"));	
+					log.warn("LTI submission error");
+					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					errors++;
+					dao.update(currentItem);
+				}
+				
+				releaseLock(currentItem);
+				continue;
+			}	
+			
+			//////////////////////////////  OLD API INTEGRATION  ///////////////////////////////
 
 			if (!turnitinConn.isUseSourceParameter()) {
 				try {
@@ -1523,50 +2023,6 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 
 			String fcmd = "2";
 			String fid = "5";
-
-			//to get the name of the initial submited file we need the title
-			ContentResource resource = null;
-			ResourceProperties resourceProperties = null;
-			String fileName = null;
-			try {
-				try {
-					resource = contentHostingService.getResource(currentItem.getContentId());
-
-				} catch (IdUnusedException e4) {
-					//ToDo we should probably remove these from the Queue
-					log.warn("IdUnusedException: no resource with id " + currentItem.getContentId());
-					dao.delete(currentItem);
-					errors++;
-					continue;
-				}
-				resourceProperties = resource.getProperties();
-				fileName = resourceProperties.getProperty(resourceProperties.getNamePropDisplayName());
-				fileName = escapeFileName(fileName, resource.getId());
-			}
-			catch (PermissionException e2) {
-				log.error("Submission failed due to permission error.", e2);
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError("Permission exception: " + e2.getMessage());
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				errors++;
-				continue;
-			}
-			catch (TypeException e) {
-				log.error("Submission failed due to content Type error.", e);
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError("Type Exception: " + e.getMessage());
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				errors++;
-				continue;
-			}
-
-			//TII-97 filenames can't be longer than 200 chars
-			if (fileName != null && fileName.length() >=200 ) {
-				fileName = truncateFileName(fileName, 198);
-			}
-
 
 			String userEid = currentItem.getUserId();
 			try {
@@ -1707,7 +2163,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 	}
 
 	public String escapeFileName(String fileName, String contentId) {
-		log.debug("origional filename is: " + fileName);
+		log.debug("original filename is: " + fileName);
 		if (fileName == null) {
 			//use the id
 			fileName  = contentId;
@@ -1827,6 +2283,106 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 				//currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
 				//dao.update(currentItem);
 			}
+			
+			Site s = null;
+			try {
+				s = siteService.getSite(currentItem.getSiteId());
+			}
+			catch (IdUnusedException iue) {
+				log.warn("checkForReportsBulk: Site " + currentItem.getSiteId() + " not found!" + iue.getMessage());
+				long l = currentItem.getRetryCount().longValue();
+				l++;
+				currentItem.setRetryCount(Long.valueOf(l));
+				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+				currentItem.setLastError("Site not found");
+				dao.update(currentItem);
+				continue;
+			}
+			//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
+			if(siteAdvisor.siteCanUseLTIReviewService(s)){			
+				log.debug("getReviewScore using the LTI integration");			
+				
+				Map<String,String> ltiProps = new HashMap<String,String> ();						
+				ltiProps = putInstructorInfo(ltiProps, currentItem.getSiteId());
+				
+				String paperId = null;
+				if(currentItem.isResubmission()){//TODO until TII admits and solves the resubmission callback issue, this might be a workaround for single file submissions
+					log.debug("It's a resubmission");
+					try{
+						org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(currentItem.getTaskId());
+						AssignmentContent ac = a.getContent();
+						if(ac == null){
+							log.debug("Could not find the assignment content " + currentItem.getTaskId());
+						} else {
+							log.debug("Got assignment content " + currentItem.getTaskId());
+							//1 - inline, 2 - attach, 3 - both, 4 - non elec, 5 - single file
+							if(ac.getTypeOfSubmission() == 5 || ac.getTypeOfSubmission() == 1){
+								AssignmentSubmission as = assignmentService.getSubmission(currentItem.getSubmissionId());						
+								ResourceProperties aProperties = as.getProperties();
+								paperId = aProperties.getProperty("turnitin_id");
+							} //TODO should we? - else if(ac.getTypeOfSubmission() == 2 || ac.getTypeOfSubmission() == 3){
+						}
+					} catch(Exception e){
+						log.error("Couldn't get TII paper id for content " + currentItem.getContentId() + ": " + e.getMessage());
+					}
+				} else {//preferred way			
+					ContentResource cr = null;
+					try{
+						cr = contentHostingService.getResource(currentItem.getContentId());
+					} catch(Exception ex){
+						log.warn("Could not get content by id " + currentItem.getContentId() + " " + ex.getMessage());
+						long l = currentItem.getRetryCount().longValue();
+						l++;
+						currentItem.setRetryCount(Long.valueOf(l));
+						currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+						currentItem.setLastError("Could not get submission by id");
+						dao.update(currentItem);
+						continue;
+					}
+					ResourceProperties rp = cr.getProperties();
+					paperId = rp.getProperty("turnitin_id");
+				}
+				
+				if(paperId == null){
+					log.warn("Could not find TII paper id for the content " + currentItem.getContentId());
+					long l = currentItem.getRetryCount().longValue();
+					l++;
+					currentItem.setRetryCount(Long.valueOf(l));
+					currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+					currentItem.setLastError("Could not find TII paper id for the submission");
+					dao.update(currentItem);
+					continue;
+				}
+				
+				int result = tiiUtil.makeLTIcall(tiiUtil.INFO_SUBMISSION, paperId, ltiProps);
+				if(result >= 0){
+					currentItem.setReviewScore(result);
+					currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
+					currentItem.setDateReportReceived(new Date());
+					dao.update(currentItem);
+					//log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
+					log.debug("new report received: " + paperId + " -> " + currentItem.getReviewScore());
+				} else {
+					if(result == -7){
+						log.debug("report is still pending for paper " + paperId);
+						currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
+						currentItem.setLastError(null);
+						currentItem.setErrorCode(null);
+					} else {
+						log.error("Error making LTI call");
+						long l = currentItem.getRetryCount().longValue();
+						l++;
+						currentItem.setRetryCount(Long.valueOf(l));
+						currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+						currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+						currentItem.setLastError(switchLTIError(result, "LTI Report Data Error"));
+					}
+					dao.update(currentItem);
+				}
+				
+				continue;
+			}
+			//////////////////////////////  OLD API INTEGRATION  ///////////////////////////////
 
 			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
 				currentItem.setStatus(Long.valueOf(4));
@@ -2172,7 +2728,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		String assignEnc = assign;
 		try {
 			if (assign.contains("&")) {
-				//log.debug("replacing & in assingment title");
+				//log.debug("replacing & in assignment title");
 				assign = assign.replace('&', 'n');
 
 			}
@@ -2238,6 +2794,10 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		return turnitinContentValidator.isAcceptableContent(resource);
 	}
 
+	public boolean isAcceptableSize(ContentResource resource) {
+		return turnitinContentValidator.isAcceptableSize(resource);
+	}
+	
 	/**
 	 * find the next time this item should be tried
 	 * @param retryCount
@@ -2354,14 +2914,73 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		return getLocalizedStatusMessage(errorCode.toString());
 	}
 
-        private String getTEM(String cid) {
-                if (turnitinConn.isUseSourceParameter()) {
-                        return getInstructorInfo(cid).get("uem").toString();
-                } else {
-                        return turnitinConn.getDefaultInstructorEmail();
-                }
+    private String getTEM(String cid) {
+        if (turnitinConn.isUseSourceParameter()) {
+            return getInstructorInfo(cid).get("uem").toString();
+        } else {
+            return turnitinConn.getDefaultInstructorEmail();
         }
+    }
 
+	/**
+	 * This will add to the LTI map the information for the instructor such as
+	 * uem, username, ufn, etc. If the system is configured to use src9
+	 * provisioning, this will draw information from the current thread based
+	 * user. Otherwise it will use the default Instructor information that has
+	 * been configured for the system.
+	 *
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public Map putInstructorInfo(Map ltiProps, String siteId) {
+
+		log.debug("Putting instructor info for site " + siteId);
+
+		if (!turnitinConn.isUseSourceParameter()) {
+			ltiProps.put("roles", "Instructor");
+			ltiProps.put("user_id", turnitinConn.getDefaultInstructorId());
+			ltiProps.put("lis_person_contact_email_primary", turnitinConn.getDefaultInstructorEmail());
+			ltiProps.put("lis_person_name_given", turnitinConn.getDefaultInstructorFName());
+			ltiProps.put("lis_person_name_family", turnitinConn.getDefaultInstructorLName());
+			ltiProps.put("lis_person_name_full", turnitinConn.getDefaultInstructorFName() + " " + turnitinConn.getDefaultInstructorLName());
+		} else {
+			String INST_ROLE = "section.role.instructor";
+			User inst = null;
+			try {
+				Site site = siteService.getSite(siteId);
+				User user = userDirectoryService.getCurrentUser();
+	
+				log.debug("Current user: " + user.getId());
+
+				if (site.isAllowed(user.getId(), INST_ROLE)) {
+					inst = user;
+				} else {
+					Set<String> instIds = getActiveInstructorIds(INST_ROLE,	site);
+					if (instIds.size() > 0) {
+						inst = userDirectoryService.getUser((String) instIds.toArray()[0]);
+					}
+				}
+			} catch (IdUnusedException e) {
+				log.error("Unable to fetch site in putInstructorInfo: " + siteId, e);
+			} catch (UserNotDefinedException e) {
+				log.error("Unable to fetch user in putInstructorInfo", e);
+			}
+
+			if (inst == null) {
+				log.error("Instructor is null in putInstructorInfo");
+			} else {
+				ltiProps.put("roles", "Instructor");
+				ltiProps.put("user_id", inst.getId());
+				ltiProps.put("lis_person_contact_email_primary", getEmail(inst));
+				ltiProps.put("lis_person_name_given", inst.getFirstName());
+				ltiProps.put("lis_person_name_family", inst.getLastName());
+				ltiProps.put("lis_person_name_full", inst.getDisplayName());
+			}
+		}
+
+		return ltiProps;
+	}
+	
 	/**
 	 * This will return a map of the information for the instructor such as
 	 * uem, username, ufn, etc. If the system is configured to use src9
@@ -2424,7 +3043,7 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		return togo;
 	}
 
-@SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	public Map getInstructorInfo(String siteId, boolean ignoreUseSource) {
 		Map togo = new HashMap();
 		if (!turnitinConn.isUseSourceParameter() && ignoreUseSource == false ) {
@@ -2492,6 +3111,137 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		}
 
 		return ret;
+	}
+
+	public String getLegacyReviewReportStudent(String contentId) throws QueueException, ReportException{
+		return getReviewReportStudent(contentId);
+	}
+	
+	public String getLegacyReviewReportInstructor(String contentId) throws QueueException, ReportException{
+		return getReviewReportStudent(contentId);
+	}
+	
+	public String getLTIAccess(String taskId, String contextId){
+		String ltiUrl = null;
+		try{
+			org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(taskId);
+			AssignmentContent ac = a.getContent();
+			ResourceProperties aProperties = ac.getProperties();
+			String ltiId = aProperties.getProperty("lti_id");
+			ltiUrl = "/access/basiclti/site/" + contextId + "/content:" + ltiId;
+			log.debug("getLTIAccess: " + ltiUrl);
+		} catch(Exception e){
+			log.warn("Exception while trying to get LTI access for task " + taskId + " and site " + contextId + ": " + e.getMessage());
+		}
+		return ltiUrl;
+	}
+	
+	public boolean deleteLTITool(String taskId, String contextId){
+		SecurityAdvisor advisor = new SimpleSecurityAdvisor(sessionManager.getCurrentSessionUserId(), "site.upd", "/site/!admin");
+		boolean deleted = false;
+		try{
+			org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(taskId);
+			AssignmentContent ac = a.getContent();
+			ResourceProperties aProperties = ac.getProperties();
+			String ltiId = aProperties.getProperty("lti_id");
+			securityService.pushAdvisor(advisor);
+			deleted = tiiUtil.deleteTIIToolContent(ltiId);
+		} catch(Exception e){
+			log.warn("Error trying to delete TII tool content: " + e.getMessage());
+		} finally {
+			securityService.popAdvisor(advisor);
+		}
+		return deleted;
+	}
+	
+	private List<ContentResource> getAllAcceptableAttachments(AssignmentSubmission sub, boolean allowAnyFile){
+		List attachments = sub.getSubmittedAttachments();
+		List<ContentResource> resources = new ArrayList<ContentResource>();
+        for (int i = 0; i < attachments.size(); i++) {
+            Reference attachment = (Reference) attachments.get(i);
+            try {
+                ContentResource res = contentHostingService.getResource(attachment.getId());
+                if (isAcceptableSize(res) && (allowAnyFile || isAcceptableContent(res))) {
+                    resources.add(res);
+                }
+            } catch (PermissionException e) {
+                log.warn(":getAllAcceptableAttachments " + e.getMessage());
+            } catch (IdUnusedException e) {
+                log.warn(":getAllAcceptableAttachments " + e.getMessage());
+            } catch (TypeException e) {
+                log.warn(":getAllAcceptableAttachments " + e.getMessage());
+            }
+        }
+        return resources;
+	}
+	
+	private String switchLTIError(int result, String method){
+		switch(result){
+			case -1:
+				return method + ": type is not correct";
+			case -2:
+				return method + ": error while signing TII LTI properties";
+			case -3:
+				return method + ": status 400, bad request";
+			case -4:
+				return method + ": exception while making TII LTI call";
+			case -5:
+				return method + ": other LTI error";
+			case -6:
+				return method + ": error while submitting (XML response)";
+			case -9:
+				return method + ": TII global LTI tool doesn't exist or properties are wrongly configured";
+			default:
+				return method + ": generic LTI error";
+		}
+	}
+	
+	private void processError(ContentReviewItem item, Long status, String error){//TODO resto de llamadas
+		item.setStatus(status);
+		if(error != null){
+			item.setLastError(error);
+		}
+		dao.update(item);
+		releaseLock(item);
+	}
+	
+	public boolean allowAllContent() {
+		return true;
+	}
+	
+	public Map<String, SortedSet<String>> getAcceptableExtensionsToMimeTypes() {
+		return new HashMap<String, SortedSet<String>>();
+	}
+
+	public Map<String, SortedSet<String>> getAcceptableFileTypesToExtensions() {
+		return new HashMap<String, SortedSet<String>>();
+	}
+	
+	/**
+	 * A simple SecurityAdviser that can be used to override permissions for one user for one function.
+	 */
+	protected class SimpleSecurityAdvisor implements SecurityAdvisor
+	{
+		protected String m_userId;
+		protected String m_function;
+		protected String m_reference;
+
+		public SimpleSecurityAdvisor(String userId, String function, String reference)
+		{
+			m_userId = userId;
+			m_function = function;
+			m_reference = reference;
+		}
+
+		public SecurityAdvice isAllowed(String userId, String function, String reference)
+		{
+			SecurityAdvice rv = SecurityAdvice.PASS;
+			if (m_userId.equals(userId) && m_function.equals(function) && m_reference.equals(reference))
+			{
+				rv = SecurityAdvice.ALLOWED;
+			}
+			return rv;
+		}
 	}
 
 }

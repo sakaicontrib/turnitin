@@ -26,5 +26,13 @@
         <property name="retryCount" type="long" not-null="false" />
         <property name="nextRetryTime" type="java.util.Date" not-null="false"/>
         <property name="errorCode" type="integer" not-null="false"/>
+        <property name="urlAccessed" type="boolean">
+			<column name="urlAccessed" not-null="true" default="false" />
+        </property>
+        <property name="submissionId" type="string" length="255" not-null="false" />
+        <property name="resubmission" type="boolean">
+			<column name="resubmission" not-null="true" default="false" />
+        </property>
+        <property name="externalGrade" type="string" length="255" not-null="false" />
 	</class>
 </hibernate-mapping>

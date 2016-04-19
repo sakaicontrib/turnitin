@@ -1,11 +1,65 @@
 Turnitin Content Review Service
 ===============================
 
-.. author Steven Githens
+2016 TII LTI integration
+------------------------
+First step: select the ContentReviewSiteAdvisor you want on the components.xml file. Uncomment the specific lines and deploy the tool.
+
+SITEPROPERTYADVISOR:
+--------------------
+The new TII LTI integration includes some new site properties needed for configuration. If they aren't added to the site, the default value will be used:
+
+	* useContentReviewService : this site property indicates whether we are using the TII integration or not
+		Default value: false
+	
+	* useContentReviewLTIService : this site property indicates whether we are using the new LTI TII integration or the old API
+		Default value: false
+		Note: it will only be checked if the previous property is true
+		
+	* useContentReviewDirectSubmission : this site property indicates whether we are using the direct/external submission way or the Sakai submission method
+		Default value: false
+		Note: it will only be checked if the previous properties are true
+	
+	For instance, if we want to set up a new site for using the new LTI integration we'd need these properties:
+
+		useContentReviewService = true
+		useContentReviewLTIService = true
+	
+GLOBALPROPERTYADVISOR:
+----------------------
+This advisor will be used when we want all our sites to behave the same way. If they aren't included to the sakai.properties file, false will be taken as the default value.
+
+	* assignment.useContentReviewService : this property indicates whether we are using the TII integration or not
+	
+	* assignment.useContentReviewLTI : this property indicates whether we are using the new LTI TII integration or the old API
+		Note: it will only be checked if the previous property is true
+		
+	* assignment.useContentReviewDirect : this property indicates whether we are using the direct/external submission way or the Sakai submission method
+		Note: it will only be checked if the previous properties are true
+	
+	For instance, if we want all the sites to use the new LTI integration, we'd need these properties (besides all the other TII configuration):
+
+		assignment.useContentReviewService = true
+		assignment.useContentReviewLTI = true
+
+
+LTI GLOBAL TOOL CONFIGURATION:
+------------------------------
+Launch URL -> https://turnitinuk.com/api/lti/1p0/assignment
+Launch Key -> from the turnitin setup
+Launch Secret -> from the turnitin setup
+Send Names (ticked)
+Send Emails (ticked)
+Allow custom parameters (ticked)
+Allow tool title to be changed (ticked)
+Tool Visibility (stealthed)
+It must have a site ID of !turnitin
+
+
+=============================== Old readme content
 
 Installation
 ------------
-
 
 This module can be installed with the standard Sakai maven idiom.
 Additionally, it can be included with a Sakai distribution as a top
