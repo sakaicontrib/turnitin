@@ -28,17 +28,21 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -118,6 +122,20 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String defaultClassPassword = null;
 
 	private List<String> enabledSiteTypes;
+
+	// TII-157 define Turnitin's acceptable file extensions and MIME types	--bbailla2
+	private final String[] DEFAULT_ACCEPTABLE_FILE_EXTENSIONS = new String[] {".doc", ".docx", ".xls", ".xls", ".xls", ".xls", ".xlsx", ".ppt", ".ppt", ".ppt", ".ppt", ".pptx", ".pps", ".pps", ".ppsx", ".pdf", ".ps", ".eps", ".txt", ".html", ".htm", ".wpd", ".wpd", ".odt", ".rtf", ".rtf", ".rtf", ".rtf", ".hwp"};
+	private final String[] DEFAULT_ACCEPTABLE_MIME_TYPES = new String[] {"application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/excel", "application/vnd.ms-excel", "application/x-excel", "application/x-msexcel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/mspowerpoint", "application/powerpoint", "application/vnd.ms-powerpoint", "application/x-mspowerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/mspowerpoint", "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.slideshow", "application/pdf", "application/postscript", "application/postscript", "text/plain", "text/html", "text/html", "application/wordperfect", "application/x-wpwin", "application/vnd.oasis.opendocument.text", "text/rtf", "application/rtf", "application/x-rtf", "text/richtext", "application/x-hwp"};
+
+	// Sakai.properties overriding the arrays above
+	private final String PROP_ACCEPT_ALL_FILES = "turnitin.accept.all.files";
+
+	private final String PROP_ACCEPTABLE_FILE_EXTENSIONS = "turnitin.acceptable.file.extensions";
+	private final String PROP_ACCEPTABLE_MIME_TYPES = "turnitin.acceptable.mime.types";
+	// A list of the displayable file types (ie. "Microsoft Word", "WordPerfect document", "Postscript", etc.)
+	private final String PROP_ACCEPTABLE_FILE_TYPES = "turnitin.acceptable.file.types";
+
+	private final String KEY_FILE_TYPE_PREFIX = "file.type";
 
 	private TurnitinAccountConnection turnitinConn;
 	public void setTurnitinConn(TurnitinAccountConnection turnitinConn) {
@@ -2231,11 +2249,117 @@ private List<ContentReviewItem> getItemsByContentId(String contentId) {
 		}
 	}
 
+	// SAK-27857	--bbailla2
+	public boolean allowAllContent()
+	{
+		// Turntin reports errors when content is submitted that it can't check originality against. So we will block unsupported content.
+		return serverConfigurationService.getBoolean(PROP_ACCEPT_ALL_FILES, false);
+	}
+
 	/* (non-Javadoc)
 	 * @see org.sakaiproject.contentreview.service.ContentReviewService#isAcceptableContent(org.sakaiproject.content.api.ContentResource)
 	 */
 	public boolean isAcceptableContent(ContentResource resource) {
 		return turnitinContentValidator.isAcceptableContent(resource);
+	}
+
+	// SAK-27857	--bbailla2
+	public String[] getAcceptableFileExtensions()
+	{
+		String[] extensions = serverConfigurationService.getStrings(PROP_ACCEPTABLE_FILE_EXTENSIONS);
+		if (extensions != null && extensions.length > 0)
+		{
+			return extensions;
+		}
+		return DEFAULT_ACCEPTABLE_FILE_EXTENSIONS;
+	}
+
+	// TII-157	--bbailla2
+	public String[] getAcceptableMimeTypes()
+	{
+		String[] mimeTypes = serverConfigurationService.getStrings(PROP_ACCEPTABLE_MIME_TYPES);
+		if (mimeTypes != null && mimeTypes.length > 0)
+		{
+			return mimeTypes;
+		}
+		return DEFAULT_ACCEPTABLE_MIME_TYPES;
+	}
+
+	// TII-157	--bbailla2
+	public String [] getAcceptableFileTypes()
+	{
+		return serverConfigurationService.getStrings(PROP_ACCEPTABLE_FILE_TYPES);
+	}
+
+	// TII-157	--bbailla2
+	public Map<String, SortedSet<String>> getAcceptableExtensionsToMimeTypes()
+	{
+		Map<String, SortedSet<String>> acceptableExtensionsToMimeTypes = new HashMap<String, SortedSet<String>>();
+		String[] acceptableFileExtensions = getAcceptableFileExtensions();
+		String[] acceptableMimeTypes = getAcceptableMimeTypes();
+		int min = Math.min(acceptableFileExtensions.length, acceptableMimeTypes.length);
+		for (int i = 0; i < min; i++)
+		{
+			appendToMap(acceptableExtensionsToMimeTypes, acceptableFileExtensions[i], acceptableMimeTypes[i]);
+		}
+
+		return acceptableExtensionsToMimeTypes;
+	}
+
+	// TII-157	--bbailla2
+	public Map<String, SortedSet<String>> getAcceptableFileTypesToExtensions()
+	{
+		Map<String, SortedSet<String>> acceptableFileTypesToExtensions = new LinkedHashMap<String, SortedSet<String>>();
+		String[] acceptableFileTypes = getAcceptableFileTypes();
+		String[] acceptableFileExtensions = getAcceptableFileExtensions();
+		if (acceptableFileTypes != null && acceptableFileTypes.length > 0)
+		{
+			// The acceptable file types are listed in sakai.properties. Sakai.properties takes precedence.
+			int min = Math.min(acceptableFileTypes.length, acceptableFileExtensions.length);
+			for (int i = 0; i < min; i++)
+			{
+				appendToMap(acceptableFileTypesToExtensions, acceptableFileTypes[i], acceptableFileExtensions[i]);
+			}
+		}
+		else
+		{
+			/*
+			 * acceptableFileTypes not specified in sakai.properties (this is normal).
+			 * Use ResourceLoader to resolve the file types.
+			 * If the resource loader doesn't find the file extenions, log a warning and return the [missing key...] messages
+			 */
+			ResourceLoader resourceLoader = new ResourceLoader("turnitin");
+			for (int i = 0; i< acceptableFileExtensions.length; i++)
+			{
+				String fileExtension = acceptableFileExtensions[i];
+				String key = KEY_FILE_TYPE_PREFIX + fileExtension;
+				if (!resourceLoader.getIsValid(key))
+				{
+					log.warn("While resolving acceptable file types for Turnitin, the sakai.property " + PROP_ACCEPTABLE_FILE_TYPES + " is not set, and the message bundle " + key + " could not be resolved. Displaying [missing key ...] to the user");
+				}
+				String fileType = resourceLoader.getString(key);
+				appendToMap(acceptableFileTypesToExtensions, fileType, acceptableFileExtensions[i]);
+			}
+		}
+
+		return acceptableFileTypesToExtensions;
+	}
+
+	// TII-157	--bbailla2
+	/**
+	 * Inserts (key, value) into a Map<String, Set<String>> such that value is inserted into the value Set associated with key.
+	 * The value set is implemented as a TreeSet, so the Strings will be in alphabetical order
+	 * Eg. if we insert (a, b) and (a, c) into map, then map.get(a) will return {b, c}
+	 */
+	private void appendToMap(Map<String, SortedSet<String>> map, String key, String value)
+	{
+		SortedSet<String> valueList = map.get(key);
+		if (valueList == null)
+		{
+			valueList = new TreeSet<String>();
+			map.put(key, valueList);
+		}
+		valueList.add(value);
 	}
 
 	/**
