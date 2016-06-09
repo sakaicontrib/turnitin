@@ -272,7 +272,7 @@ public class TurnitinRosterSync {
 			log.debug("User " + userId + " has no last name");
 			throw new SubmissionException ("User has no last name");
 		}
-		String dis = turnitinConn.isInstructorAccountNotified() ? "1" : "0";
+		String dis = turnitinConn.isInstructorAccountNotified() ? "0" : "1"; // dis=1 means disable sending email to the user
 
 		Document document = null;
 
