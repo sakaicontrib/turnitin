@@ -88,7 +88,7 @@
 	<bean
 		id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewQueue"
 		class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
-		singleton="true" init-method="init">
+		init-method="init">
 		<property name="beanId">
 			<value>TiiContentReviewQueue</value>
 		</property>
@@ -112,7 +112,7 @@
 	<bean
 		id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewReports"
 		class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
-		singleton="true" init-method="init">
+		init-method="init">
 		<property name="beanId">
 			<value>TiiContentReviewReports</value>
 		</property>
@@ -136,7 +136,7 @@
     <bean
         id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewRosterSync"
         class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
-        singleton="true" init-method="init">
+        init-method="init">
         <property name="beanId">
             <value>TiiContentReviewRosterSync</value>
         </property>
