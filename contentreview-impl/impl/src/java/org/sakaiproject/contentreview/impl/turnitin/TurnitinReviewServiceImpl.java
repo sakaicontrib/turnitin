@@ -1952,7 +1952,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					l++;
 					currentItem.setRetryCount(Long.valueOf(l));
 					currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
-					currentItem.setLastError(switchLTIError(result, "LTI Submission Error"));	
+					String returnedError = ltiProps.get("returnedError");
+					if (returnedError != null)
+					    currentItem.setLastError(returnedError);
+					else
+					    currentItem.setLastError(switchLTIError(result, "LTI Submission Error"));	
 					log.warn("LTI submission error");
 					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					errors++;
