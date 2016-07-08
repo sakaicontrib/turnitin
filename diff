@@ -1,0 +1,3047 @@
+diff --git a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentContent.java b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentContent.java
+index d5f7b05..ae19d53 100644
+--- a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentContent.java
++++ b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentContent.java
+@@ -189,7 +189,15 @@ public interface AssignmentContent extends Entity, AttachmentContainer
+ 	 */
+ 	
+ 	public boolean getAllowStudentViewReport();
++
++	/**
++	 * Access whether this AssignmentContent allows students to view review service grades.
++	 * 
++	 * @return true if the AssignmentContent allows students to view review service grades, false otherwise.
++	 */
+ 	
++	public boolean getAllowStudentViewExternalGrade();
++
+ 	/**
+ 	 * Access the list of authors.
+ 	 * 
+@@ -238,6 +246,10 @@ public interface AssignmentContent extends Entity, AttachmentContainer
+ 
+ 	public void setExcludeQuoted(boolean m_excludeQuoted);
+ 	
++	public boolean isAllowAnyFile();
++
++	public void setAllowAnyFile(boolean m_allowAnyFile);
++	
+ 	/**
+ 	 * Exclude type options:
+ 	 * 0 none
+diff --git a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentContentEdit.java b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentContentEdit.java
+index 5dd0a7b..15a86d5 100644
+--- a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentContentEdit.java
++++ b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentContentEdit.java
+@@ -157,7 +157,7 @@ public interface AssignmentContentEdit extends AssignmentContent, AttachmentCont
+ 	public void setAllowReviewService(boolean allow);
+ 	
+ 	/**
+-	 * Set whether this sssignment allow students to view review service reports?
++	 * Set whether this assignment allow students to view review service reports?
+ 	 * 
+ 	 * @param allow -
+ 	 *        true if the Assignment allows review service, false otherwise?
+@@ -165,6 +165,14 @@ public interface AssignmentContentEdit extends AssignmentContent, AttachmentCont
+ 	public void setAllowStudentViewReport(boolean allow);
+ 	
+ 	/**
++	 * Set whether this assignment allow students to view review service grades?
++	 * 
++	 * @param allow -
++	 *        true if the Assignment allows students to view review service grade, false otherwise
++	 */
++	public void setAllowStudentViewExternalGrade(boolean allow);
++	
++	/**
+ 	 * Add an author to the author list.
+ 	 * 
+ 	 * @param author -
+diff --git a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentService.java b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentService.java
+index b4d9231..1a4239e 100644
+--- a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentService.java
++++ b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentService.java
+@@ -591,6 +591,14 @@ public interface AssignmentService extends EntityProducer
+ 	 *        The AssignmentSubmissionEdit object to commit.
+ 	 */
+ 	public void commitEdit(AssignmentSubmissionEdit submission);
++	
++	/**
++	 * Method for allowing to commit TII properties into the Submission object
++	 * 
++	 * @param submission
++	 *        The AssignmentSubmissionEdit object to commit.
++	 */
++	public void commitEditFromCallback(AssignmentSubmissionEdit submission);
+ 
+ 	/**
+ 	 * Cancel the changes made to a AssignmentSubmissionEdit object, and release the lock. The AssignmentSubmissionEdit is disabled, and not to be used after this call.
+diff --git a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentSubmission.java b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentSubmission.java
+index 0feb3e7..fb08b42 100644
+--- a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentSubmission.java
++++ b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentSubmission.java
+@@ -282,6 +282,18 @@ public interface AssignmentSubmission extends Entity
+ 	 * @return
+ 	 */
+ 	public String getReviewIconUrl();
++	
++	/**
++	 *  the color of the content review Icon associated with this submission
++	 * @return
++	 */
++	public String getReviewIconColor();
++	
++	/**
++	 *  indicates whether the external grade for this submission is different than the assignments one
++	 * @return
++	 */
++	public boolean isExternalGradeDifferent();
+ 
+ 	/**
+ 	 *
+diff --git a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentSubmissionEdit.java b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentSubmissionEdit.java
+index 609b422..53d5474 100644
+--- a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentSubmissionEdit.java
++++ b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/AssignmentSubmissionEdit.java
+@@ -206,6 +206,18 @@ public interface AssignmentSubmissionEdit extends AssignmentSubmission, Edit
+ 	public void setReviewIconUrl(String url);
+ 	
+ 	/**
++	 * Set the color of the Review Report
++	 * @param color
++	 */
++	public void setReviewIconColor(String color);
++	
++	/**
++	 * When the external grade for this submission is different than the assignments one
++	 * @param url
++	 */
++	public void setExternalGradeDifferent(boolean different);
++	
++	/**
+ 	 * Set the content review status
+ 	 * @param status
+ 	 */
+@@ -265,6 +277,13 @@ public interface AssignmentSubmissionEdit extends AssignmentSubmission, Edit
+ 	 * @param attachments
+ 	 */
+ 	public void postAttachment(List attachments);
++	
++	/**
++	 * Post resubmission attachments to the content review service
++	 * @param attachments
++	 */
++	public void postAttachmentResub(List attachments);
++
+ 
+ 	/**
+ 	 * Set whether this submission was generated by a user or the system
+diff --git a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/ContentReviewResult.java b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/ContentReviewResult.java
+index c0add8a..d04be4c 100644
+--- a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/ContentReviewResult.java
++++ b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/api/ContentReviewResult.java
+@@ -33,6 +33,16 @@ public class ContentReviewResult
+ 	 * The URL of the content review icon associated with this item
+ 	 */
+ 	private String reviewIconURL;
++	
++	/**
++	 * The URL of the content review color associated with this item
++	 */
++	private String reviewIconColor;
++	
++	/**
++	 *  Indicates whether the external grade for this submission is different than the assignments one
++	 */
++	private String externalGrade;
+ 
+ 	/**
+ 	 * An error string, if any, return from the review service
+@@ -128,6 +138,38 @@ public class ContentReviewResult
+ 	{
+ 		this.reviewIconURL = reviewIconURL;
+ 	}
++	
++	/**
++	 * Getter for the color of the content review icon associated with this item
++	 */
++	public String getReviewIconColor()
++	{
++		return reviewIconColor;
++	}
++
++	/**
++	 * Setter for the color of the content review icon associated with this item
++	 */
++	public void setReviewIconColor(String reviewIconColor)
++	{
++		this.reviewIconColor = reviewIconColor;
++	}
++
++	/**
++	 * Getter for the external grade
++	 */
++	public String getExternalGrade()
++	{
++		return externalGrade;
++	}
++
++	/**
++	 * Setter for the external grade
++	 */
++	public void setExternalGrade(String externalGrade)
++	{
++		this.externalGrade = externalGrade;
++	}
+ 
+ 	/**
+ 	 * Getter for the error string, if any, returned from the review service
+diff --git a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/cover/AssignmentService.java b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/cover/AssignmentService.java
+index 22939a1..065a354 100644
+--- a/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/cover/AssignmentService.java
++++ b/assignment/assignment-api/api/src/java/org/sakaiproject/assignment/cover/AssignmentService.java
+@@ -420,6 +420,15 @@ public class AssignmentService {
+ 
+ 		service.commitEdit(param0);
+ 	}
++	
++	public static void commitEditFromCallback(
++			org.sakaiproject.assignment.api.AssignmentSubmissionEdit param0) {
++		org.sakaiproject.assignment.api.AssignmentService service = getInstance();
++		if (service == null)
++			return;
++
++		service.commitEditFromCallback(param0);
++	}
+ 
+ 	public static void cancelEdit(
+ 			org.sakaiproject.assignment.api.AssignmentSubmissionEdit param0) {
+diff --git a/assignment/assignment-bundles/resources/assignment.properties b/assignment/assignment-bundles/resources/assignment.properties
+index 9d57756..2f13836 100644
+--- a/assignment/assignment-bundles/resources/assignment.properties
++++ b/assignment/assignment-bundles/resources/assignment.properties
+@@ -97,6 +97,7 @@ gen.can.discard   = Your changes will be discarded. Are you sure you want to can
+ gen.clocli        = Close, click to open assignment instructions
+ gen.closed        = Closed
+ gen.creby         = Created by
++gen.cr.submit     = You can choose to have students submit their assignments inline only (typed directly into a text box), as attachments only, or both. Student submissions must be 'Single Upload File only' or 'Inline only' if using Turnitin integration.
+ gen.don           = Done
+ gen.dra1          = Draft
+ gen.closeexit	  = Close and Exit
+@@ -109,6 +110,7 @@ gen.forpoi        = For points, enter maximum possible
+ gen.assign.gra	  = Grade
+ gen.gra           = Grade
+ gen.gra2          = Grade:
++gen.gra.ext       	= External Grade:
+ gen.grade.override  = Override grade with:
+ gen.grading				= Grading
+ gen.group	 = Group
+@@ -697,6 +699,7 @@ review.use = Use {0}
+ review.switch.ne.1 = {0} is not available for non-electronic submissions.
+ review.switch.ne.2 = {0} is not available for non-electronic submissions. "Use Turnitin" has been deselected below.
+ review.allow = Allow students to view report
++review.allow.grades = Allow students to view external grades
+ review.report = Report
+ review.report.expand = Expand reports
+ review.report.collapse = Collapse reports
+@@ -713,6 +716,7 @@ review.originality.check.turnitin=Turnitin paper repository
+ review.originality.check.internet=Current and archived internet
+ review.originality.check.pub=Periodicals, journals, and publications
+ review.originality.check.institution=Institution-specific repository
++review.originality.allow.any.file=Allow submissions of any kind of file
+ review.exclude.bibliographic=Exclude bibliographic materials from Similarity Index for all papers in this assignment
+ review.exclude.quoted=Exclude quoted materials from Similarity Index for all papers in this assignment
+ review.exclude.smallMatches=Exclude small matches
+@@ -899,6 +903,7 @@ content_review.pending.info = This attachment has been submitted and is pending
+ content_review.error = An unknown error occurred. The originality review for this attachment is not available.
+ content_review.error.createAssignment=An error with {0} has occurred while creating this assignment. {1} has saved the assignment in draft mode. Please try posting this assignment again later. {2}
+ content_review.note=<div><br /><em>NOTE:</em><ul><li>When submitting attachments, students should only use these file types: {0}.</li> <li>Students should always save files with the appropriate extension.</li> </ul></div>
++content_review.studentNote = Only use file types: Microsoft Word (.doc, .docx), PowerPoint (.ppt, .pptx), PostScript (.ps), PDF (.pdf), HTML (.html), OpenOffice (ODT), Hangul (HWP), rich or plain text (.rtf, .txt).</li><li>Always include file extension.</li><li>Maximum file size is 20 Mb. The document must contain more than 20 words.</li></ol>
+ content_review.accepted.types.delimiter=,
+ content_review.accepted.types.lparen=(
+ content_review.accepted.types.rparen=)
+@@ -1011,6 +1016,24 @@ grades.late=Late submission
+ grades.lateness.late=Late
+ grades.lateness.ontime=On time
+ grades.lateness.unknown=Unknown
++ 
++cr.notprocess.warning = You have uploaded a file with an extension that will not be processed by the content review service
++cr.size.warning = You have uploaded a file which size is too big for the content review service
++submission.inline=Inline Submission
++content.review=Content Review
++content.review.inbox=Assignment Inbox
++review.oldsite=This site was created more than {0} years ago and there's a risk the content review site might have expired.
++ review.sitechars=The title of this site is shorter than the minimum allowed by the content review service. If you wish to route submissions through {0} then you need to choose a site title with more than {1} characters.
++review.sitecharslong=The title of this site is longer than the maximum allowed by the content review service. If you wish to route submissions through {0} then you need to choose a site title with less than {1} characters.
++review.assignchars=The title of this assignment is shorter than the minimum allowed by the content review service. If you wish to route submissions through {0} then you need to choose a title with more than {1} characters.
++review.assigncharslong=The title of this assignment is longer than the maximum allowed by the content review service. If you wish to route submissions through {0} then you need to choose a title with less than {1} characters.
++review.originality.alt=View originality report: score
++review.user.email=The content review service requires your email to be set. Your submission cannot be reviewed by {0} until you update your details.
++review.user.name=The content review service requires your first name and surname to be set. Your submission cannot be reviewed by {0} until you update your details.
++review.user.lastname=The content review service requires your surname to be set. Your submission cannot be reviewed by {0} until you update your details.
++review.instructor.fields=The content review service requires your first name, surname and email must to be set. If you wish to route submissions through {0} then you need to update your details.
++review.conflicting.popup=This item has been graded in both Turnitin and in the Assignments Tool. The mark set in the Assignments Tool is the one that is displayed here.
++allowResubmission.review.warning=Any submissions made after the Assignment Due Date will not be sent to {0}
+ 
+ rubric.title=Rubric
+ rubric.addNoRubric=No Rutgers Rubric will be added to this assignment
+diff --git a/assignment/assignment-impl/impl/src/java/org/sakaiproject/assignment/impl/BaseAssignmentService.java b/assignment/assignment-impl/impl/src/java/org/sakaiproject/assignment/impl/BaseAssignmentService.java
+index ee300da..39bbf20 100644
+--- a/assignment/assignment-impl/impl/src/java/org/sakaiproject/assignment/impl/BaseAssignmentService.java
++++ b/assignment/assignment-impl/impl/src/java/org/sakaiproject/assignment/impl/BaseAssignmentService.java
+@@ -21,6 +21,8 @@
+ 
+ package org.sakaiproject.assignment.impl;
+ 
++import java.text.SimpleDateFormat;
++
+ import org.apache.commons.codec.binary.Base64;
+ import org.apache.commons.io.FilenameUtils;
+ import org.apache.commons.lang.StringUtils;
+@@ -51,6 +53,7 @@ import org.sakaiproject.contentreview.exception.ReportException;
+ import org.sakaiproject.contentreview.exception.SubmissionException;
+ import org.sakaiproject.contentreview.model.ContentReviewItem;
+ import org.sakaiproject.contentreview.service.ContentReviewService;
++import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
+ import org.sakaiproject.email.cover.DigestService;
+ import org.sakaiproject.email.cover.EmailService;
+ import org.sakaiproject.entity.api.*;
+@@ -75,6 +78,7 @@ import org.sakaiproject.time.api.Time;
+ import org.sakaiproject.time.cover.TimeService;
+ import org.sakaiproject.tool.api.SessionBindingEvent;
+ import org.sakaiproject.tool.api.SessionBindingListener;
++import org.sakaiproject.tool.api.Session;
+ import org.sakaiproject.tool.cover.SessionManager;
+ import org.sakaiproject.tool.cover.ToolManager;
+ import org.sakaiproject.user.api.User;
+@@ -163,6 +167,11 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		this.contentReviewService = contentReviewService;
+ 	}
+ 	
++	protected ContentReviewSiteAdvisor contentReviewSiteAdvisor;
++	public void setContentReviewSiteAdvisor(ContentReviewSiteAdvisor contentReviewSiteAdvisor) {
++		this.contentReviewSiteAdvisor = contentReviewSiteAdvisor;
++	}
++	
+ 	private AssignmentPeerAssessmentService assignmentPeerAssessmentService = null;
+ 	public void setAssignmentPeerAssessmentService(AssignmentPeerAssessmentService assignmentPeerAssessmentService){
+ 		this.assignmentPeerAssessmentService = assignmentPeerAssessmentService;
+@@ -757,6 +766,10 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+  		{
+  			contentReviewService = (ContentReviewService) ComponentManager.get(ContentReviewService.class.getName());
+  		}
++		if (contentReviewSiteAdvisor == null)
++ 		{
++ 			contentReviewSiteAdvisor = (ContentReviewSiteAdvisor) ComponentManager.get(ContentReviewSiteAdvisor.class.getName());
++ 		}
+ 	} // init
+ 
+ 	/**
+@@ -2016,6 +2029,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 				
+ 				ResourcePropertiesEdit pEdit = (BaseResourcePropertiesEdit) retVal.getPropertiesEdit();
+ 				pEdit.addAll(existingContent.getProperties());
++				pEdit.removeProperty("lti_id");
+ 				addLiveProperties(pEdit);
+ 			}
+ 		}
+@@ -2539,6 +2553,32 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 
+ 	} // commitEdit(Submission)
+ 	
++	public void commitEditFromCallback(AssignmentSubmissionEdit submission)
++	{
++		String submissionRef = submission.getReference();
++		
++		// check for closed edit
++		if (!submission.isActiveEdit())
++		{
++			try
++			{
++				throw new Exception();
++			}
++			catch (Exception e)
++			{
++				M_log.warn(" commitEditFromCallback(): closed AssignmentSubmissionEdit assignment submission id=" + submission.getId() + e.getMessage());
++			}
++			return;
++		}
++
++		// complete the edit
++		m_submissionStorage.commit(submission);
++		
++		// close the edit object
++		
++		((BaseAssignmentSubmissionEdit) submission).closeEdit();
++	}
++	
+ 	protected void sendGradeReleaseNotification(boolean released, String notificationSetting, User[] allSubmitters, AssignmentSubmission s)
+ 	{
+ 		if (allSubmitters == null) return;
+@@ -6046,6 +6086,231 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		return true;
+ 	}
+ 
++	//TODO all that follows was taken from BaseContentService, removed and changed code, should be revised
++	protected static final int STREAM_BUFFER_SIZE = 102400;
++	protected static final String SECURE_INLINE_HTML = "content.html.forcedownload";
++	public static final String RFC1123_DATE = "EEE, dd MMM yyyy HH:mm:ss zzz";
++	public static final Locale LOCALE_US = Locale.US;
++	
++	protected void handleAccessResource(HttpServletRequest req, HttpServletResponse res, ContentResource resource){
++
++		// Set some headers to tell browsers to revalidate and check for updated files
++		res.addHeader("Cache-Control", "must-revalidate, private");
++		res.addHeader("Expires", "-1");
++		try
++		{
++			long len = resource.getContentLength();
++			String contentType = resource.getContentType();
++			ResourceProperties rp = resource.getProperties();
++			long lastModTime = 0;
++
++			try {
++				Time modTime = rp.getTimeProperty(ResourceProperties.PROP_MODIFIED_DATE);
++				lastModTime = modTime.getTime();
++			} catch (Exception e1) {
++				M_log.info("Could not retrieve modified time for: " + resource.getId());
++			}
++			
++			// KNL-1316 tell the browser when our file was last modified for caching reasons
++			if (lastModTime > 0) {
++				SimpleDateFormat rfc1123Date = new SimpleDateFormat(RFC1123_DATE, LOCALE_US);
++				rfc1123Date.setTimeZone(TimeZone.getTimeZone("GMT"));
++				res.addHeader("Last-Modified", rfc1123Date.format(lastModTime));
++			}
++
++			// for url content type, encode a redirect to the body URL
++			if (contentType.equalsIgnoreCase(ResourceProperties.TYPE_URL))
++			{	
++				M_log.warn("REMOVED CODE (url type) - SHOULD NOT ENTER HERE");
++			} else
++			{
++				// use the last part, the file name part of the id, for the download file name
++				//		String fileName = Web.encodeFileName( req, Validator.getFileName(ref.getId()) );
++				String fileName = Web.encodeFileName( req, rp.getProperty(rp.getNamePropDisplayName()) );
++				M_log.debug("fileName " + fileName);
++
++				String disposition = null;
++				if (Validator.letBrowserInline(contentType))
++				{
++					// if this is an html file we have more checks
++				    String lcct = contentType.toLowerCase();
++				    if ( ( lcct.startsWith("text/") || lcct.startsWith("image/") 
++				            || lcct.contains("html") || lcct.contains("script") ) && 
++				            m_serverConfigurationService.getBoolean(SECURE_INLINE_HTML, true)) {
++				        // increased checks to handle more mime-types - https://jira.sakaiproject.org/browse/KNL-749
++
++						boolean fileInline = false;
++						boolean folderInline = false;
++
++						try {
++							fileInline = rp.getBooleanProperty(ResourceProperties.PROP_ALLOW_INLINE);
++						}
++						catch (EntityPropertyNotDefinedException e) {
++							// we expect this so nothing to do!
++						}
++
++						if (!fileInline) 
++						try
++						{
++							folderInline = resource.getContainingCollection().getProperties().getBooleanProperty(ResourceProperties.PROP_ALLOW_INLINE);
++						}
++						catch (EntityPropertyNotDefinedException e) {
++							// we expect this so nothing to do!
++						}		
++						
++						if (fileInline || folderInline) {
++							disposition = "inline; filename=\"" + fileName + "\"";
++						}
++					} else {
++						disposition = "inline; filename=\"" + fileName + "\"";
++					}
++				}
++				
++				// drop through to attachment
++				if (disposition == null)
++				{
++					disposition = "attachment; filename=\"" + fileName + "\"";
++				}
++
++				// NOTE: Only set the encoding on the content we have to.
++				// Files uploaded by the user may have been created with different encodings, such as ISO-8859-1;
++				// rather than (sometimes wrongly) saying its UTF-8, let the browser auto-detect the encoding.
++				// If the content was created through the WYSIWYG editor, the encoding does need to be set (UTF-8).
++				String encoding = resource.getProperties().getProperty(ResourceProperties.PROP_CONTENT_ENCODING);
++				if (encoding != null && encoding.length() > 0)
++				{
++					contentType = contentType + "; charset=" + encoding;
++				}
++				
++				// KNL-1316 let's see if the user already has a cached copy. Code copied and modified from Tomcat DefaultServlet.java
++				long headerValue = req.getDateHeader("If-Modified-Since");
++				if (headerValue != -1 && (lastModTime < headerValue + 1000)) {
++					// The entity has not been modified since the date specified by the client. This is not an error case.
++					res.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
++					return; 
++				}
++
++				res.addHeader("Accept-Ranges", "bytes");
++        	
++				// stream the content using a small buffer to keep memory managed
++				InputStream content = null;
++				OutputStream out = null;
++
++				try
++				{
++					content = resource.streamContent();
++					if (content == null)
++					{
++						//throw new IdUnusedException(ref.getReference());
++						M_log.warn("NULL CONTENT - SHOULD NOT ENTER HERE");
++						return;
++					}
++	
++					res.setContentType(contentType);
++					res.addHeader("Content-Disposition", disposition);
++					// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4187336
++					if (len <= Integer.MAX_VALUE){
++ 						res.setContentLength((int)len);
++ 					} else {
++ 						res.addHeader("Content-Length", Long.toString(len));
++ 					}
++
++					// set the buffer of the response to match what we are reading from the request
++					if (len < STREAM_BUFFER_SIZE)
++					{
++						res.setBufferSize((int)len);
++					}
++					else
++					{
++						res.setBufferSize(STREAM_BUFFER_SIZE);
++					}
++
++					out = res.getOutputStream();
++
++					copyRange(content, out, 0, len-1);
++				}
++				catch (ServerOverloadException e)
++				{
++					throw e;
++				}
++				catch (Exception ignore)
++				{
++				}
++				finally
++				{
++					// be a good little program and close the stream - freeing up valuable system resources
++					if (content != null)
++					{
++						content.close();
++					}
++
++					if (out != null)
++					{
++						try
++						{
++							out.close();
++						}
++						catch (Exception ignore)
++						{
++						}
++					}
++				}				
++				// Track event - only for full reads
++				//TODO eventTrackingService.post(eventTrackingService.newEvent(EVENT_RESOURCE_READ, resource.getReference(null), false));
++			} // output resource
++		}
++		catch (Exception t)
++		{
++			M_log.error("Exception handling content " + t.getMessage());
++		}
++	}
++
++    /**
++     * Copy the partial contents of the specified input stream to the specified
++     * output stream.
++     * 
++     * @param istream The input stream to read from
++     * @param ostream The output stream to write to
++     * @param start Start of the range which will be copied
++     * @param end End of the range which will be copied
++     * @return Exception which occurred during processing
++     */
++    protected IOException copyRange(InputStream istream,
++                                  OutputStream ostream,
++                                  long start, long end) {
++
++    	try {
++            istream.skip(start);
++        } catch (IOException e) {
++            return e;
++        }
++
++        IOException exception = null;
++        long bytesToRead = end - start + 1;
++
++        byte buffer[] = new byte[STREAM_BUFFER_SIZE];
++        int len = buffer.length;
++        while ( (bytesToRead > 0) && (len >= buffer.length)) {
++            try {
++                len = istream.read(buffer);
++                if (bytesToRead >= len) {
++                    ostream.write(buffer, 0, len);
++                    bytesToRead -= len;
++                } else {
++                    ostream.write(buffer, 0, (int) bytesToRead);
++                    bytesToRead = 0;
++                }
++            } catch (IOException e) {
++                exception = e;
++                len = -1;
++            }
++            if (len < buffer.length)
++                break;
++        }
++
++        return exception;
++    }
++	
+ 	/**
+ 	 * {@inheritDoc}
+ 	 */
+@@ -6057,9 +6322,68 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 					Collection copyrightAcceptedRefs) throws EntityPermissionException, EntityNotDefinedException,
+ 					EntityAccessOverloadException, EntityCopyrightException
+ 			{
++				M_log.debug("handleAccess from getHttpAccess ");
++				M_log.debug("ref " + ref.getId() + " - " + ref.getSubType() + " - " + ref.getReference() + " - " + ref.getContainer());
+ 				if (SessionManager.getCurrentSessionUserId() == null)
+ 				{
+-					// fail the request, user not logged in yet.
++					M_log.debug("user not logged in");
++					try{
++						if ("s".equals(ref.getSubType()))
++						{
++							M_log.debug("getting submission");
++							//TODO should we check the assignment settings?
++							Session newsession = SessionManager.startSession();
++							newsession.setActive();
++							SessionManager.setCurrentSession(newsession);
++							newsession.setUserId("admin");
++							newsession.setUserEid("admin");
++							if (newsession == null){
++								M_log.debug("startSession() failed.");
++							} else {
++								M_log.debug(newsession.getId());
++							}
++							if(!ref.getId().contains(":")){
++								M_log.debug("No content review item specified");
++								return;
++							}
++							String[] ids = ref.getId().split(":");
++							String submissionId = ids[0];
++							String criId = ids[1];
++							AssignmentSubmission s = getSubmission(submissionId);
++							ContentReviewItem cri = contentReviewService.getItemById(criId);
++							M_log.debug("cri " + criId + " - content " + cri.getContentId());
++							ContentResource cr = m_contentHostingService.getResource(cri.getContentId());
++							if(s == null || cr == null || cri == null){
++								M_log.warn("Could not get submission, content or contentreviewitem " + ref.getId());
++								return;
++							} else {
++								M_log.debug("submission url " + s.getUrl());
++								if (s.getSubmittedAttachments().isEmpty())
++									M_log.debug(this + " getReviewScore No attachments submitted.");
++								else {
++									if(cri.isUrlAccessed()){
++										M_log.warn("Trying to access an url already accessed, submission id " + s.getId());
++										return;
++									}
++
++									handleAccessResource(req, res, cr);
++									
++									boolean itemUpdated = contentReviewService.updateItemAccess(cr.getId());
++									if(!itemUpdated){
++										M_log.error("Could not update cr item access status");
++									}
++										
++									//TODO close sakai session
++								}
++							}
++						}
++						// else fail the request, user not logged in yet.
++					}
++					catch (Throwable t)
++					{
++						M_log.warn(" HandleAccess: caught exception " + t.toString() + " and rethrow it!");
++						throw new EntityNotDefinedException(ref.getReference());
++					}
+ 				}
+ 				else
+ 				{
+@@ -8750,6 +9074,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		protected boolean m_allowReviewService;
+ 		
+ 		protected boolean m_allowStudentViewReport;
++		
++		protected boolean m_allowStudentViewExternalGrade;
+ 
+ 		String m_submitReviewRepo;
+ 		String m_generateOriginalityReport;
+@@ -8757,6 +9083,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		boolean m_checkInternet = true;
+ 		boolean m_checkPublications = true;
+ 		boolean m_checkInstitution = true;
++		boolean m_allowAnyFile = false;
+ 		boolean m_excludeBibliographic = true;
+ 		boolean m_excludeQuoted = true;
+ 		int m_excludeType = 0;
+@@ -8837,12 +9164,14 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			m_hideDueDate = getBool(el.getAttribute("hideduedate"));
+ 			m_allowReviewService = getBool(el.getAttribute("allowreview"));
+ 			m_allowStudentViewReport = getBool(el.getAttribute("allowstudentview"));
++			m_allowStudentViewExternalGrade = getBool(el.getAttribute("allowstudentviewexternalgrade"));
+ 			m_submitReviewRepo = el.getAttribute("submitReviewRepo");
+ 			m_generateOriginalityReport = el.getAttribute("generateOriginalityReport");
+ 			m_checkTurnitin = getBool(el.getAttribute("checkTurnitin"));
+ 			m_checkInternet = getBool(el.getAttribute("checkInternet"));
+ 			m_checkPublications = getBool(el.getAttribute("checkPublications"));
+ 			m_checkInstitution = getBool(el.getAttribute("checkInstitution"));
++			m_allowAnyFile = getBool(el.getAttribute("allowAnyFile"));
+ 			m_excludeBibliographic = getBool(el.getAttribute("excludeBibliographic"));
+ 			m_excludeQuoted = getBool(el.getAttribute("excludeQuoted"));
+ 			String excludeTypeStr = el.getAttribute("excludeType");
+@@ -9049,12 +9378,14 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 							m_hideDueDate = getBool(attributes.getValue("hideduedate"));
+ 							m_allowReviewService = getBool(attributes.getValue("allowreview"));
+ 							m_allowStudentViewReport = getBool(attributes.getValue("allowstudentview"));
++							m_allowStudentViewExternalGrade = getBool(attributes.getValue("allowstudentviewexternalgrade"));
+ 							m_submitReviewRepo = attributes.getValue("submitReviewRepo");
+ 							m_generateOriginalityReport = attributes.getValue("generateOriginalityReport");
+ 							m_checkTurnitin = getBool(attributes.getValue("checkTurnitin"));
+ 							m_checkInternet = getBool(attributes.getValue("checkInternet"));
+ 							m_checkPublications = getBool(attributes.getValue("checkPublications"));
+ 							m_checkInstitution = getBool(attributes.getValue("checkInstitution"));
++							m_allowAnyFile = getBool(attributes.getValue("allowAnyFile"));
+ 							m_excludeBibliographic = getBool(attributes.getValue("excludeBibliographic"));
+ 							m_excludeQuoted = getBool(attributes.getValue("excludeQuoted"));
+ 							String excludeTypeStr = attributes.getValue("excludeType");
+@@ -9230,12 +9561,14 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		
+ 			content.setAttribute("allowreview", getBoolString(m_allowReviewService));
+ 			content.setAttribute("allowstudentview", getBoolString(m_allowStudentViewReport));
++			content.setAttribute("allowstudentviewexternalgrade", getBoolString(m_allowStudentViewExternalGrade));
+ 			content.setAttribute("submitReviewRepo", m_submitReviewRepo);
+ 			content.setAttribute("generateOriginalityReport", m_generateOriginalityReport);
+ 			content.setAttribute("checkTurnitin", getBoolString(m_checkTurnitin));
+ 			content.setAttribute("checkInternet", getBoolString(m_checkInternet));
+ 			content.setAttribute("checkPublications", getBoolString(m_checkPublications));
+ 			content.setAttribute("checkInstitution", getBoolString(m_checkInstitution));
++			content.setAttribute("allowAnyFile", getBoolString(m_allowAnyFile));
+ 			content.setAttribute("excludeBibliographic", getBoolString(m_excludeBibliographic));
+ 			content.setAttribute("excludeQuoted", getBoolString(m_excludeQuoted));
+ 			content.setAttribute("excludeType", Integer.toString(m_excludeType));
+@@ -9311,12 +9644,14 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 				//Uct
+ 				m_allowReviewService = content.getAllowReviewService();
+ 				m_allowStudentViewReport = content.getAllowStudentViewReport();
++				m_allowStudentViewExternalGrade = content.getAllowStudentViewExternalGrade();
+ 				m_submitReviewRepo = content.getSubmitReviewRepo();
+ 				m_generateOriginalityReport = content.getGenerateOriginalityReport();
+ 				m_checkTurnitin = content.isCheckTurnitin();
+ 				m_checkInternet = content.isCheckInternet();
+ 				m_checkPublications = content.isCheckPublications();
+ 				m_checkInstitution = content.isCheckInstitution();
++				m_allowAnyFile = content.isAllowAnyFile();
+ 				m_excludeBibliographic = content.isExcludeBibliographic();
+ 				m_excludeQuoted = content.isExcludeQuoted();
+ 				m_excludeType = content.getExcludeType();
+@@ -9676,6 +10011,9 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			return m_allowStudentViewReport;
+ 		}
+ 		
++		public boolean getAllowStudentViewExternalGrade() {
++			return m_allowStudentViewExternalGrade;
++		}
+ 		
+ 		/**
+ 		 * Access the time that this object was created.
+@@ -9840,6 +10178,14 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		public void setExcludeValue(int m_excludeValue){
+ 			this.m_excludeValue = m_excludeValue;
+ 		}
++		
++		public boolean isAllowAnyFile() {
++			return m_allowAnyFile;
++		}
++
++		public void setAllowAnyFile(boolean m_allowAnyFile) {
++			this.m_allowAnyFile = m_allowAnyFile;
++		}
+ 
+ 	}// BaseAssignmentContent
+ 
+@@ -10112,6 +10458,16 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		}
+ 		
+ 		/**
++		 * Does this Assignment allow students to view the external grades?
++		 * 
++		 * @param allow -
++		 *        true if the Assignment allows students to view the external grades, false otherwise
++		 */
++		public void setAllowStudentViewExternalGrade(boolean allow) {
++			m_allowStudentViewExternalGrade = allow;
++		}
++		
++		/**
+ 		 * Does this Assignment allow attachments?
+ 		 * 
+ 		 * @param allow -
+@@ -10326,6 +10682,9 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		protected String m_reviewStatus;
+ 		
+ 		protected String m_reviewIconUrl;
++		protected String m_reviewIconColor;
++		
++		protected boolean m_externalGradeDifferent;
+ 
+         protected String m_reviewError;
+ 		
+@@ -10394,7 +10753,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 					return m_reviewScore.intValue();
+ 				}
+ 
+-				ContentResource cr = getFirstAcceptableAttachement();
++				boolean allowAnyFile = this.getAssignment().getContent().isAllowAnyFile();
++				ContentResource cr = getFirstAcceptableAttachement(allowAnyFile);
+ 				if (cr == null )
+ 				{
+ 					M_log.debug(this + " getReviewScore No suitable attachments found in list");
+@@ -10423,10 +10783,9 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 				catch (QueueException cie) {
+ 					//should we add the item
+ 					try {
+-						
+ 							M_log.debug(this + " getReviewScore Item is not in queue we will try add it");
+-                                                        try {
+-								contentReviewService.queueContent(getContentReviewSubmitterId(cr), this.getContext(), getAssignment().getReference(), Arrays.asList(cr));
++							try {
++								contentReviewService.queueContent(getContentReviewSubmitterId(cr), this.getContext(), getAssignment().getReference(), Arrays.asList(cr), this.getId(), false);
+ 							}
+ 							catch (QueueException qe) {
+ 								M_log.warn(" getReviewScore Unable to queue content with content review Service: " + qe.getMessage());
+@@ -10498,7 +10857,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 					M_log.debug(" getReviewScore(ContentResource) Item is not in queue we will try to add it");
+ 					try
+ 					{
+-						contentReviewService.queueContent(getContentReviewSubmitterId(cr), this.getContext(), getAssignment().getReference(), Arrays.asList(cr));
++						contentReviewService.queueContent(getContentReviewSubmitterId(cr), this.getContext(), getAssignment().getReference(), Arrays.asList(cr), this.getId(), false);
+ 					}
+ 					catch (QueueException qe)
+ 					{
+@@ -10540,7 +10899,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			else
+ 			{
+ 				try {
+-					ContentResource cr = getFirstAcceptableAttachement();
++					boolean allowAnyFile = this.getAssignment().getContent().isAllowAnyFile();
++					ContentResource cr = getFirstAcceptableAttachement(allowAnyFile);
+ 					if (cr == null )
+ 					{
+ 						M_log.debug(this + " getReviewReport No suitable attachments found in list");
+@@ -10548,11 +10908,22 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 					}
+ 					
+ 					String contentId = cr.getId();
+-					
+-					if (allowGradeSubmission(getReference()))
+-						return contentReviewService.getReviewReportInstructor(contentId, getAssignment().getReference(), UserDirectoryService.getCurrentUser().getId());
+-					else
+-						return contentReviewService.getReviewReportStudent(contentId, getAssignment().getReference(), UserDirectoryService.getCurrentUser().getId());
++					try {
++						Site site = SiteService.getSite(m_context);
++						boolean siteCanUseLTIReviewService = contentReviewSiteAdvisor.siteCanUseLTIReviewService(site);
++						if (siteCanUseLTIReviewService) {
++							return contentReviewService.getReviewReport(contentId, null, null);
++						} else {
++							if (allowGradeSubmission(getReference())){
++								return contentReviewService.getReviewReportInstructor(contentId, getAssignment().getReference(), UserDirectoryService.getCurrentUser().getId());
++							} else {
++								return contentReviewService.getReviewReportStudent(contentId, getAssignment().getReference(), UserDirectoryService.getCurrentUser().getId());
++							}
++						}
++					} catch (IdUnusedException _iue) {
++						M_log.debug(this + " getReviewReport Could not find site from m_context value " + m_context);
++						return "error";
++					}
+ 					
+ 				} catch (Exception e) {
+ 					M_log.warn(":getReviewReport() " + e.getMessage());
+@@ -10578,13 +10949,21 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			try
+ 			{
+ 				String contentId = cr.getId();
+-				if (allowGradeSubmission(getReference()))
+-				{
+-					return contentReviewService.getReviewReportInstructor(contentId, getAssignment().getReference(), UserDirectoryService.getCurrentUser().getId());
+-				}
+-				else
+-				{
+-					return contentReviewService.getReviewReportStudent(contentId, getAssignment().getReference(), UserDirectoryService.getCurrentUser().getId());
++				try {
++					Site site = SiteService.getSite(m_context);
++					boolean siteCanUseLTIReviewService = contentReviewSiteAdvisor.siteCanUseLTIReviewService(site);
++					if (siteCanUseLTIReviewService) {
++						return contentReviewService.getReviewReport(contentId, null, null);
++					} else {
++						if (allowGradeSubmission(getReference())){
++							return contentReviewService.getReviewReportInstructor(contentId, getAssignment().getReference(), UserDirectoryService.getCurrentUser().getId());
++						} else {
++							return contentReviewService.getReviewReportStudent(contentId, getAssignment().getReference(), UserDirectoryService.getCurrentUser().getId());
++						}
++					}
++				} catch (IdUnusedException _iue) {
++					M_log.debug(this + " getReviewReport Could not find site from m_context value " + m_context);
++					return "error";
+ 				}
+ 			}
+ 			catch (Exception e)
+@@ -10595,13 +10974,13 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		}
+ 		
+ 		//TODO: delete this and all calling methods if there are no repercussions
+-		private ContentResource getFirstAcceptableAttachement() {
++		private ContentResource getFirstAcceptableAttachement(boolean allowAnyFile) {
+ 			String contentId = null;
+ 			try {
+ 			for( int i =0; i < m_submittedAttachments.size();i++ ) {
+ 				Reference ref = (Reference)m_submittedAttachments.get(i);
+ 				ContentResource contentResource = (ContentResource)ref.getEntity();
+-				if (contentReviewService.isAcceptableContent(contentResource)) {
++				if (contentReviewService.isAcceptableSize(contentResource) && (allowAnyFile || contentReviewService.isAcceptableContent(contentResource))){
+ 					return (ContentResource)contentResource;
+ 				}
+ 			}
+@@ -10616,7 +10995,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 		/**
+ 		 * SAK-26322 - Gets all attachments in m_submittedAttachments that are acceptable to the content review service
+ 		 */
+-		private List<ContentResource> getAllAcceptableAttachments()
++		private List<ContentResource> getAllAcceptableAttachments(boolean allowAnyFile)
+ 		{
+ 			List<ContentResource> attachments = new ArrayList<ContentResource>();
+ 			for (int i = 0; i< m_submittedAttachments.size(); i++)
+@@ -10625,7 +11004,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 				{
+ 					Reference ref = (Reference)m_submittedAttachments.get(i);
+ 					ContentResource contentResource = (ContentResource)ref.getEntity();
+-					if (contentReviewService.isAcceptableContent(contentResource))
++					if (contentReviewService.isAcceptableSize(contentResource) && (allowAnyFile || contentReviewService.isAcceptableContent(contentResource)))
+ 					{
+ 						attachments.add((ContentResource)contentResource);
+ 					}
+@@ -10652,7 +11031,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+             else
+             {
+                 try {
+-                    ContentResource cr = getFirstAcceptableAttachement();
++                    boolean allowAnyFile = this.getAssignment().getContent().isAllowAnyFile();
++                    ContentResource cr = getFirstAcceptableAttachement(allowAnyFile);
+                     if (cr == null )
+                     {
+                         M_log.debug(this + " getReviewError No suitable attachments found in list");
+@@ -10771,6 +11151,17 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 				
+ 			return m_reviewIconUrl;
+ 		}
++		
++		public String getReviewIconColor() {
++			if (m_reviewIconColor == null )
++				m_reviewIconColor = contentReviewService.getIconColorforScore(Long.valueOf(this.getReviewScore()));
++				
++			return m_reviewIconColor;
++		}
++		
++		public boolean isExternalGradeDifferent() {
++			return m_externalGradeDifferent;
++		}
+ 
+ 		/**
+ 		 * @inheritDoc
+@@ -10781,7 +11172,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			ArrayList<ContentReviewResult> reviewResults = new ArrayList<ContentReviewResult>();
+ 
+ 			//get all the attachments for this submission and populate the reviewResults
+-			List<ContentResource> contentResources = getAllAcceptableAttachments();
++			boolean allowAnyFile = this.getAssignment().getContent().isAllowAnyFile();
++			List<ContentResource> contentResources = getAllAcceptableAttachments(allowAnyFile);
+ 			Iterator<ContentResource> itContentResources = contentResources.iterator();
+ 			while (itContentResources.hasNext())
+ 			{
+@@ -10795,6 +11187,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 				//skip review status, it's unused
+ 				String iconUrl = contentReviewService.getIconUrlforScore(Long.valueOf(reviewScore));
+ 				reviewResult.setReviewIconURL(iconUrl);
++				reviewResult.setReviewIconColor(contentReviewService.getIconColorforScore(Long.valueOf(reviewScore)));
++				reviewResult.setExternalGrade(contentReviewService.getExternalGradeForContentId(cr.getId()));
+ 				reviewResult.setReviewError(getReviewError(cr));
+ 
+ 				if ("true".equals(cr.getProperties().getProperty(PROP_INLINE_SUBMISSION)))
+@@ -10944,6 +11338,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			m_gradeReleased = getBool(el.getAttribute("gradereleased"));
+ 			m_honorPledgeFlag = getBool(el.getAttribute("pledgeflag"));
+ 			m_hideDueDate = getBool(el.getAttribute("hideduedate"));
++			
++			m_externalGradeDifferent = getBool(el.getAttribute("isexternalgradedif"));
+ 
+ 			m_submittedText = FormattedText.decodeFormattedTextAttribute(el, "submittedtext");
+ 			m_feedbackComment = FormattedText.decodeFormattedTextAttribute(el, "feedbackcomment");
+@@ -11163,6 +11559,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 							m_gradeReleased = getBool(attributes.getValue("gradereleased"));
+ 							m_honorPledgeFlag = getBool(attributes.getValue("pledgeflag"));
+ 							m_hideDueDate = getBool(attributes.getValue("hideduedate"));
++							
++							m_externalGradeDifferent = getBool(attributes.getValue("isexternalgradedif"));
+ 
+ 							m_submittedText = formattedTextDecodeFormattedTextAttribute(attributes, "submittedtext");
+ 							m_feedbackComment = formattedTextDecodeFormattedTextAttribute(attributes, "feedbackcomment");
+@@ -11252,6 +11650,8 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			submission.setAttribute("gradereleased", getBoolString(m_gradeReleased));
+ 			submission.setAttribute("pledgeflag", getBoolString(m_honorPledgeFlag));
+ 			submission.setAttribute("hideduedate", getBoolString(m_hideDueDate));
++			
++			submission.setAttribute("isexternalgradedif", getBoolString(m_externalGradeDifferent));
+ 
+ 			// SAK-17606
+ 			submission.setAttribute("anonymousSubmissionId", m_anonymousSubmissionId);
+@@ -11374,6 +11774,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			m_gradedBy = submission.getGradedBy();
+ 			m_gradeReleased = submission.getGradeReleased();
+ 			m_honorPledgeFlag = submission.getHonorPledgeFlag();
++			m_externalGradeDifferent = submission.isExternalGradeDifferent();
+ 			m_properties = new BaseResourcePropertiesEdit();
+ 			m_properties.addAll(submission.getProperties());
+ 
+@@ -12636,8 +13037,9 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			//Send the attachment to the review service
+ 
+ 			try {
++				boolean allowAnyFile = this.getAssignment().getContent().isAllowAnyFile();
+ 				//SAK-26322
+-				List<ContentResource> resources = getAllAcceptableAttachments(attachments);
++				List<ContentResource> resources = getAllAcceptableAttachments(attachments, allowAnyFile);
+ 				Assignment ass = this.getAssignment();			
+ 				if (ass != null)
+ 				{
+@@ -12654,7 +13056,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 					}else{						
+ 						userId = this.getContentReviewSubmitterId(null);
+ 					}
+-					contentReviewService.queueContent(userId, this.getContext(), ass.getReference(), resources);
++					contentReviewService.queueContent(userId, this.getContext(), ass.getReference(), resources, this.getId(), false);
+ 				}
+ 				else
+ 				{
+@@ -12671,14 +13073,50 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 				e.printStackTrace();
+ 			}
+ 		}
++		
++		public void postAttachmentResub(List attachments){
++			//Send the attachment to the review service
++			try {
++				boolean allowAnyFile = this.getAssignment().getContent().isAllowAnyFile();
++				List<ContentResource> resources = getAllAcceptableAttachments(attachments, allowAnyFile);
++				Assignment ass = this.getAssignment();
++				if (ass != null)
++				{
++					//Group submissions store the group ID as the submitterId, so find an actual user ID
++					String userId = null;
++					if(getAssignment().isGroup()){
++						//first first user id from an attachment
++						for(ContentResource cr : resources){
++							userId = this.getContentReviewSubmitterId(cr);
++							if(userId != null){
++								break;
++							}
++						}
++					}else{
++						userId = this.getContentReviewSubmitterId(null);
++					}
++					contentReviewService.queueContent(userId, this.getContext(), ass.getReference(), resources, this.getId(), true);
++				}
++				else
++				{
++					// error, assignment couldn't be found. Log the error
++					M_log.debug(this + " BaseAssignmentSubmissionEdit postAttachmentResub: Unable to find assignment associated with submission id= " + this.m_id + " and assignment id=" + this.m_assignment);
++				}
++			} catch (QueueException qe) {
++				M_log.warn(" BaseAssignmentSubmissionEdit postAttachmentResub: Unable to add content to Content Review queue: " + qe.getMessage());
++			} catch (Exception e) {
++				e.printStackTrace();
++			}
++
++		}
+ 
+-		private ContentResource getFirstAcceptableAttachement(List attachments) {
++		private ContentResource getFirstAcceptableAttachement(List attachments, boolean allowAnyFile) {
+ 			
+ 			for( int i =0; i < attachments.size();i++ ) { 
+ 				Reference attachment = (Reference)attachments.get(i);
+ 				try {
+ 					ContentResource res = m_contentHostingService.getResource(attachment.getId());
+-					if (contentReviewService.isAcceptableContent(res)) {
++					if (contentReviewService.isAcceptableSize(res) && (allowAnyFile || contentReviewService.isAcceptableContent(res))) {
+ 						return res;
+ 					}
+ 				} catch (PermissionException e) {
+@@ -12700,7 +13138,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			return null;
+ 		}
+ 
+-		private List<ContentResource> getAllAcceptableAttachments(List attachments)
++		private List<ContentResource> getAllAcceptableAttachments(List attachments, boolean allowAnyFile)
+ 		{
+ 			List<ContentResource> resources = new ArrayList<ContentResource>();
+ 			for (int i = 0; i < attachments.size(); i++)
+@@ -12709,7 +13147,7 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 				try
+ 				{
+ 					ContentResource res = m_contentHostingService.getResource(attachment.getId());
+-					if (contentReviewService.isAcceptableContent(res))
++					if (contentReviewService.isAcceptableSize(res) && (allowAnyFile || contentReviewService.isAcceptableContent(res)))
+ 					{
+ 						resources.add(res);
+ 					}
+@@ -12836,6 +13274,14 @@ public abstract class BaseAssignmentService implements AssignmentService, Entity
+ 			this.m_reviewIconUrl = url;
+ 			
+ 		}
++		
++		public void setReviewIconColor(String color) {
++			this.m_reviewIconColor = color;			
++		}
++
++		public void setExternalGradeDifferent(boolean externalGradeDifferent) {
++			this.m_externalGradeDifferent = externalGradeDifferent;			
++		}
+ 
+ 		public void setReviewStatus(String status) {
+ 			this.m_reviewStatus = status;
+diff --git a/assignment/assignment-impl/pack/src/webapp/WEB-INF/components.xml b/assignment/assignment-impl/pack/src/webapp/WEB-INF/components.xml
+index f5ae6fe..0115ec1 100644
+--- a/assignment/assignment-impl/pack/src/webapp/WEB-INF/components.xml
++++ b/assignment/assignment-impl/pack/src/webapp/WEB-INF/components.xml
+@@ -29,7 +29,8 @@
+  		<property name="developerHelperService"><ref bean="org.sakaiproject.entitybroker.DeveloperHelperService"/></property>
+ 		<property name="authzGroupService"><ref bean="org.sakaiproject.authz.api.AuthzGroupService"/></property>
+  		
+- 		<!--<property name="contentReviewService"><ref bean="org.sakaiproject.contentreview.service.ContentReviewService"/></property>-->
++<!-- 		<property name="contentReviewService"><ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceTii"/></property> -->
++<!--		<property name="contentReviewSiteAdvisor"><ref bean="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"/></property> -->
+  		
+  		<!--use to allow group awareness option in assignments. 
+  			By default this is true.-->
+diff --git a/assignment/assignment-tool/tool/src/java/org/sakaiproject/assignment/tool/AssignmentAction.java b/assignment/assignment-tool/tool/src/java/org/sakaiproject/assignment/tool/AssignmentAction.java
+index 9f219c7..cfe422d 100644
+--- a/assignment/assignment-tool/tool/src/java/org/sakaiproject/assignment/tool/AssignmentAction.java
++++ b/assignment/assignment-tool/tool/src/java/org/sakaiproject/assignment/tool/AssignmentAction.java
+@@ -57,6 +57,7 @@ import java.util.SortedSet;
+ import java.util.concurrent.ConcurrentSkipListSet;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
++import java.util.TimeZone;
+ 
+ import org.apache.commons.collections.CollectionUtils;
+ import org.apache.commons.lang.StringUtils;
+@@ -125,6 +126,7 @@ import org.sakaiproject.content.api.ContentResourceEdit;
+ import org.sakaiproject.content.api.ContentTypeImageService;
+ import org.sakaiproject.content.api.FilePickerHelper;
+ import org.sakaiproject.contentreview.service.ContentReviewService;
++import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
+ import org.sakaiproject.entity.api.Entity;
+ import org.sakaiproject.entity.api.EntityPropertyNotDefinedException;
+ import org.sakaiproject.entity.api.EntityPropertyTypeException;
+@@ -201,6 +203,14 @@ public class AssignmentAction extends PagedResourceActionII
+ 	
+ 	private static final Boolean allowReviewService = ServerConfigurationService.getBoolean("assignment.useContentReview", false);
+ 	private static final Boolean allowPeerAssessment = ServerConfigurationService.getBoolean("assignment.usePeerAssessment", true);
++	private static Boolean allowLTIReviewService = false;
++	private static Boolean isDirectAccess = false;
++	private static final int contentreviewSiteYears = ServerConfigurationService.getInt("contentreview.site.years", 0);//TII value = 6
++	private static final int contentreviewSiteMin = ServerConfigurationService.getInt("contentreview.site.min", 0);//TII value = 2
++	private static final int contentreviewSiteMax = ServerConfigurationService.getInt("contentreview.site.max", 0);//TII value = 100
++	private static final int contentreviewAssignMin = ServerConfigurationService.getInt("contentreview.assign.min", 0);//TII value = 3
++	private static final int contentreviewAssignMax = ServerConfigurationService.getInt("contentreview.assign.max", 0);//TII value = 99
++	private static String reviewServiceName = "Review Service Default";
+ 	
+ 	/** Is the review service available? */
+ 	//Peer Assessment
+@@ -219,6 +229,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 	private static final String NEW_ASSIGNMENT_USE_REVIEW_SERVICE = "new_assignment_use_review_service";
+ 	
+ 	private static final String NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW = "new_assignment_allow_student_view";
++	private static final String NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW_EXTERNAL_GRADE = "new_assignment_allow_student_view_external_grade";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO = "submit_papers_to";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE = "0";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD = "1";
+@@ -229,6 +240,7 @@ public class AssignmentAction extends PagedResourceActionII
+     // or 2 - On Due Date
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO = "report_gen_speed";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY = "0";
++	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY_RESUB = "1";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE = "2";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_TURNITIN = "s_paper_check";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INTERNET = "internet_check";
+@@ -239,6 +251,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_SMALL_MATCHES = "exclude_smallmatches";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_TYPE = "exclude_type";
+ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_VALUE = "exclude_value";
++ 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE = "allow_any_file";
+ 
+ 	/** Rubric's context constants **/
+ 	private static final String RUBRICS_LIST = "rubrics_list";
+@@ -586,6 +599,12 @@ public class AssignmentAction extends PagedResourceActionII
+ 	private static final String NEW_ASSIGNMENT_FOCUS = "new_assignment_focus";
+ 
+ 	private static final String NEW_ASSIGNMENT_DESCRIPTION_EMPTY = "new_assignment_description_empty";
++	
++	private static final String NEW_ASSIGNMENT_SHORT_TITLE = "new_assignment_short_title";
++	
++	private static final String NEW_ASSIGNMENT_INSTRUCTOR_FIELDS = "new_assignment_instructor_fields";
++	
++	private static final String NEW_ASSIGNMENT_LONG_TITLE = "new_assignment_long_title";
+ 
+ 	private static final String NEW_ASSIGNMENT_ADD_TO_GRADEBOOK = "new_assignment_add_to_gradebook";
+ 
+@@ -1012,11 +1031,12 @@ public class AssignmentAction extends PagedResourceActionII
+ 		
+ 		// Check whether content review service is enabled, present and enabled for this site
+ 		getContentReviewService();
++		getContentReviewSiteAdvisor();
+ 		context.put("allowReviewService", allowReviewService && contentReviewService != null && contentReviewService.isSiteAcceptable(s));
+ 
+ 		if (allowReviewService && contentReviewService != null && contentReviewService.isSiteAcceptable(s)) {
+-			//put the review service stings in context
+-			String reviewServiceName = contentReviewService.getServiceName();
++			//put the review service strings in context
++			reviewServiceName = contentReviewService.getServiceName();
+ 			String reviewServiceTitle = rb.getFormattedMessage("review.title", new Object[]{reviewServiceName});
+ 			String reviewServiceUse = rb.getFormattedMessage("review.use", new Object[]{reviewServiceName});
+ 			String reviewServiceNonElectronic1 = rb.getFormattedMessage("review.switch.ne.1", reviewServiceName);
+@@ -1027,6 +1047,16 @@ public class AssignmentAction extends PagedResourceActionII
+ 			context.put("reviewIndicator", rb.getFormattedMessage("review.contentReviewIndicator", new Object[]{reviewServiceName}));
+ 			context.put("reviewSwitchNe1", reviewServiceNonElectronic1);
+ 			context.put("reviewSwitchNe2", reviewServiceNonElectronic2);
++			if(contentReviewSiteAdvisor.siteCanUseLTIReviewService(s)){
++				allowLTIReviewService = true;
++			} else {
++				allowLTIReviewService = false;
++			}
++			if(contentReviewService.isDirectAccess(s)){
++				isDirectAccess = true;
++			} else {
++				isDirectAccess = false;
++			}
+ 		}
+ 		
+ 		//Peer Assessment
+@@ -1241,6 +1271,14 @@ public class AssignmentAction extends PagedResourceActionII
+ 			context.put("assignmentscheck", state.getAttribute(HAS_MULTIPLE_ASSIGNMENTS));
+ 		}
+ 		
++		//SAK-30430 managing the content review error when creating assignment
++		if (state.getAttribute("alertMessageCR") != null){
++			String uiService = ServerConfigurationService.getString("ui.service", "Sakai");
++			String[] args = new String[]{contentReviewService.getServiceName(), uiService};
++			addAlert(state, rb.getFormattedMessage("content_review.error.createAssignment", args));
++			state.removeAttribute("alertMessageCR");
++		}
++		
+ 		return template;
+ 
+ 	} // buildNormalContext
+@@ -1585,6 +1623,23 @@ public class AssignmentAction extends PagedResourceActionII
+ 
+ 			// can the student view model answer or not
+ 			canViewAssignmentIntoContext(context, assignment, s);
++			
++			// add TII info if needed
++			if (allowReviewService && assignment.getContent().getAllowReviewService() && allowLTIReviewService){
++				//put the LTI assignment link in context
++				String ltiLink = contentReviewService.getLTIAccess(currentAssignmentReference, contextString);
++				M_log.debug("ltiLink " + ltiLink);
++				context.put("ltiLink", ltiLink);
++				int factor = AssignmentService.getScaleFactor();
++				int dec = (int)Math.log10(factor);
++				int maxPointsInt = assignment.getContent().getMaxGradePoint() / dec;
++				context.put("maxPointsInt", maxPointsInt);
++				if(isDirectAccess && Boolean.valueOf(AssignmentService.canSubmit(contextString, assignment))){
++					M_log.debug("Allowing submission directly from TII");
++					String templateAux = (String) getContext(data).get("template");
++					return templateAux + "_lti_access";
++				}
++			}
+ 		}
+ 
+ 		TaggingManager taggingManager = (TaggingManager) ComponentManager
+@@ -1934,6 +1989,16 @@ public class AssignmentAction extends PagedResourceActionII
+ 			
+ 			context.put("submissionType", submissionType);
+ 			
++			//warnings if user's fields are not set
++			if (allowReviewService && currentAssignment.getContent().getAllowReviewService()){
++				context.put("usingreview", true);
++				context.put("namenull", Boolean.valueOf(StringUtils.isEmpty(user.getFirstName())));
++				context.put("lastname", Boolean.valueOf(StringUtils.isEmpty(user.getLastName())));
++				context.put("mailnull", Boolean.valueOf(StringUtils.isEmpty(user.getEmail())));
++			} else {
++				context.put("usingreview", false);
++			}
++			
+ 			AssignmentSubmission s = getSubmission(currentAssignmentReference, submitter, "build_student_view_submission_confirmation_context",state);
+ 			if (s != null)
+ 			{
+@@ -2031,7 +2096,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 		String template = (String) getContext(data).get("template");
+ 		return template + TEMPLATE_STUDENT_VIEW_ASSIGNMENT;
+ 
+-	} // build_student_view_submission_context
++	} // build_student_view_assignment_context
+ 
+ 	/**
+ 	 * build the student preview of showing an assignment submission
+@@ -2274,6 +2339,19 @@ public class AssignmentAction extends PagedResourceActionII
+ 			m_securityService.popAdvisor(asgnAdvisor);
+ 		}
+ 		
++		// add TII info if needed
++		String contextString = (String) state.getAttribute(STATE_CONTEXT_STRING);
++		if (allowReviewService && assignment.getContent().getAllowReviewService() && allowLTIReviewService){
++			//put the LTI assignment link in context
++			String ltiLink = contentReviewService.getLTIAccess(assignment.getId(), contextString);
++			M_log.debug("ltiLink " + ltiLink);
++			context.put("ltiLink", ltiLink);
++			int factor = AssignmentService.getScaleFactor();
++			int dec = (int)Math.log10(factor);
++			int maxPointsInt = assignment.getContent().getMaxGradePoint() / dec;
++			context.put("maxPointsInt", maxPointsInt);
++		}
++		
+ 		String template = (String) getContext(data).get("template");
+ 		return template + TEMPLATE_STUDENT_VIEW_GRADE;
+ 
+@@ -2501,6 +2579,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 		context.put("name_PeerAssessmentInstructions", NEW_ASSIGNMENT_PEER_ASSESSMENT_INSTRUCTIONS);
+ 		context.put("name_UseReviewService", NEW_ASSIGNMENT_USE_REVIEW_SERVICE);
+ 		context.put("name_AllowStudentView", NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW);
++		context.put("name_AllowStudentViewExternalGrade", NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW_EXTERNAL_GRADE);
+ 		context.put("name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO", NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO);
+ 		context.put("name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE", NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE);
+ 		context.put("name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD", NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD);
+@@ -2517,6 +2596,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 		context.put("name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_SMALL_MATCHES", NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_SMALL_MATCHES);
+ 		context.put("name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_TYPE", NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_TYPE);
+ 		context.put("name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_VALUE", NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_VALUE);
++		context.put("name_NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE", NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE);
+ 		
+ 		/*
+ 		 * ADD FOR RUBRIC
+@@ -2672,6 +2752,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 		//Rely on the deprecated "turnitin.allowStudentView.default" setting if set, otherwise use "contentreview.allowStudentView.default"
+ 		boolean defaultAllowStudentView = ServerConfigurationService.getBoolean("turnitin.allowStudentView.default", ServerConfigurationService.getBoolean("contentreview.allowStudentView.default", Boolean.FALSE));
+ 		context.put("value_AllowStudentView", state.getAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW) == null ? Boolean.toString(defaultAllowStudentView) : state.getAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW));
++		context.put("value_AllowStudentViewExternalGrade", state.getAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW_EXTERNAL_GRADE) == null ? Boolean.toString(ServerConfigurationService.getBoolean("turnitin.allowStudentViewExternalGrade.default", false)) : state.getAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW_EXTERNAL_GRADE));
+ 		
+ 		List<String> subOptions = getSubmissionRepositoryOptions();
+ 		String submitRadio = ServerConfigurationService.getString("turnitin.repository.setting.value",null) == null ? NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE : ServerConfigurationService.getString("turnitin.repository.setting.value");
+@@ -2696,6 +2777,8 @@ public class AssignmentAction extends PagedResourceActionII
+ 		context.put("value_NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INTERNET", state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INTERNET) == null ? Boolean.toString(ServerConfigurationService.getBoolean("turnitin.option.internet_check.default", ServerConfigurationService.getBoolean("turnitin.option.internet_check", true) ? true : false)) : state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INTERNET));
+ 		context.put("value_NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_PUB", state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_PUB) == null ? Boolean.toString(ServerConfigurationService.getBoolean("turnitin.option.journal_check.default", ServerConfigurationService.getBoolean("turnitin.option.journal_check", true) ? true : false)) : state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_PUB));
+ 		context.put("value_NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INSTITUTION", state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INSTITUTION) == null ? Boolean.toString(ServerConfigurationService.getBoolean("turnitin.option.institution_check.default", ServerConfigurationService.getBoolean("turnitin.option.institution_check", true) ? true : false)) : state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INSTITUTION));
++		
++		context.put("value_NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE", state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE) == null ? Boolean.toString(ServerConfigurationService.getBoolean("turnitin.option.any_file.default", false)) : state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE));
+ 
+ 		//exclude bibliographic materials
+ 		context.put("show_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC", ServerConfigurationService.getBoolean("turnitin.option.exclude_bibliographic", true));
+@@ -3647,6 +3730,19 @@ public class AssignmentAction extends PagedResourceActionII
+ 		// letter grading
+ 		letterGradeOptionsIntoContext(context);
+ 		
++		// add TII info if needed
++		String contextString = (String) state.getAttribute(STATE_CONTEXT_STRING);
++		if (allowReviewService && a.getContent().getAllowReviewService() && allowLTIReviewService){
++			//put the LTI assignment link in context
++			String ltiLink = contentReviewService.getLTIAccess(assignmentId, contextString);
++			M_log.debug("ltiLink " + ltiLink);
++			context.put("ltiLink", ltiLink);
++			int factor = AssignmentService.getScaleFactor();
++			int dec = (int)Math.log10(factor);
++			int maxPointsInt = a.getContent().getMaxGradePoint() / dec;
++			context.put("maxPointsInt", maxPointsInt);
++		}
++		
+ 		String template = (String) getContext(data).get("template");
+ 		return template + TEMPLATE_INSTRUCTOR_GRADE_SUBMISSION;
+ 
+@@ -4396,6 +4492,21 @@ public class AssignmentAction extends PagedResourceActionII
+ 		
+ 		String template = (String) getContext(data).get("template");
+ 		
++		String contextString = (String) state.getAttribute(STATE_CONTEXT_STRING);
++		if (allowReviewService && assignment != null && assignmentContent != null && assignmentContent.getAllowReviewService() && allowLTIReviewService){
++			String ltiLink = contentReviewService.getLTIAccess(assignmentRef, contextString);
++			M_log.debug("ltiLink " + ltiLink);
++			context.put("ltiLink", ltiLink);
++			int factor = AssignmentService.getScaleFactor();
++			int dec = (int)Math.log10(factor);
++			int maxPointsInt = assignmentContent.getMaxGradePoint() / dec;
++			context.put("maxPointsInt", maxPointsInt);
++			if(isDirectAccess){
++				M_log.debug("Allowing submission directly from TII");
++				return template + "_lti_access";
++			}
++		}
++		
+ 		return template + TEMPLATE_INSTRUCTOR_GRADE_ASSIGNMENT;
+ 
+ 	} // build_instructor_grade_assignment_context
+@@ -4503,6 +4614,14 @@ public class AssignmentAction extends PagedResourceActionII
+ 		context.put("contentTypeImageService", state.getAttribute(STATE_CONTENT_TYPE_IMAGE_SERVICE));
+ 		context.put("honor_pledge_text", ServerConfigurationService.getString("assignment.honor.pledge", rb.getString("gen.honple2")));
+ 		
++		String contextString = (String) state.getAttribute(STATE_CONTEXT_STRING);
++		if (allowReviewService && assignment.getContent().getAllowReviewService() && allowLTIReviewService){
++			//put the LTI assignment link in context
++			String ltiLink = contentReviewService.getLTIAccess(assignmentId, contextString);
++			M_log.debug("ltiLink " + ltiLink);
++			context.put("ltiLink", ltiLink);
++		}
++		
+ 		String template = (String) getContext(data).get("template");
+ 		return template + TEMPLATE_INSTRUCTOR_VIEW_ASSIGNMENT;
+ 
+@@ -6787,6 +6906,8 @@ public class AssignmentAction extends PagedResourceActionII
+ 
+ 							// clean the ContentReview attributes
+ 							sEdit.setReviewIconUrl(null);
++							sEdit.setReviewIconColor(null);
++							sEdit.setExternalGradeDifferent(false);
+ 							sEdit.setReviewScore(-2); // the default is -2 (e.g., for a new submission)
+ 							sEdit.setReviewStatus(null);
+ 
+@@ -6863,9 +6984,13 @@ public class AssignmentAction extends PagedResourceActionII
+ 							{
+ 								//Post the attachments before clearing so that we don't sumbit duplicate attachments
+ 								//Check if we need to post the attachments
+-								if (a.getContent().getAllowReviewService()) {
++								if (a.getContent().getAllowReviewService() && post) {
+ 									if (!attachments.isEmpty()) { 
+-										sEdit.postAttachment(attachments);
++										if(!isPreviousSubmissionTime){//isUserSubmission can be used too
++											sEdit.postAttachment(attachments);
++										} else {
++											sEdit.postAttachmentResub(attachments);
++										}
+ 									}
+ 								}
+ 																 
+@@ -6889,9 +7014,9 @@ public class AssignmentAction extends PagedResourceActionII
+ 						}
+ 
+ 						// SAK-26322 - add inline as an attachment for the content review service
+-						if (a.getContent().getAllowReviewService() && !isHtmlEmpty(text))
++						if (a.getContent().getAllowReviewService() && !isHtmlEmpty(text) && post)
+ 						{
+-							prepareInlineForContentReview(text, sEdit, state, u);
++							prepareInlineForContentReview(text, sEdit, state, u, isPreviousSubmissionTime);
+ 						}
+ 
+ 						if (submitter != null) {
+@@ -6944,15 +7069,15 @@ public class AssignmentAction extends PagedResourceActionII
+ 							List attachments = (List) state.getAttribute(ATTACHMENTS);
+ 
+ 							// SAK-26322 - add inline as an attachment for the content review service
+-							if (a.getContent().getAllowReviewService() && !isHtmlEmpty(text))
++							if (a.getContent().getAllowReviewService() && !isHtmlEmpty(text) && post)
+ 							{
+-								prepareInlineForContentReview(text, edit, state, u);
++								prepareInlineForContentReview(text, edit, state, u, false);
+ 							}
+ 							
+ 							if (attachments != null)
+ 							{
+ 	 							// add each attachment
+-								if ((!attachments.isEmpty()) && a.getContent().getAllowReviewService()) 
++								if ((!attachments.isEmpty()) && a.getContent().getAllowReviewService() && post) 
+ 									edit.postAttachment(attachments);								
+ 								
+ 								// add each attachment
+@@ -7020,7 +7145,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 	/**
+ 	 * Takes the inline submission, prepares it as an attachment to the submission and queues the attachment with the content review service
+ 	 */
+-	private void prepareInlineForContentReview(String text, AssignmentSubmissionEdit edit, SessionState state, User student)
++	private void prepareInlineForContentReview(String text, AssignmentSubmissionEdit edit, SessionState state, User student, boolean isResubmission)
+ 	{
+ 		//We will be replacing the inline submission's attachment
+ 		//firstly, disconnect any existing attachments with AssignmentSubmission.PROP_INLINE_SUBMISSION set
+@@ -7112,7 +7237,9 @@ public class AssignmentAction extends PagedResourceActionII
+ 			ContentResource attachment = m_contentHostingService.addAttachmentResource(resourceId, siteId, toolName, contentType, contentStream, inlineProps);
+ 			// TODO: need to put this file in some kind of list to improve performance with web service impls of content-review service
+ 			String contentUserId = isOnBehalfOfStudent ? student.getId() : currentUser.getId();
+-			contentReviewService.queueContent(contentUserId, siteId, edit.getAssignment().getReference(), Arrays.asList(attachment));
++			if(!isResubmission){
++				contentReviewService.queueContent(null, null, edit.getAssignment().getReference(), Arrays.asList(attachment), edit.getId(), isResubmission);
++			}
+ 
+ 			try
+ 			{
+@@ -7584,6 +7711,76 @@ public class AssignmentAction extends PagedResourceActionII
+ 				//can't use content-review with non-electronic submissions
+ 				addAlert(state, rb.getFormattedMessage("review.switch.ne.1", contentReviewService.getServiceName()));
+ 			}
++			Site st = null;
++			try {
++				st = SiteService.getSite((String) state.getAttribute(STATE_CONTEXT_STRING));
++			} catch (IdUnusedException iue) {
++				M_log.warn(this + ":setNewAssignmentParameters: Site not found!" + iue.getMessage());
++			}
++			//TODO depending on new federated integration, use one property or another to check we're using TII
++			if (contentReviewSiteAdvisor.siteCanUseReviewService(st)
++					&& ((Integer) state.getAttribute(NEW_ASSIGNMENT_SUBMISSION_TYPE)).intValue() != Assignment.SINGLE_ATTACHMENT_SUBMISSION &&
++						((Integer) state.getAttribute(NEW_ASSIGNMENT_SUBMISSION_TYPE)).intValue() != Assignment.TEXT_ONLY_ASSIGNMENT_SUBMISSION )
++			{
++				addAlert(state, rb.getString("gen.cr.submit"));
++			}
++
++			if (allowReviewService && allowLTIReviewService && validify){
++				if (title != null && contentreviewAssignMin > 0 && title.length() < contentreviewAssignMin){
++					// if the title is shorter than the minimum post the message
++					// One could ignore the message and still post the assignment
++					if (state.getAttribute(NEW_ASSIGNMENT_SHORT_TITLE) == null){
++						state.setAttribute(NEW_ASSIGNMENT_SHORT_TITLE, Boolean.TRUE.toString());
++					} else {
++						state.removeAttribute(NEW_ASSIGNMENT_SHORT_TITLE);
++					}
++				} else {
++					state.removeAttribute(NEW_ASSIGNMENT_SHORT_TITLE);
++				}
++				if (title != null && contentreviewAssignMax > 0 && title.length() > contentreviewAssignMax){
++					// if the title is longer than the maximum post the message
++					// One could ignore the message and still post the assignment
++					if (state.getAttribute(NEW_ASSIGNMENT_LONG_TITLE) == null){
++						state.setAttribute(NEW_ASSIGNMENT_LONG_TITLE, Boolean.TRUE.toString());
++					} else {
++						state.removeAttribute(NEW_ASSIGNMENT_LONG_TITLE);
++					}
++				} else {
++					state.removeAttribute(NEW_ASSIGNMENT_LONG_TITLE);
++				}
++				User user = (User) state.getAttribute(STATE_USER);
++				if(StringUtils.isEmpty(user.getFirstName()) || StringUtils.isEmpty(user.getLastName()) || StringUtils.isEmpty(user.getEmail())){
++					if (state.getAttribute(NEW_ASSIGNMENT_INSTRUCTOR_FIELDS) == null){
++						state.setAttribute(NEW_ASSIGNMENT_INSTRUCTOR_FIELDS, Boolean.TRUE.toString());
++					} else {
++						state.removeAttribute(NEW_ASSIGNMENT_INSTRUCTOR_FIELDS);
++					}
++				} else {
++					state.removeAttribute(NEW_ASSIGNMENT_INSTRUCTOR_FIELDS);
++				}
++				if (state.getAttribute(NEW_ASSIGNMENT_SHORT_TITLE) != null){
++					addAlert(state, rb.getFormattedMessage("review.assignchars", new Object[]{reviewServiceName, contentreviewAssignMin}));
++				}
++				if (state.getAttribute(NEW_ASSIGNMENT_LONG_TITLE) != null){
++					addAlert(state, rb.getFormattedMessage("review.assigncharslong", new Object[]{reviewServiceName, contentreviewAssignMax}));
++				}
++				if (state.getAttribute(NEW_ASSIGNMENT_INSTRUCTOR_FIELDS) != null){
++					addAlert(state, rb.getFormattedMessage("review.instructor.fields", new Object[]{ reviewServiceName}));
++				}
++				if (contentreviewSiteMin > 0 && st.getTitle().length() < contentreviewSiteMin){
++					addAlert(state, rb.getFormattedMessage("review.sitechars", new Object[]{reviewServiceName, contentreviewSiteMin}));
++				} else if (contentreviewSiteMax > 0 && st.getTitle().length() > contentreviewSiteMax){
++					addAlert(state, rb.getFormattedMessage("review.sitecharslong", new Object[]{reviewServiceName, contentreviewSiteMax}));
++				}
++				if(contentreviewSiteYears > 0){
++					GregorianCalendar agoCalendar = new GregorianCalendar();
++					agoCalendar.add(GregorianCalendar.YEAR, -contentreviewSiteYears);
++					Date agoDate = agoCalendar.getTime();
++					if (st.getCreatedDate().before(agoDate)){
++						addAlert(state, rb.getFormattedMessage("review.oldsite", new Object[]{contentreviewSiteYears}));
++					}
++				}
++			}
+ 		}
+ 		state.setAttribute(NEW_ASSIGNMENT_USE_REVIEW_SERVICE, b);
+ 		
+@@ -7593,6 +7790,12 @@ public class AssignmentAction extends PagedResourceActionII
+ 		else b = Boolean.TRUE.toString();
+ 		state.setAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW, b);
+ 		
++		//set whether students can view the review service grades
++		r = params.getString(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW_EXTERNAL_GRADE);
++		if (r == null) b = Boolean.FALSE.toString();
++		else b = Boolean.TRUE.toString();
++		state.setAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW_EXTERNAL_GRADE, b);
++
+ 		//set submit options
+ 		r = params.getString(NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO);
+ 		if(r == null || (!NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD.equals(r) && !NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_INSITUTION.equals(r)))
+@@ -7642,6 +7845,12 @@ public class AssignmentAction extends PagedResourceActionII
+ 		else b = Boolean.TRUE.toString();
+ 		state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_SMALL_MATCHES, b);
+ 		
++		//allow any type
++		r = params.getString(NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE);
++		if (r == null) b = Boolean.FALSE.toString();
++		else b = Boolean.TRUE.toString();
++		state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE, b);
++
+ 		//exclude type:
+ 		//only options are 0=none, 1=words, 2=percentages
+ 		r = params.getString(NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_TYPE);
+@@ -8587,6 +8796,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 			boolean useReviewService = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_USE_REVIEW_SERVICE));
+ 			
+ 			boolean allowStudentViewReport = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW));
++			boolean allowStudentViewExternalGrade = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW_EXTERNAL_GRADE));
+ 
+ 			// If the assignment switched to non-electronic, we need to use some of the assignment's previous content-review settings.
+ 			// This way, students will maintain access to their originality reports when appropriate.
+@@ -8602,6 +8812,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 			boolean checkInternet = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INTERNET));
+ 			boolean checkPublications = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_PUB));
+ 			boolean checkInstitution = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INSTITUTION));
++			boolean allowAnyFile = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE));
+ 			//exclude bibliographic materials
+ 			boolean excludeBibliographic = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC));
+ 			//exclude quoted materials
+@@ -8685,7 +8896,8 @@ public class AssignmentAction extends PagedResourceActionII
+ 				state.setAttribute("contentReviewSuccess", Boolean.TRUE);
+ 
+ 				// commit the changes to AssignmentContent object
+-				commitAssignmentContentEdit(state, ac, a.getReference(), title, submissionType,useReviewService,allowStudentViewReport, gradeType, gradePoints, description, checkAddHonorPledge, attachments, submitReviewRepo, generateOriginalityReport, checkTurnitin, checkInternet, checkPublications, checkInstitution, excludeBibliographic, excludeQuoted, excludeType, excludeValue, openTime, dueTime, closeTime, hideDueDate);
++				//commitAssignmentContentEdit(state, ac, a.getReference(), title, submissionType,useReviewService,allowStudentViewReport, gradeType, gradePoints, description, checkAddHonorPledge, attachments, submitReviewRepo, generateOriginalityReport, checkTurnitin, checkInternet, checkPublications, checkInstitution, excludeBibliographic, excludeQuoted, excludeType, excludeValue, openTime, dueTime, closeTime, hideDueDate);
++				commitAssignmentContentEdit(state, ac, a.getReference(), title, submissionType,useReviewService,allowStudentViewReport,allowStudentViewExternalGrade, gradeType, gradePoints, description, checkAddHonorPledge, attachments, submitReviewRepo, generateOriginalityReport, checkTurnitin, checkInternet, checkPublications, checkInstitution, excludeBibliographic, excludeQuoted, excludeType, excludeValue, allowAnyFile, openTime, dueTime, closeTime, hideDueDate);
+ 				
+ 				// set the Assignment Properties object
+ 				ResourcePropertiesEdit aPropertiesEdit = a.getPropertiesEdit();
+@@ -9833,7 +10045,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 		}
+ 	}
+ 
+-	private void commitAssignmentContentEdit(SessionState state, AssignmentContentEdit ac, String assignmentRef, String title, int submissionType,boolean useReviewService, boolean allowStudentViewReport, int gradeType, String gradePoints, String description, String checkAddHonorPledge, List attachments, String submitReviewRepo, String generateOriginalityReport, boolean checkTurnitin, boolean checkInternet, boolean checkPublications, boolean checkInstitution, boolean excludeBibliographic, boolean excludeQuoted, int excludeType, int excludeValue, Time openTime, Time dueTime, Time closeTime, boolean hideDueDate) 
++	private void commitAssignmentContentEdit(SessionState state, AssignmentContentEdit ac, String assignmentRef, String title, int submissionType,boolean useReviewService, boolean allowStudentViewReport, boolean allowStudentViewExternalGrade, int gradeType, String gradePoints, String description, String checkAddHonorPledge, List attachments, String submitReviewRepo, String generateOriginalityReport, boolean checkTurnitin, boolean checkInternet, boolean checkPublications, boolean checkInstitution, boolean excludeBibliographic, boolean excludeQuoted, int excludeType, int excludeValue, boolean allowAnyFile, Time openTime, Time dueTime, Time closeTime, boolean hideDueDate)
+ 	{
+ 		ac.setTitle(title);
+ 		ac.setInstructions(description);
+@@ -9842,6 +10054,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 		ac.setTypeOfSubmission(submissionType);
+ 		ac.setAllowReviewService(useReviewService);
+ 		ac.setAllowStudentViewReport(allowStudentViewReport);
++		ac.setAllowStudentViewExternalGrade(allowStudentViewExternalGrade);
+ 		ac.setSubmitReviewRepo(submitReviewRepo);
+ 		ac.setGenerateOriginalityReport(generateOriginalityReport);
+ 		ac.setCheckInstitution(checkInstitution);
+@@ -9852,6 +10065,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 		ac.setExcludeQuoted(excludeQuoted);
+ 		ac.setExcludeType(excludeType);
+ 		ac.setExcludeValue(excludeValue);
++		ac.setAllowAnyFile(allowAnyFile);
+ 		ac.setTypeOfGrade(gradeType);
+ 		if (gradeType == 3)
+ 		{
+@@ -9908,12 +10122,18 @@ public class AssignmentAction extends PagedResourceActionII
+         Map opts = new HashMap();
+         
+         opts.put("submit_papers_to", assign.getSubmitReviewRepo());
+-        opts.put("report_gen_speed", assign.getGenerateOriginalityReport());
++        String originalityReportVal = assign.getGenerateOriginalityReport();
++        if(originalityReportVal.equals(NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY) && state.getAttribute(AssignmentSubmission.ALLOW_RESUBMIT_NUMBER) != null){
++        	opts.put("report_gen_speed", NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY_RESUB);
++        } else {
++        	opts.put("report_gen_speed", originalityReportVal);
++        }
+         opts.put("institution_check", assign.isCheckInstitution() ? "1" : "0");
+         opts.put("internet_check", assign.isCheckInternet() ? "1" : "0");
+         opts.put("journal_check", assign.isCheckPublications() ? "1" : "0");
+-        opts.put("s_paper_check", assign.isCheckTurnitin() ? "1" : "0");        
+-        opts.put("s_view_report", assign.getAllowStudentViewReport() ? "1" : "0");        
++        opts.put("s_paper_check", assign.isCheckTurnitin() ? "1" : "0");
++        opts.put("s_view_report", assign.getAllowStudentViewReport() ? "1" : "0");
++        opts.put("allow_any_file", assign.isAllowAnyFile() ? "1" : "0");
+         if(ServerConfigurationService.getBoolean("turnitin.option.exclude_bibliographic", true)){
+ 			//we don't want to pass parameters if the user didn't get an option to set it
+         	opts.put("exclude_biblio", assign.isExcludeBibliographic() ? "1" : "0");
+@@ -9928,16 +10148,32 @@ public class AssignmentAction extends PagedResourceActionII
+         	opts.put("exclude_type", Integer.toString(assign.getExcludeType()));
+         	opts.put("exclude_value", Integer.toString(assign.getExcludeValue()));
+         }
+-        opts.put("late_accept_flag", "1");
+-        
++ 
++        if(closeTime.getTime() > dueTime.getTime()){
++			opts.put("late_accept_flag", "1");
++        } else {
++			opts.put("late_accept_flag", "0");
++        }
++
+         SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
+         dform.applyPattern("yyyy-MM-dd HH:mm:ss");
+         opts.put("dtstart", dform.format(openTime.getTime()));
+         opts.put("dtdue", dform.format(dueTime.getTime()));
+         //opts.put("dtpost", dform.format(closeTime.getTime()));
+-        opts.put("points", assign.getMaxGradePoint());
++        TimeZone tz = TimeZone.getTimeZone("UTC");
++        dform.setTimeZone(tz);
++        dform.applyPattern("yyyy-MM-dd'T'HH:mm");
++        opts.put("isostart", dform.format(openTime.getTime()));
++        opts.put("isodue", dform.format(dueTime.getTime()));
+         opts.put("title", assign.getTitle());
+         opts.put("instructions", assign.getInstructions());
++        opts.put("assignmentContentId", assign.getReference());
++
++        int factor = AssignmentService.getScaleFactor();
++        int dec = (int)Math.log10(factor);
++        int maxPoints = assign.getMaxGradePoint() / dec;
++        opts.put("points", maxPoints);
++
+         if(assign.getAttachments() != null && assign.getAttachments().size() > 0){
+         	List<String> attachments = new ArrayList<String>();
+         	for(Reference ref : assign.getAttachments()){
+@@ -9952,7 +10188,8 @@ public class AssignmentAction extends PagedResourceActionII
+             M_log.error(e);
+ 			String uiService = ServerConfigurationService.getString("ui.service", "Sakai");
+ 			String[] args = new String[]{contentReviewService.getServiceName(), uiService, e.toString()};
+-            state.setAttribute("alertMessage", rb.getFormattedMessage("content_review.error.createAssignment", args));
++			//state.setAttribute("alertMessage", rb.getFormattedMessage("content_review.error.createAssignment", args));
++			state.setAttribute("alertMessageCR", rb.getFormattedMessage("content_review.error.createAssignment", args));
+         }
+ 		return false;
+     }
+@@ -10476,6 +10713,8 @@ public class AssignmentAction extends PagedResourceActionII
+ 				
+ 				//set whether students can view the review service results
+ 				state.setAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW, Boolean.valueOf(a.getContent().getAllowStudentViewReport()).toString());
++				//set whether students can view the review service grades
++				state.setAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW_EXTERNAL_GRADE, Boolean.valueOf(a.getContent().getAllowStudentViewExternalGrade()).toString());
+ 				
+ 				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO, a.getContent().getSubmitReviewRepo());
+ 				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO, a.getContent().getGenerateOriginalityReport());
+@@ -10483,6 +10722,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INTERNET, Boolean.valueOf(a.getContent().isCheckInternet()).toString());
+ 				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_PUB, Boolean.valueOf(a.getContent().isCheckPublications()).toString());
+ 				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INSTITUTION, Boolean.valueOf(a.getContent().isCheckInstitution()).toString());
++				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE, Boolean.valueOf(a.getContent().isAllowAnyFile()).toString());
+ 				//exclude bibliographic
+ 				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC, Boolean.valueOf(a.getContent().isExcludeBibliographic()).toString());
+ 				//exclude quoted
+@@ -10500,6 +10740,38 @@ public class AssignmentAction extends PagedResourceActionII
+ 				setAssignmentSupplementItemInState(state, a);
+ 				
+ 				state.setAttribute(STATE_MODE, MODE_INSTRUCTOR_NEW_EDIT_ASSIGNMENT);
++				
++				// generate alert when editing an assignment from old site
++				if(allowReviewService && allowLTIReviewService && a.getContent().getAllowReviewService()){
++					if (contentreviewAssignMin > 0 && a.getTitle().length() < contentreviewAssignMin){
++						addAlert(state, rb.getFormattedMessage("review.assignchars", new Object[]{reviewServiceName, contentreviewAssignMin}));
++					} else if (contentreviewAssignMax > 0 && a.getTitle().length() > contentreviewAssignMax){
++						addAlert(state, rb.getFormattedMessage("review.assigncharslong", new Object[]{reviewServiceName, contentreviewAssignMax}));
++					}
++					User user = (User) state.getAttribute(STATE_USER);
++					if(StringUtils.isEmpty(user.getFirstName()) || StringUtils.isEmpty(user.getLastName()) || StringUtils.isEmpty(user.getEmail())){
++						addAlert(state, rb.getFormattedMessage("review.instructor.fields", new Object[]{ reviewServiceName}));
++					}
++					Site st = null;
++					try {
++						st = SiteService.getSite((String) state.getAttribute(STATE_CONTEXT_STRING));
++						if (contentreviewSiteMin > 0 && st.getTitle().length() < contentreviewSiteMin){
++							addAlert(state, rb.getFormattedMessage("review.sitechars", new Object[]{reviewServiceName, contentreviewSiteMin}));
++						} else if (contentreviewSiteMax > 0 && st.getTitle().length() > contentreviewSiteMax){
++							addAlert(state, rb.getFormattedMessage("review.sitecharslong", new Object[]{reviewServiceName, contentreviewSiteMax}));
++						}
++						if(contentreviewSiteYears > 0){
++							GregorianCalendar agoCalendar = new GregorianCalendar();
++							agoCalendar.add(GregorianCalendar.YEAR, -contentreviewSiteYears);
++							Date agoDate = agoCalendar.getTime();
++							if (st.getCreatedDate().before(agoDate)){
++								addAlert(state, rb.getFormattedMessage("review.oldsite", new Object[]{contentreviewSiteYears}));
++							}
++						}
++					} catch (IdUnusedException iue) {
++						M_log.warn(this + ":doEdit_Assignment: Site not found!" + iue.getMessage());
++					}
++				}
+ 			}
+ 		}
+ 		else
+@@ -10746,6 +11018,9 @@ public class AssignmentAction extends PagedResourceActionII
+ 				
+ 				// remove related announcement if there is one
+ 				removeAnnouncement(state, pEdit);
++				
++				//remove related lti tool if there is one
++				removeLTITool(state, aEdit);
+ 
+ 				// remove from Gradebook
+ 				integrateGradebook(state, (String) ids.get (i), associateGradebookAssignment, "remove", null, null, -1, null, null, null, -1);
+@@ -10768,6 +11043,21 @@ public class AssignmentAction extends PagedResourceActionII
+ 
+ 	} // doDelete_Assignment
+ 
++	/**
++	 * private method to remove assignment related LTI tool
++	 * @param state
++	 * @param aEdit
++	 */
++	private void removeLTITool(SessionState state, AssignmentEdit aEdit){
++		String contextString = (String) state.getAttribute(STATE_CONTEXT_STRING);
++		if (allowReviewService && aEdit.getContent().getAllowReviewService() && allowLTIReviewService){
++			//put the LTI assignment link in context
++			boolean removed = contentReviewService.deleteLTITool(aEdit.getReference(), contextString);
++			if(!removed){
++				M_log.warn("Could not delete associated LTI tool");
++			}
++		}
++	}
+ 
+ 	/**
+ 	 * private function to remove assignment related announcement
+@@ -13065,7 +13355,7 @@ public class AssignmentAction extends PagedResourceActionII
+ 		// SAK-17606
+ 		state.removeAttribute(NEW_ASSIGNMENT_CHECK_ANONYMOUS_GRADING);
+ 
+-	} // resetNewAssignment
++	} // initializeAssignment
+ 	
+ 	/**
+ 	 * reset the attributes for assignment
+@@ -17201,6 +17491,14 @@ public class AssignmentAction extends PagedResourceActionII
+ 		}
+ 	}
+ 	
++	private ContentReviewSiteAdvisor contentReviewSiteAdvisor;
++	private void getContentReviewSiteAdvisor() {
++		if (contentReviewSiteAdvisor == null)
++		{
++			contentReviewSiteAdvisor = (ContentReviewSiteAdvisor) ComponentManager.get(ContentReviewSiteAdvisor.class.getName());
++		}
++	}
++	
+ 	/******************* model answer *********/
+ 	/**
+ 	 * add model answer input into state variables
+@@ -17592,6 +17890,11 @@ public class AssignmentAction extends PagedResourceActionII
+ 						// of further permissions
+ 						m_securityService.pushAdvisor(sa);
+ 						ContentResource attachment = m_contentHostingService.addAttachmentResource(resourceId, siteId, "Assignments", contentType, fileContentStream, props);
++						if(allowReviewService && !contentReviewService.isAcceptableContent(attachment)) {
++							addAlert(state, rb.getFormattedMessage("cr.notprocess.warning"));
++						} else if(!contentReviewService.isAcceptableSize(attachment)) {
++							addAlert(state, rb.getFormattedMessage("cr.size.warning"));
++						}
+ 						
+ 						Site s = null;
+ 						try
+diff --git a/assignment/assignment-tool/tool/src/webapp/css/assignment.css b/assignment/assignment-tool/tool/src/webapp/css/assignment.css
+index d757f35..09903fe 100755
+--- a/assignment/assignment-tool/tool/src/webapp/css/assignment.css
++++ b/assignment/assignment-tool/tool/src/webapp/css/assignment.css
+@@ -1,3 +1,17 @@
++.tiioptions {
++   background-color: #eee;
++   margin-left:40px;
++   padding: 10px;
++}
++.tiioptions input[type="radio"]{
++   margin-right: 5px;   
++}
++.tiioptions input[type="checkbox"]{
++   margin-right: 2px;
++}
++.tiioptions label {
++   font-weight: normal;
++}
+ .toggleAnchor{
+     border:1px solid #cef;
+     background:#cef  !important;
+@@ -286,3 +300,23 @@ fieldset .alertMessageInline,fieldset .alertMessage {
+ .itemAction a:link {
+     border: 1px solid transparent;
+ }
++
++.reviewStyle{
++    color: red !important;
++    font-size: 15px !important;
++}
++
++.flagStyle{
++    font-size: 15px !important;
++}
++
++.errorStyle{
++    color: #f39c12 !important;
++    font-size: 15px !important;
++}
++
++.conflicting-assignment-mark{
++    color: red !important;
++    font-style: italic !important;
++    cursor: pointer !important;
++}
+\ No newline at end of file
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_grading_submission.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_grading_submission.vm
+index 2aa3816..2168e54 100644
+--- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_grading_submission.vm
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_grading_submission.vm
+@@ -215,10 +215,10 @@
+ 										#set ($props = $reviewResult.getContentResource().Properties)
+ 										<span class="reportIcon">
+ 										#if ($reviewResult.getReviewReport().equals("Error"))
+-											<img src="/library/skin/images/error.png" alt="$reviewResult.getReviewError()" title="$reviewResult.getReviewError()">
++											<i alt="$reviewResult.getReviewError()" title="$reviewResult.getReviewError()" class="fa fa-exclamation-triangle errorStyle"></i>
+ 										#else
+ 											<a href="$reviewResult.getReviewReport()" target="_blank">
+-												<img src="$reviewResult.getReviewIconURL()" alt="$reviewResult.getReviewScore()" title="$reviewResult.getReviewScore()">
++												<i alt="$tlang.getString("review.originality.alt") = $reviewResult.getReviewScore() %" title="$tlang.getString("review.originality.alt") = $reviewResult.getReviewScore() %" class="fa fa-flag flagStyle" style="color:$reviewResult.getReviewIconColor() !important"></i>
+ 											</a>
+ 										#end
+ 										</span>
+@@ -227,6 +227,11 @@
+ 										#else
+ 											$validator.escapeHtml($props.getPropertyFormatted($props.NamePropDisplayName))
+ 										#end
++										#if($reviewResult.getExternalGrade() && $assignment.getContent().AllowStudentViewExternalGrade)
++											<span style="font-style:italic !important">
++												($tlang.getString("gen.gra.ext") $reviewResult.getExternalGrade() / $maxPointsInt)
++											</span>
++										#end
+ 									</div>
+ 								#end
+ 								#if ($reviewResults.size() >= 3)
+@@ -511,6 +516,18 @@
+ 										#end
+ 										</label>
+ 										<input type="text" name="$name_grade" size="5" maxlength="11" value="$!value_grade" id="grade" onkeypress="return ASN.handleEnterKeyPress(event);" /> <span class="text-info">($tlang.getString("grade.max") $assignmentContent.getMaxGradePointDisplay())</span>
++										#if($allowReviewService && $assignment.getContent().AllowReviewService && $submission.isExternalGradeDifferent())
++											#set($reviewResultsExt=$submission.ContentReviewResults)
++											#if ($reviewResultsExt.size() == 1)
++												#foreach ($reviewResultExt in $reviewResultsExt)
++													#if ($reviewResultExt.getExternalGrade())
++														<span style="font-style:italic !important" class="instruction">
++															($tlang.getString("gen.gra.ext") $reviewResultExt.getExternalGrade())
++														</span>
++													#end
++												#end
++											#end
++										#end
+ 										
+ 										<!--for grading via an external scoring service, if enabled for the associated gradebook item -->
+ 										#if($scoringComponentEnabled)
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_list_submissions.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_list_submissions.vm
+index 1881a56..9d9339c 100644
+--- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_list_submissions.vm
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_list_submissions.vm
+@@ -346,6 +346,9 @@
+ 					</a>
+ 				</p>
+ 				<div id="allowResubmissionPanelContent" style="display:none; overflow: hidden;">
++				#if ($allowReviewService && $assignment.getContent().AllowReviewService)
++					<div class="alertMessage">$tlang.getFormattedMessage("allowResubmission.review.warning", $reviewServiceName)</div>
++				#end
+ 				<p class="text-info">
+ 				#if ($assignment.isGroup())
+ 					$tlang.getString("allowResubmission.groups.instruction")
+@@ -690,7 +693,11 @@
+ 							#if ($withGrade)
+ 								<td headers="grade">
+ 									#if($!submission)
+-										$submission.getGradeDisplay($typeOfGrade)
++										#if($allowReviewService && $assignment.getContent().AllowReviewService && $submission.isExternalGradeDifferent())
++											<span onclick="alert('$tlang.getFormattedMessage('review.conflicting.popup', $reviewServiceName)')" class="conflicting-assignment-mark">$submission.getGradeDisplay($typeOfGrade)!</span>
++										#else
++											$submission.getGradeDisplay($typeOfGrade)										
++										#end
+ 									#end
+ 								</td>
+ 							#end	
+@@ -711,10 +718,10 @@
+ 											#set ($props = $reviewResult.getContentResource().Properties)
+ 											<span class="reportIcon">
+ 											#if ($reviewResult.getReviewReport().equals("Error"))
+-												<img src="/library/skin/images/error.png" alt="$reviewResult.getReviewError()" title="$reviewResult.getReviewError()">
++												<i alt="$reviewResult.getReviewError()" title="$reviewResult.getReviewError()" class="fa fa-exclamation-triangle errorStyle"></i>
+ 											#else
+ 												<a href="$reviewResult.getReviewReport()" target="_blank">
+-													<img src="$reviewResult.getReviewIconURL()" alt="$reviewResult.getReviewScore()" title="$reviewResult.getReviewScore()">
++													<i alt="$tlang.getString("review.originality.alt") = $reviewResult.getReviewScore() %" title="$tlang.getString("review.originality.alt") = $reviewResult.getReviewScore() %" class="fa fa-flag flagStyle" style="color:$reviewResult.getReviewIconColor() !important"></i>
+ 												</a>
+ 											#end
+ 											</span>
+@@ -723,6 +730,11 @@
+ 											#else
+ 												$validator.escapeHtml($props.getPropertyFormatted($props.NamePropDisplayName))
+ 											#end
++											#if($reviewResult.getExternalGrade() && $assignment.getContent().AllowStudentViewExternalGrade)
++												<span style="font-style:italic !important">
++													($tlang.getString("gen.gra.ext") $reviewResult.getExternalGrade() / $maxPointsInt)
++												</span>
++											#end
+ 										</div>
+ 									#end
+ 									#if ($reviewResults.size() >= 3)
+@@ -858,6 +870,20 @@
+ 				#end
+ 			</td>
+ 		</tr>
++		#if($allowReviewService && $assignment.getContent().AllowReviewService)
++			<tr> 
++				<th>
++					$tlang.getString("content.review")
++				</th>
++				<td>
++				#if($!ltiLink)
++					<a href="$ltiLink" title="$tlang.getString("content.review.inbox")" target="_blank">$reviewServiceName</a>
++				#else
++					$reviewServiceName
++				#end
++				</td>
++			</tr>
++		#end
+ 	</table>	
+ 	
+ 	#if ($assignmentContent.getInstructions().length()==0)
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm
+index 1048cfb..f61b903 100644
+--- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm
+@@ -9,6 +9,14 @@
+ 	$(document).ready(function() {
+ 		ASN.setupAssignNew();
+ 		#if($turnitin_forceSingleAttachment)
++			var useReview = document.getElementById('$name_UseReviewService');
++			if(useReview.checked){
++				$("#subType > option").each(function(){
++					if($(this).val() != 5 && $(this).val() != 1){
++						$(this).prop('disabled', 'disabled');
++					}
++				});
++			}
+ 		 	$("#new_assignment_use_review_service").click(function (){
+ 		 		var checked = this.checked;
+ 		 		if(checked){
+@@ -16,7 +24,7 @@
+ 		 		}
+ 		 		$("#subType > option").each(function(){
+ 		 			if(checked){
+-		 				if($(this).val() != 5){
++		 				if($(this).val() != 5 && $(this).val() != 1){
+ 		 					$(this).prop('disabled', 'disabled');
+ 		 				}
+ 		 			}else{
+@@ -566,11 +574,11 @@ function decCheck(element) {
+ 				#end
+ 
+ 				#if ($!value_UseReviewService.equals("true") && $!value_SubmissionType != 4)
+-					<div id="reviewServiceOptions" class="indnt3">
++					<div id="reviewServiceOptions" class="indnt3 tiioptions">
+ 				#else
+ 					<div id="reviewServiceOptions" style="display:none" class="indnt3">
+ 				#end
+-					<div class="checkbox">
++					<div>
+ 						<label for="$name_AllowStudentView">
+ 						#if ($!value_AllowStudentView.equals("true"))
+ 							<input id="$name_AllowStudentView" name="$name_AllowStudentView" type="checkbox" value="true" checked="checked" />
+@@ -587,43 +595,75 @@ function decCheck(element) {
+ 					#if ($content_review_note)
+ 						$content_review_note
+ 					#end
+-					$tlang.getString("review.submit.papers.repository")
+-					<br/>
+-
+-					<div class="radio">
++					<h5>$tlang.getString("review.submit.papers.repository")</h5>
++					<div class="tiiradio">
+ 						#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT.contains($name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE))
+-							<input type="radio" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE"))checked#end/>$tlang.getString("review.submit.papers.repository.none")<br/>
++						<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO">
++							<input type="radio" id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO"  name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_NONE"))checked#end/>$tlang.getString("review.submit.papers.repository.none")
++					        </label>
++						<br/>
+ 						#end
+ 						#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT.contains($name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD))
+-							<input type="radio" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD"))checked#end/>$tlang.getString("review.submit.papers.repository.standard")<br/>
++						<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO">
++							<input type="radio" id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD"))checked#end/>$tlang.getString("review.submit.papers.repository.standard")
++						</label>
++						<br/>
+ 						#end
+ 						#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT.contains($name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_INSITUTION))
+-							<input type="radio" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_INSITUTION" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_INSITUTION"))checked#end/>$tlang.getString("review.submit.papers.repository.institution")<br/>
++						<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO">
++							<input type="radio" id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_INSITUTION" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_INSITUTION"))checked#end/>$tlang.getString("review.submit.papers.repository.institution")<br/>
++						</label>
++						<br/>
+ 						#end
+ 					</div>
+ 
+-					<h4>
++					<div>
++						#if ($!value_AllowStudentViewExternalGrade.equals("true"))
++							<input id="$name_AllowStudentViewExternalGrade" name="$name_AllowStudentViewExternalGrade" type="checkbox" value="true" checked="checked" />
++						#else
++							<input id="$name_AllowStudentViewExternalGrade" name="$name_AllowStudentViewExternalGrade" type="checkbox" value="true" />
++						#end
++						<label for="$name_AllowStudentViewExternalGrade">
++							$tlang.getString("review.allow.grades") 
++						</label>
++					</div>
++					<div>
++						#if ($!value_NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE.equals("true"))			
++							<input id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE" type="checkbox" value="true" checked="checked" />
++						#else
++							<input id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE" type="checkbox" value="true" />
++						#end
++						<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_ALLOW_ANY_FILE">
++							$tlang.getString("review.originality.allow.any.file") 
++						</label>
++					</div>
++					
++					<h5>
+ 						$tlang.getString("review.originality.reports")
+-					</h4>
++					</h5>
+ 
+-					<div class="radio">
++					<div class="tiiradio">
+ 						#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT.contains($name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY))
+-							<input type="radio" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY"))checked#end/>$tlang.getString("review.originality.reports.immediately")<br/>
++						<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO">
++							<input type="radio" id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY"))checked#end/>$tlang.getString("review.originality.reports.immediately")
++						</label>
++						<br/>
+ 						#end
+ 						#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT.contains($name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE))
+-							<input type="radio" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE"))checked#end/>$tlang.getString("review.originality.reports.due")<br/>
++						<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO">
++							<input type="radio" id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO" value="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE" #if($value_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO.equals("$name_NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE"))checked#end/>$tlang.getString("review.originality.reports.due")
++						</label>
++						<br/>
+ 						#end
+ 					</div>
+ 
+-					<br/>
+ 					#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC || $show_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_QUOTED || $show_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_SMALL_MATCHES)
+-						$tlang.getString("review.exclude.matches.header")
+-						<br/>
++						<h5>$tlang.getString("review.exclude.matches.header")</h5>
+ 					#end
+ 
+ 					<!-- Exclude Bibliographic materials -->
+ 					#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC)
+-					<div class="checkbox">
++					<div>
+ 						<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC">
+ 							#if ($!value_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC.equals("true"))
+ 								<input id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC" type="checkbox" value="true" checked="checked" />
+@@ -636,7 +676,7 @@ function decCheck(element) {
+ 					#end
+ 					<!-- Exclude Quoted materials -->
+ 					#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_QUOTED)
+-					<div class="checkbox">
++					<div>
+ 						<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_QUOTED">
+ 							#if ($!value_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_QUOTED.equals("true"))
+ 								<input id="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_QUOTED" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_QUOTED" type="checkbox" value="true" checked="checked" />
+@@ -650,7 +690,7 @@ function decCheck(element) {
+ 					<!-- Exclude small matches -->
+ 
+ 					#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_SMALL_MATCHES)
+-						<div class="checkbox">
++						<div>
+ 							<label for="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_TYPE">
+ 							#if ($value_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_TYPE == 1 || $value_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_TYPE == 2)
+ 								<input type="checkbox" value="true" name="$name_NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_SMALL_MATCHES" checked="checked" onclick="ASN.toggleSmallMatchesOptions(this.checked)"/>
+@@ -684,9 +724,9 @@ function decCheck(element) {
+ 								</div>
+ 						</div>
+ 					#end
+-					<br/>
++					<h5>
+ 					$tlang.getString("review.originality.check")
+-					<br/>
++					</h5>
+ 					<div class="indnt1">
+ 						#if($show_NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_TURNITIN)
+ 						<div class="checkbox">
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_view_assignment.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_view_assignment.vm
+index f0502d6..993553e 100644
+--- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_view_assignment.vm
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_view_assignment.vm
+@@ -208,6 +208,20 @@
+ 					#end
+ 				</td>
+ 			</tr>
++			#if($allowReviewService && $assignment.getContent().AllowReviewService)
++				<tr> 
++					<th>
++						$tlang.getString("content.review")
++					</th>
++					<td>
++						#if($!ltiLink)
++							<a href="$ltiLink" title="$tlang.getString("content.review.inbox")" target="_blank">$reviewServiceName</a>
++						#else
++							$reviewServiceName
++						#end
++					</td>
++				</tr>
++			#end
+ 		</table>
+ 		#if ($!rubricHTMLTable)
+ 			<h4>$tlang.getString("rubric.title")</h4>
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_list_assignments.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_list_assignments.vm
+index 956c88b..2c44bd8 100644
+--- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_list_assignments.vm
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_list_assignments.vm
+@@ -251,7 +251,7 @@
+ 												$validator.escapeHtml($validator.limit($!assignment.getTitle(), 64))
+ 
+ 											#if ($assignmentContent.getAllowReviewService())
+-												<img alt="$reviewIndicator" title="$reviewIndicator" src="/library/image/silk/rosette.png" />
++												<i alt="$reviewIndicator" title="$reviewIndicator" class="fa fa-certificate reviewStyle"></i>
+ 											#end
+ 											</a>
+ 										</h4>
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_lti_access.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_lti_access.vm
+new file mode 100644
+index 0000000..9fd001b
+--- /dev/null
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_lti_access.vm
+@@ -0,0 +1,11 @@
++<div>
++	<iframe 
++		id="ltiiframe"
++		style="width:99%;padding:0 !important; height:750px"
++		frameborder="0"
++		marginwidth="0"
++		marginheight="0"
++		src="$!ltiLink"
++		height="750px">
++	</iframe>
++</div>
+\ No newline at end of file
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_grade.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_grade.vm
+index a0f400e..506c02f 100644
+--- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_grade.vm
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_grade.vm
+@@ -185,10 +185,10 @@
+ 										<span class="reportIcon">
+ 										
+ 										#if ($reviewResult.getReviewReport().equals("Error"))
+-											<img src="/library/skin/images/error.png" alt="$reviewResult.getReviewError()" title="$reviewResult.getReviewError()">
++											<i alt="$reviewResult.getReviewError()" title="$reviewResult.getReviewError()" class="fa fa-exclamation-triangle errorStyle"></i>
+ 										#else
+ 											<a href="$reviewResult.getReviewReport()" target="_blank">
+-												<img src="$reviewResult.getReviewIconURL()" alt="$reviewResult.getReviewScore()" title="$reviewResult.getReviewScore()">
++												<i alt="$tlang.getString("review.originality.alt") = $reviewResult.getReviewScore() %" title="$tlang.getString("review.originality.alt") = $reviewResult.getReviewScore() %" class="fa fa-flag flagStyle" style="color:$reviewResult.getReviewIconColor() !important"></i>
+ 											</a>
+ 										#end
+ 										</span>
+@@ -197,6 +197,11 @@
+ 										#else
+ 											$validator.escapeHtml($props.getPropertyFormatted($props.NamePropDisplayName))
+ 										#end
++										#if($reviewResult.getExternalGrade() && $assignment.getContent().AllowStudentViewExternalGrade)
++											<span style="font-style:italic !important">
++												($tlang.getString("gen.gra.ext") $reviewResult.getExternalGrade() / $maxPointsInt)
++											</span>
++										#end
+ 									</div>
+ 								#end
+ 								#if ($reviewResults.size() >= 3)
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_submission.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_submission.vm
+index 031f7bd..492acc4 100644
+--- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_submission.vm
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_submission.vm
+@@ -308,10 +308,10 @@ $(document).ready(function(){
+ 										#set ($props = $reviewResult.getContentResource().Properties)
+ 										<span class="reportIcon">
+ 										#if ($reviewResult.getReviewReport().equals("Error"))
+-											<img src="/library/skin/images/error.png" alt="$reviewResult.getReviewError()" title="$reviewResult.getReviewError()">
++											<i alt="$reviewResult.getReviewError()" title="$reviewResult.getReviewError()" class="fa fa-exclamation-triangle errorStyle"></i>
+ 										#else
+ 											<a href="$reviewResult.getReviewReport()" target="_blank">
+-												<img src="$reviewResult.getReviewIconURL()" alt="$reviewResult.getReviewScore()" title="$reviewResult.getReviewScore()">
++												<i alt="$tlang.getString("review.originality.alt") = $reviewResult.getReviewScore() %" title="$tlang.getString("review.originality.alt") = $reviewResult.getReviewScore() %" class="fa fa-flag reviewStyle" style="color:$reviewResult.getReviewIconColor()"></i>
+ 											</a>
+ 										#end
+ 										</span>
+@@ -320,6 +320,11 @@ $(document).ready(function(){
+ 										#else
+ 											$validator.escapeHtml($props.getPropertyFormatted($props.NamePropDisplayName))
+ 										#end
++										#if($reviewResult.getExternalGrade() && $assignment.getContent().AllowStudentViewExternalGrade)
++											<span style="font-style:italic !important">
++												($tlang.getString("gen.gra.ext") $reviewResult.getExternalGrade() / $maxPointsInt)
++											</span>
++										#end
+ 									</div>
+ 								#end
+ 								#if ($reviewResults.size() >= 3)
+@@ -698,7 +703,7 @@ $(document).ready(function(){
+ 							#end
+ 							#if ($plagiarismNote)
+ 								<p>
+-									<img alt="$reviewIndicator" title="$reviewIndicator" src="/library/image/silk/rosette.png" class="assignmentRosette"/>
++									<i alt="$reviewIndicator" title="$reviewIndicator" class="fa fa-certificate reviewStyle"></i>
+ 									<em>
+ 										$plagiarismNote
+ 										#if ($plagiarismFileTypes)
+@@ -772,7 +777,7 @@ $(document).ready(function(){
+ 				#if (($submissionType == 2) || ($submissionType == 5))
+ 					#if ($plagiarismNote)
+ 						<p>
+-							<img alt="$reviewIndicator" title="$reviewIndicator" src="/library/image/silk/rosette.png" class="assignmentRosette"/>
++							<i alt="$reviewIndicator" title="$reviewIndicator" class="fa fa-certificate reviewStyle"></i>
+ 							<em>
+ 								$plagiarismNote
+ 								#if ($plagiarismFileTypes)
+diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_submission_confirmation.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_submission_confirmation.vm
+index 7213078..54f3167 100644
+--- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_submission_confirmation.vm
++++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_submission_confirmation.vm
+@@ -31,6 +31,15 @@
+    <p class="alertMessage">$tlang.getString('confirm.submission.email.noEmailAddress')</p>	 
+   #end	 
+  #end
++	#if ($!usingreview && $!namenull)
++		<p class="alertMessage">$tlang.getFormattedMessage('review.user.name', $reviewServiceName)</p>
++	#end
++	#if ($!usingreview && $!lastnamenull)
++		<p class="alertMessage">$tlang.getFormattedMessage('review.user.lastname', $reviewServiceName)</p>
++	#end
++	#if ($!usingreview && $!mailnull)
++		<p class="alertMessage">$tlang.getFormattedMessage('review.user.email', $reviewServiceName)</p>
++	#end
+ 	<form name="addSubmissionForm" action="#toolForm($action)" method="post" onsubmit="return true;">
+ 		<table class="itemSummary" border="0" cellspacing="0" summary="$tlang.getString('confirm.submission.title')">
+ 			## user
+diff --git a/basiclti/basiclti-common/src/java/org/sakaiproject/basiclti/util/SakaiBLTIUtil.java b/basiclti/basiclti-common/src/java/org/sakaiproject/basiclti/util/SakaiBLTIUtil.java
+index 08db4a9..3dc7994 100644
+--- a/basiclti/basiclti-common/src/java/org/sakaiproject/basiclti/util/SakaiBLTIUtil.java
++++ b/basiclti/basiclti-common/src/java/org/sakaiproject/basiclti/util/SakaiBLTIUtil.java
+@@ -167,7 +167,7 @@ public class SakaiBLTIUtil {
+ 	}
+ 
+ 	// Retrieve the property from the configuration unless it
+-	// is overridden by the server configurtation (i.e. sakai.properties)
++	// is overridden by the server configuration (i.e. sakai.properties)
+ 	public static String getCorrectProperty(Properties config,
+ 			String propName, Placement placement)
+ 	{
+@@ -926,10 +926,12 @@ public class SakaiBLTIUtil {
+ 		}
+ 
+ 		int allowCustom = getInt(tool.get(LTIService.LTI_ALLOWCUSTOM));
+-		if ( allowCustom == 1 ) 
++		if ( allowCustom == 1 )  {
+ 			LTI2Util.mergeLTI1Custom(custom, (String) content.get(LTIService.LTI_CUSTOM));
++		}
+ 
+ 		LTI2Util.mergeLTI1Custom(custom, (String) tool.get(LTIService.LTI_CUSTOM));
++		M_log.debug("custom props="+custom);
+ 
+ 		if ( isLTI2 ) {
+ 			M_log.debug("before ltiProps="+ltiProps);
+@@ -956,10 +958,83 @@ public class SakaiBLTIUtil {
+ 				M_log.debug("Launching with SHA256 Signing");
+ 			}
+ 		}
++		
++		//substitute resources params and add the rest
++		if(custom.getProperty(BasicLTIConstants.RESOURCE_LINK_ID) != null){//TODO if allowReviewService prop y future prop for TII
++			addTIIproperties(ltiProps, custom);
++		}
+ 
+ 		// System.out.println("LAUNCH TYPE "+ (isLTI1 ? "LTI 1" : "LTI 2") );
+ 		return postLaunchHTML(toolProps, ltiProps, rb);
+ 	}
++	
++	private static void addTIIproperties(Properties ltiProps, Properties custom){
++		M_log.debug("we have custom link id " + custom.getProperty(BasicLTIConstants.RESOURCE_LINK_ID));
++		setProperty(ltiProps,BasicLTIConstants.RESOURCE_LINK_ID,custom.getProperty(BasicLTIConstants.RESOURCE_LINK_ID));
++		if(custom.getProperty(BasicLTIConstants.RESOURCE_LINK_TITLE) != null){
++			M_log.debug("and we have custom link title " + custom.getProperty(BasicLTIConstants.RESOURCE_LINK_TITLE));
++			setProperty(ltiProps,BasicLTIConstants.RESOURCE_LINK_TITLE,custom.getProperty(BasicLTIConstants.RESOURCE_LINK_TITLE));
++		}
++		if(custom.getProperty("custom_startdate") != null){
++			M_log.debug("and we have custom start date " + custom.getProperty("custom_startdate"));
++			setProperty(ltiProps,"custom_startdate",custom.getProperty("custom_startdate"));
++		}
++		if(custom.getProperty("custom_duedate") != null){
++			M_log.debug("and we have custom due date " + custom.getProperty("custom_duedate"));
++			setProperty(ltiProps,"custom_duedate",custom.getProperty("custom_duedate"));
++		}
++		if(custom.getProperty("custom_feedbackreleasedate") != null){
++			M_log.debug("and we have custom feedback date " + custom.getProperty("custom_feedbackreleasedate"));
++			setProperty(ltiProps,"custom_feedbackreleasedate",custom.getProperty("custom_feedbackreleasedate"));
++		}
++		if(custom.getProperty(BasicLTIConstants.RESOURCE_LINK_DESCRIPTION) != null){
++			M_log.debug("and we have custom link description " + custom.getProperty(BasicLTIConstants.RESOURCE_LINK_DESCRIPTION));
++			setProperty(ltiProps,BasicLTIConstants.RESOURCE_LINK_DESCRIPTION,custom.getProperty(BasicLTIConstants.RESOURCE_LINK_DESCRIPTION));
++		}
++		if(custom.getProperty("custom_maxpoints") != null){
++			M_log.debug("and we have custom max points " + custom.getProperty("custom_maxpoints"));
++			setProperty(ltiProps,"custom_maxpoints",custom.getProperty("custom_maxpoints"));
++		}
++		if(custom.getProperty("custom_studentpapercheck") != null){
++			setProperty(ltiProps,"custom_studentpapercheck",custom.getProperty("custom_studentpapercheck"));
++		}
++		if(custom.getProperty("custom_journalcheck") != null){
++			setProperty(ltiProps,"custom_journalcheck",custom.getProperty("custom_journalcheck"));
++		}
++		if(custom.getProperty("custom_internetcheck") != null){
++			setProperty(ltiProps,"custom_internetcheck",custom.getProperty("custom_internetcheck"));
++		}
++		if(custom.getProperty("custom_institutioncheck") != null){
++			setProperty(ltiProps,"custom_institutioncheck",custom.getProperty("custom_institutioncheck"));
++		}
++		if(custom.getProperty("custom_allow_non_or_submissions") != null){
++			setProperty(ltiProps,"custom_allow_non_or_submissions",custom.getProperty("custom_allow_non_or_submissions"));
++		}
++		if(custom.getProperty("custom_exclude_type") != null){
++			setProperty(ltiProps,"custom_exclude_type",custom.getProperty("custom_exclude_type"));
++		}
++		if(custom.getProperty("custom_exclude_value") != null){
++			setProperty(ltiProps,"custom_exclude_value",custom.getProperty("custom_exclude_value"));
++		}
++		if(custom.getProperty("custom_late_accept_flag") != null){
++			setProperty(ltiProps,"custom_late_accept_flag",custom.getProperty("custom_late_accept_flag"));
++		}
++		if(custom.getProperty("custom_report_gen_speed") != null){
++			setProperty(ltiProps,"custom_report_gen_speed",custom.getProperty("custom_report_gen_speed"));
++		}
++		if(custom.getProperty("custom_s_view_reports") != null){
++			setProperty(ltiProps,"custom_s_view_reports",custom.getProperty("custom_s_view_reports"));
++		}
++		if(custom.getProperty("custom_submit_papers_to") != null){
++			setProperty(ltiProps,"custom_submit_papers_to",custom.getProperty("custom_submit_papers_to"));
++		}
++		if(custom.getProperty("custom_use_biblio_exclusion") != null){
++			setProperty(ltiProps,"custom_use_biblio_exclusion",custom.getProperty("custom_use_biblio_exclusion"));
++		}
++		if(custom.getProperty("custom_use_quoted_exclusion") != null){
++			setProperty(ltiProps,"custom_use_quoted_exclusion",custom.getProperty("custom_use_quoted_exclusion"));
++		}
++	}
+ 
+ 	/**
+ 	 * An LTI 2.0 Registration launch
+diff --git a/basiclti/basiclti-impl/src/java/org/sakaiproject/basiclti/impl/BasicLTISecurityServiceImpl.java b/basiclti/basiclti-impl/src/java/org/sakaiproject/basiclti/impl/BasicLTISecurityServiceImpl.java
+index cc65842..70bb875 100644
+--- a/basiclti/basiclti-impl/src/java/org/sakaiproject/basiclti/impl/BasicLTISecurityServiceImpl.java
++++ b/basiclti/basiclti-impl/src/java/org/sakaiproject/basiclti/impl/BasicLTISecurityServiceImpl.java
+@@ -356,7 +356,11 @@ public class BasicLTISecurityServiceImpl implements EntityProducer {
+ 								String siteId = (String) tool.get(LTIService.LTI_SITE_ID);
+ 								if ( siteId != null && ! siteId.equals(ref.getContext()) ) 
+ 								{
+-									tool = null;
++									logger.warn("SiteId is not context: " + siteId + " - " + ref.getContext());
++									String turnitinSite = ServerConfigurationService.getString("turnitin.lti.site", "!turnitin");
++									if(!siteId.equals(turnitinSite)){
++										tool = null;
++									}
+ 								}
+ 							}
+ 						}
+diff --git a/basiclti/tsugi-util/src/java/org/tsugi/basiclti/BasicLTIConstants.java b/basiclti/tsugi-util/src/java/org/tsugi/basiclti/BasicLTIConstants.java
+index 115232e..0be2f1d 100644
+--- a/basiclti/tsugi-util/src/java/org/tsugi/basiclti/BasicLTIConstants.java
++++ b/basiclti/tsugi-util/src/java/org/tsugi/basiclti/BasicLTIConstants.java
+@@ -84,7 +84,7 @@ public class BasicLTIConstants {
+ 	 */
+ 	public static final String CUSTOM_PREFIX = "custom_";
+ 	/**
+-	 * Parameters with the OAuth prefix are also acceptible.
++	 * Parameters with the OAuth prefix are also acceptable.
+ 	 */
+ 	public static final String OAUTH_PREFIX = "oauth_";
+ 	/**
+@@ -544,4 +544,27 @@ public class BasicLTIConstants {
+ 	 */
+ 	public static final String NEW_SITE_TYPE = "lti";
+ 
++	/**
++	 * Utility array useful for validating property names when building launch
++	 * data.
++	 */
++	public static final String[] validPropertyNames = { CONTEXT_ID,
++		CONTEXT_LABEL, CONTEXT_TITLE, CONTEXT_TYPE,
++		LAUNCH_PRESENTATION_DOCUMENT_TARGET, LAUNCH_PRESENTATION_HEIGHT,
++		LAUNCH_PRESENTATION_LOCALE, LAUNCH_PRESENTATION_RETURN_URL,
++		LAUNCH_PRESENTATION_WIDTH, LIS_PERSON_CONTACT_EMAIL_PRIMARY,
++		LAUNCH_PRESENTATION_CSS_URL, 
++		TOOL_CONSUMER_INFO_PRODUCT_FAMILY_CODE,
++		TOOL_CONSUMER_INFO_VERSION,
++		LIS_PERSON_NAME_FAMILY, LIS_PERSON_NAME_FULL, LIS_PERSON_NAME_GIVEN,
++		LIS_PERSON_SOURCEDID, LIS_COURSE_OFFERING_SOURCEDID, 
++		LIS_COURSE_SECTION_SOURCEDID, 
++		LIS_OUTCOME_SERVICE_URL, LIS_RESULT_SOURCEDID,
++		LTI_MESSAGE_TYPE, LTI_VERSION, RESOURCE_LINK_ID, 
++		RESOURCE_LINK_TITLE, RESOURCE_LINK_DESCRIPTION, ROLES,
++		TC_PROFILE_URL,
++		TOOL_CONSUMER_INSTANCE_CONTACT_EMAIL, TOOL_CONSUMER_INSTANCE_DESCRIPTION,
++		TOOL_CONSUMER_INSTANCE_GUID, TOOL_CONSUMER_INSTANCE_NAME,
++		TOOL_CONSUMER_INSTANCE_URL, USER_ID, USER_IMAGE };
++	
+ }
+diff --git a/basiclti/tsugi-util/src/java/org/tsugi/basiclti/BasicLTIUtil.java b/basiclti/tsugi-util/src/java/org/tsugi/basiclti/BasicLTIUtil.java
+index f7bd2cf..46a4a7c 100644
+--- a/basiclti/tsugi-util/src/java/org/tsugi/basiclti/BasicLTIUtil.java
++++ b/basiclti/tsugi-util/src/java/org/tsugi/basiclti/BasicLTIUtil.java
+@@ -302,6 +302,8 @@ public class BasicLTIUtil {
+ 			String tool_consumer_instance_contact_email,
+ 			Map<String, String> extra) {
+ 
++		postProp = BasicLTIUtil.cleanupProperties(postProp);
++			
+ 		if ( postProp.get(LTI_VERSION) == null ) postProp.put(LTI_VERSION, "LTI-1p0");
+ 		if ( postProp.get(LTI_MESSAGE_TYPE) == null ) postProp.put(LTI_MESSAGE_TYPE, "basic-lti-launch-request");
+ 
+@@ -1142,4 +1144,109 @@ public class BasicLTIUtil {
+ 	public static boolean equalsIgnoreCase(String str1, String str2) {
+ 		return str1 == null ? str2 == null : str1.equalsIgnoreCase(str2);
+ 	}
++	
++	/**
++	 * Any properties which are not well known (i.e. in
++	 * {@link BasicLTIConstants#validPropertyNames}) will be mapped to custom
++	 * properties per the specified semantics. NOTE: no blacklisting of keys is
++	 * performed.
++	 * 
++	 * @param rawProperties
++	 *		  A set of properties that will be cleaned.
++	 * @return A cleansed version of rawProperties.
++	 */
++	public static Map<String, String> cleanupProperties(
++			final Map<String, String> rawProperties) {
++		return cleanupProperties(rawProperties, null);
++	}
++
++	/**
++	 * Any properties which are not well known (i.e. in
++	 * {@link BasicLTIConstants#validPropertyNames}) will be mapped to custom
++	 * properties per the specified semantics.
++	 * 
++	 * @param rawProperties
++	 *		  A set of properties that will be cleaned.
++	 * @param blackList
++	 *		  An array of {@link String}s which are considered unsafe to be
++	 *		  included in launch data. Any matches will be removed from the
++	 *		  return.
++	 * @return A cleansed version of rawProperties.
++	 */
++	public static Map<String, String> cleanupProperties(
++			final Map<String, String> rawProperties, final String[] blackList) {
++		final Map<String, String> newProp = new HashMap<String, String>(
++				rawProperties.size()); // roughly the same size
++		for (String okey : rawProperties.keySet()) {
++			final String key = okey.trim();
++			if (blackList != null) {
++				boolean blackListed = false;
++				for (String blackKey : blackList) {
++					if (blackKey.equals(key)) {
++						blackListed = true;
++						break;
++					}
++				}
++				if (blackListed) {
++					continue;
++				}
++			}
++			final String value = rawProperties.get(key);
++			if (value == null || "".equals(value)) {
++				// remove null or empty values
++				continue;
++			}
++			if (isSpecifiedPropertyName(key)) {
++				// a well known property name
++				newProp.put(key, value);
++			} else {
++				// convert to a custom property name
++				newProp.put(adaptToCustomPropertyName(key), value);
++			}
++		}
++		return newProp;
++	}
++
++	/**
++	 * Any properties which are not well known (i.e. in
++	 * {@link BasicLTIConstants#validPropertyNames}) will be mapped to custom
++	 * properties per the specified semantics.
++	 * 
++	 * @deprecated See {@link #cleanupProperties(Map)}
++	 * @param rawProperties
++	 *		  A set of {@link Properties} that will be cleaned. Keys must be of
++	 *		  type {@link String}.
++	 * @return A cleansed version of {@link Properties}.
++	 */
++	public static Properties cleanupProperties(final Properties rawProperties) {
++		final Map<String, String> map = cleanupProperties(
++				convertToMap(rawProperties), null);
++		return convertToProperties(map);
++	}
++
++	/**
++	 * Checks to see if the passed propertyName is equal to one of the Strings
++	 * contained in {@link BasicLTIConstants#validPropertyNames}. String matching
++	 * is case sensitive.
++	 * 
++	 * @param propertyName
++	 * @return true if propertyName is equal to one of the Strings contained in
++	 *		 {@link BasicLTIConstants#validPropertyNames} 
++	 *		 or is a custom parameter oe extension parameter ;
++	 *		 else return false.
++	 */
++	public static boolean isSpecifiedPropertyName(final String propertyName) {
++		boolean found = false;
++		if ( propertyName.startsWith(CUSTOM_PREFIX) ) return true;
++		if ( propertyName.startsWith(EXTENSION_PREFIX) ) return true;
++		if ( propertyName.startsWith(OAUTH_PREFIX) ) return true;
++		for (String key : BasicLTIConstants.validPropertyNames) {
++			if (key.equals(propertyName)) {
++				found = true;
++				break;
++			}
++		}
++		return found;
++	}
++
+ }
+diff --git a/content-review/content-review-api/model/src/java/org/sakaiproject/contentreview/model/ContentReviewItem.java b/content-review/content-review-api/model/src/java/org/sakaiproject/contentreview/model/ContentReviewItem.java
+index 3fb5518..15dde34 100644
+--- a/content-review/content-review-api/model/src/java/org/sakaiproject/contentreview/model/ContentReviewItem.java
++++ b/content-review/content-review-api/model/src/java/org/sakaiproject/contentreview/model/ContentReviewItem.java
+@@ -41,7 +41,7 @@ public class ContentReviewItem {
+ 	public static final String SUBMISSION_ERROR_NO_RETRY = "Error occurred submitting content - will not retry";
+ 	public static final Long SUBMISSION_ERROR_NO_RETRY_CODE = new Long(5);
+ 	
+-	public static final String SUBMISSION_ERROR_USER_DETAILS = "Error occurred submitting content - inconplete or Ivalid user details";
++	public static final String SUBMISSION_ERROR_USER_DETAILS = "Error occurred submitting content - incomplete or invalid user details";
+ 	public static final Long SUBMISSION_ERROR_USER_DETAILS_CODE = new Long(6);
+ 	
+ 	public static final String REPORT_ERROR_RETRY = "Temporary error occurred retrieving report - will retry";
+@@ -71,6 +71,11 @@ public class ContentReviewItem {
+ 	private String lastError;
+ 	private String iconUrl;
+ 	private Long retryCount;
++	
++	private boolean urlAccessed;
++	private String submissionId;
++	private boolean resubmission;
++	private String externalGrade;
+ 	/**
+ 	 * Default constructor
+ 	 */
+@@ -93,6 +98,10 @@ public class ContentReviewItem {
+ 		this.reviewScore = null;
+ 		this.taskId = null;
+ 		this.retryCount = null;
++		this.urlAccessed = false;
++		this.submissionId = null;
++		this.resubmission = false;
++		this.externalGrade = null;
+ 	}
+ 	
+ 	/**
+@@ -116,6 +125,10 @@ public class ContentReviewItem {
+ 		this.reviewScore = null;
+ 		this.taskId = taskId;
+ 		this.id = null;
++		this.urlAccessed = false;
++		this.submissionId = null;
++		this.resubmission = false;
++		this.externalGrade = null;
+ 	}
+ 
+ 	/**
+@@ -134,6 +147,10 @@ public class ContentReviewItem {
+ 		this.status = status;
+ 		this.reviewScore = reviewScore;
+ 		this.taskId = taskId;
++		this.urlAccessed = false;
++		this.submissionId = null;
++		this.resubmission = false;
++		this.externalGrade = null;
+ 	}
+ 
+ 	
+@@ -276,4 +293,36 @@ public class ContentReviewItem {
+ 	public void setErrorCode(Integer errorCode) {
+ 		this.errorCode = errorCode;
+ 	}
++	
++	public boolean isUrlAccessed(){
++		return urlAccessed;
++	}
++	
++	public void setUrlAccessed(boolean urlAccessed) {
++		this.urlAccessed = urlAccessed;
++	}
++		
++	public String getSubmissionId() {
++		return submissionId;
++	}
++
++	public void setSubmissionId(String submissionId) {
++		this.submissionId = submissionId;
++	}
++	
++	public boolean isResubmission(){
++		return resubmission;
++	}
++	
++	public void setResubmission(boolean resubmission) {
++		this.resubmission = resubmission;
++	}
++	
++	public String getExternalGrade(){
++		return externalGrade;
++	}
++	
++	public void setExternalGrade(String externalGrade) {
++		this.externalGrade = externalGrade;
++	}
+ }
+diff --git a/content-review/content-review-api/public/src/java/org/sakaiproject/contentreview/service/ContentReviewService.java b/content-review/content-review-api/public/src/java/org/sakaiproject/contentreview/service/ContentReviewService.java
+index 5f81c17..aebdffa 100644
+--- a/content-review/content-review-api/public/src/java/org/sakaiproject/contentreview/service/ContentReviewService.java
++++ b/content-review/content-review-api/public/src/java/org/sakaiproject/contentreview/service/ContentReviewService.java
+@@ -46,13 +46,15 @@ public interface ContentReviewService {
+ 	/**
+ 	 *  Add an item to the Queue for Submission to Turnitin
+ 	 *  
+-	 *  @param userID if nulll current user is used
++	 *  @param userID if null current user is used
+ 	 *  @param SiteId is null current site is used
+ 	 *  @param assignmentReference reference to the task this is for
+ 	 *  @param content list of content resources to be queued
++	 *  @param submissionId reference to the submission this is for
++	 *  @param isResubmission true if is a resubmission
+ 	 *  
+-	 */
+-	public void queueContent(String userId, String siteId, String assignmentReference, List<ContentResource> content) throws QueueException;
++	 */	
++	public void queueContent(String userId, String siteId, String taskId, List<ContentResource> content, String submissionId, boolean isResubmission) throws QueueException;
+ 	
+ 	/**
+ 	 *  Add a single item to the Queue for Submission to Turnitin
+@@ -85,7 +87,6 @@ public interface ContentReviewService {
+ 	 * @return the url
+ 	 * @throws QueueException
+ 	 * @throws ReportException
+-	 * * * @deprecated since Nov 2007, use {@link getReviewReportInstructor(String contentId)} or {@link getReviewReportInstructor(String contentId)}
+ 	 */
+ 	public String getReviewReport(String contentId, String assignmentRef, String userId)
+ 	throws QueueException, ReportException;
+@@ -253,6 +254,13 @@ public interface ContentReviewService {
+ 	 */
+ 	public boolean isAcceptableContent(ContentResource resource);
+ 	
++	/**
++	 * Is the content resource of a size that can be accepted by the service implementation
++	 * @param resource
++	 * @return
++	 */
++	public boolean isAcceptableSize(ContentResource resource);
++	
+ 	/**                                                                                                                                                                                                    
+ 	 * Gets a map of acceptable file extensions for this content-review service to their associated mime types (ie. ".rtf" -> ["text/rtf", "application,rtf"])                                             
+ 	 */                                                                                                                                                                                                    
+@@ -274,6 +282,15 @@ public interface ContentReviewService {
+ 	public boolean isSiteAcceptable(Site site);
+ 	
+ 	/**
++	 *  Can this site make use of the direct TII submission mode
++	 * 
++	 * @param site
++	 * @return
++	 * 
++	 */
++	public boolean isDirectAccess(Site s);
++	
++	/**
+ 	 *  Get a icon URL that for a specific score
+ 	 * @param score
+ 	 * @return
+@@ -281,6 +298,13 @@ public interface ContentReviewService {
+ 	public String getIconUrlforScore(Long score);
+ 	
+ 	/**
++	 *  Get a icon colour for a specific score
++	 * @param score
++	 * @return
++	 */
++	public String getIconColorforScore(Long score);
++	
++	/**
+ 	 *  Does the service support resubmissions?
+ 	 * @return
+ 	 */
+@@ -365,4 +389,74 @@ public interface ContentReviewService {
+ 	 */
+ 	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts)
+ 	throws SubmissionException, TransientSubmissionException;
++	
++	/**
++	 * Get the URL to access the LTI tool associated with the task
++	 * 
++	 * @param taskId
++	 * @param siteId
++	 * @return
++	 * @throws QueueException
++	 * @throws ReportException
++	 */
++	public String getLTIAccess(String taskId, String siteId);
++	
++	/**
++	 * Delete the LTI tool associated with the task
++	 * 
++	 * @param taskId
++	 * @param siteId
++	 * @return
++	 * @throws QueueException
++	 * @throws ReportException
++	 */
++	public boolean deleteLTITool(String taskId, String siteId);
++	
++	/**
++	 * Get the ContentReviewItem that matches the id
++	 * 
++	 * @param id
++	 * @return
++	 */
++	public ContentReviewItem getItemById(String id);
++	
++	/**
++	 * Get the first ContentReviewItem that matches the param
++	 * 
++	 * @param id
++	 * @return
++	 */
++	public ContentReviewItem getFirstItemByContentId(String contentId);
++	
++	/**
++	 * Get the first ContentReviewItem that matches the param
++	 * 
++	 * @param id
++	 * @return
++	 */
++	public ContentReviewItem getFirstItemByExternalId(String externalId);
++	
++	/**
++	 * Sets the url as accessed for a submission content
++	 * 
++	 * @param contentId
++	 * @return
++	 */
++	public boolean updateItemAccess(String contentId);
++	
++	/**
++	 * Sets the grade for a submission content
++	 * 
++	 * @param contentId
++	 * @return
++	 */
++	public boolean updateExternalGrade(String contentId, String score);
++	
++	/**
++	 * Gets the grade for a submission content
++	 * 
++	 * @param contentId
++	 * @return
++	 */
++	public String getExternalGradeForContentId(String contentId);
+ }
+diff --git a/content-review/content-review-api/public/src/java/org/sakaiproject/contentreview/service/ContentReviewSiteAdvisor.java b/content-review/content-review-api/public/src/java/org/sakaiproject/contentreview/service/ContentReviewSiteAdvisor.java
+index 5bfd8d8..fb054e2 100644
+--- a/content-review/content-review-api/public/src/java/org/sakaiproject/contentreview/service/ContentReviewSiteAdvisor.java
++++ b/content-review/content-review-api/public/src/java/org/sakaiproject/contentreview/service/ContentReviewSiteAdvisor.java
+@@ -6,4 +6,8 @@ public interface ContentReviewSiteAdvisor {
+ 
+ 	
+ 	public boolean siteCanUseReviewService(Site site);
++
++	public boolean siteCanUseLTIReviewService(Site site);
++
++	public boolean siteCanUseLTIDirectSubmission(Site site);
+ }
+diff --git a/content-review/contentreview-federated/impl/src/java/org/sakaiproject/contentreview/impl/ContentReviewFederatedServiceImpl.java b/content-review/contentreview-federated/impl/src/java/org/sakaiproject/contentreview/impl/ContentReviewFederatedServiceImpl.java
+index 3652afe..40cc329 100644
+--- a/content-review/contentreview-federated/impl/src/java/org/sakaiproject/contentreview/impl/ContentReviewFederatedServiceImpl.java
++++ b/content-review/contentreview-federated/impl/src/java/org/sakaiproject/contentreview/impl/ContentReviewFederatedServiceImpl.java
+@@ -176,6 +176,13 @@ public class ContentReviewFederatedServiceImpl implements ContentReviewService {
+ 			return provider.getIconUrlforScore(score);
+ 		return null;
+ 	}
++	
++	public String getIconColorforScore(Long score) {
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.getIconColorforScore(score);
++		return null;
++	}
+ 
+ 	public String getLocalizedStatusMessage(String arg0) {
+ 		ContentReviewService provider = getSelectedProvider();
+@@ -281,6 +288,13 @@ public class ContentReviewFederatedServiceImpl implements ContentReviewService {
+ 			return provider.isAcceptableContent(arg0);
+ 		return false;
+ 	}
++	
++	public boolean isAcceptableSize(ContentResource arg0) {
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.isAcceptableSize(arg0);
++		return false;
++	}
+ 
+ 	public Map<String, SortedSet<String>> getAcceptableExtensionsToMimeTypes()
+ 	{
+@@ -308,6 +322,13 @@ public class ContentReviewFederatedServiceImpl implements ContentReviewService {
+ 			return provider.isSiteAcceptable(arg0);
+ 		return false;
+ 	}
++	
++	public boolean isDirectAccess(Site arg0) {
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.isDirectAccess(arg0);
++		return false;
++	}
+ 
+ 	public void processQueue() {
+ 		ContentReviewService provider = getSelectedProvider();
+@@ -315,10 +336,10 @@ public class ContentReviewFederatedServiceImpl implements ContentReviewService {
+ 			provider.processQueue();
+ 	}
+ 
+-	public void queueContent(String userId, String siteId, String assignmentReference, List<ContentResource> content) throws QueueException{
++	public void queueContent(String userId, String siteId, String assignmentReference, List<ContentResource> content, String submissionId, boolean isResubmission) throws QueueException{
+ 		ContentReviewService provider = getSelectedProvider();
+ 		if (provider != null)
+-			provider.queueContent(userId,siteId,assignmentReference,content);
++			provider.queueContent(userId,siteId,assignmentReference,content,submissionId,isResubmission);
+ 	}
+ 	
+ 	public void queueContent(String userId, String siteId, String taskId, String contentId)
+@@ -354,5 +375,61 @@ public class ContentReviewFederatedServiceImpl implements ContentReviewService {
+                         return provider.getReviewScore(contentId, assignmentRef, userId);
+                 return 0;
+ 	}
++	
++	public String getLTIAccess(String taskId, String siteId){
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.getLTIAccess(taskId, siteId);
++		return null;
++	}
++	
++	public boolean deleteLTITool(String taskId, String siteId){
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.deleteLTITool(taskId, siteId);
++		return false;
++	}
++	
++	public ContentReviewItem getItemById(String id){
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.getItemById(id);
++		return null;
++	}
++	
++	public ContentReviewItem getFirstItemByContentId(String contentId){
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.getFirstItemByContentId(contentId);
++		return null;
++	}
++
++	public ContentReviewItem getFirstItemByExternalId(String externalId){
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.getFirstItemByExternalId(externalId);
++		return null;
++	}
++
++	public boolean updateItemAccess(String contentId){
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.updateItemAccess(contentId);
++		return false;
++	}
++	
++	public boolean updateExternalGrade(String contentId, String score){
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.updateExternalGrade(contentId, score);
++		return false;
++	}
++	
++	public String getExternalGradeForContentId(String contentId){
++		ContentReviewService provider = getSelectedProvider();
++		if (provider != null)
++			return provider.getExternalGradeForContentId(contentId);
++		return null;
++	}
+ 
+ }
+diff --git a/content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml b/content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
+index 585ba99..7307f68 100644
+--- a/content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
++++ b/content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
+@@ -9,8 +9,8 @@
+ 		init-method="init">
+ 		<property name="providers">
+ 			<list>
+-				<!--ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceTii"/>
+-	            		<ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceVeriCite"/>
++				<ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceTii"/>
++	<!--            		<ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceVeriCite"/>
+ 					-->
+ 			</list>
+ 		</property>
+diff --git a/master/pom.xml b/master/pom.xml
+index 3adb351..c7a25b3a 100644
+--- a/master/pom.xml
++++ b/master/pom.xml
+@@ -1132,12 +1132,6 @@
+         <scope>provided</scope>
+       </dependency>
+       <dependency>
+-        <groupId>org.sakaiproject.basiclti</groupId>
+-        <artifactId>basiclti-util</artifactId>
+-        <version>${sakai.version}</version>
+-        <scope>provided</scope>
+-      </dependency>
+-      <dependency>
+         <groupId>org.sakaiproject.taggable</groupId>
+         <artifactId>sakai-taggable-api</artifactId>
+         <version>${sakai.version}</version>
+diff --git a/pom.xml b/pom.xml
+index 4b83e75..7af1022 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -120,7 +120,7 @@
+ 				<module>rubrics</module>
+ 				<module>kaltura</module>
+ 				<module>evaluation</module>
+-				<module>gradebook2</module>
++<!--				<module>gradebook2</module> -->
+ 				<module>assignment2</module>
+ 				<module>etudes-util</module>
+ 				<module>jforum</module>
