@@ -85,6 +85,7 @@ public class TurnitinLTIUtil {
 	}
 	
 	public int makeLTIcall(int type, String urlParam, Map<String, String> ltiProps){
+		Map<String, String> origLtiProps = ltiProps;
 		if(!obtainGlobalTurnitinLTIToolData()){
 			log.error("makeLTIcall - Turnitin global LTI tool does not exist or properties are wrongly configured.");
 			return -9;
@@ -136,9 +137,11 @@ public class TurnitinLTIUtil {
 					log.debug(method.getResponseBodyAsString());
 				}
 				if(type == SUBMIT || type == RESUBMIT){
-					boolean result = parseSubmissionXMLResponse(method.getResponseBodyAsString());
-					if(!result){
-						log.warn("Error while submitting. LTI props " + ltiProps.toString());
+					String result = parseSubmissionXMLResponse(method.getResponseBodyAsString());
+					if(result != null){
+						log.warn("Error while submitting. " + result + " LTI props " + ltiProps.toString());
+						origLtiProps.put("returnedError", result);
+						(new Exception()).printStackTrace();
 						return -6;
 					}
 					return 1;
@@ -172,6 +175,7 @@ public class TurnitinLTIUtil {
 				return 1;
 			} else {
 				log.warn("Not controlled status: " + statusCode + " - " + method.getStatusText());
+				origLtiProps.put("returnedError", statusCode + " - " + method.getStatusText());
 				log.debug("LTI props " + ltiProps.toString());
 				log.debug(method.getResponseBodyAsString());
 			}
@@ -279,7 +283,7 @@ public class TurnitinLTIUtil {
 		}
 	}
 	
-	private boolean parseSubmissionXMLResponse(String xml){
+	private String parseSubmissionXMLResponse(String xml){
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try{
 			DocumentBuilder builder = factory.newDocumentBuilder();
@@ -292,13 +296,13 @@ public class TurnitinLTIUtil {
 			} else {
 				String errorMessage = doc.getElementsByTagName("message").item(0).getChildNodes().item(0).getNodeValue();
 				log.error("Error when submitting to TII: " + errorMessage);//TODO return the error and store it?
-				return false;
+				return errorMessage;
 			}
 		} catch(Exception ee){
 			log.error("Could not parse TII response: " + ee.getMessage());
-			return false;
+			return ee.getMessage();
 		}
-		return true;
+		return null;
 	}
 
 	private Map<String, String> cleanUpProperties(Map<String, String> rawProperties) {
