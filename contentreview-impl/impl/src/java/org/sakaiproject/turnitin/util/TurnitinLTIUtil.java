@@ -161,6 +161,9 @@ public class TurnitinLTIUtil {
 						log.debug("Breakdown originality values: " + breakdown.toString());//TODO when should this be showed?
 					}
 					return score;
+				} else if (type == BASIC_ASSIGNMENT) {
+					// If we get a 200 back and don't want more information it's ok.
+					return 1;
 				}
 			} else if(statusCode == 302){
 				log.debug("Successful call: " + defUrl);
