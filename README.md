@@ -1,130 +1,67 @@
-Turnitin Content Review Service
-===============================
+The new implementation of turnitin for Sakai 11.0
 
-2016 TII LTI integration
-------------------------
-First step: select the ContentReviewSiteAdvisor you want on the components.xml file. Uncomment the specific lines and deploy the tool.
+This is based on Oxford's code, but with slight changes for
+the current state of 11.x ,and a couple of bug fixes and
+improvements. This will track Rutgers production code.
 
-SITEPROPERTYADVISOR:
---------------------
-The new TII LTI integration includes some new site properties needed for configuration. If they aren't added to the site, the default value will be used:
+* apply diff to your source
+* then completely replace content-review/contentreview-impl with the copy here
+* sakai.properties has the properties I used for debugging. This includes
+  our properties for the old implementation, so it may have more than you need
 
-	* useContentReviewService : this site property indicates whether we are using the TII integration or not
-		Default value: false
-	
-	* useContentReviewLTIService : this site property indicates whether we are using the new LTI TII integration or the old API
-		Default value: false
-		Note: it will only be checked if the previous property is true
-		
-	* useContentReviewDirectSubmission : this site property indicates whether we are using the direct/external submission way or the Sakai submission method
-		Default value: false
-		Note: it will only be checked if the previous properties are true
-	
-	For instance, if we want to set up a new site for using the new LTI integration we'd need these properties:
+Steps to make this work:
 
-		useContentReviewService = true
-		useContentReviewLTIService = true
-	
-GLOBALPROPERTYADVISOR:
-----------------------
-This advisor will be used when we want all our sites to behave the same way. If they aren't included to the sakai.properties file, false will be taken as the default value.
+* Have your TurnitIn administrator contact Turnitin to enable the LTI integration for you. Once they have, your administrator will need to login, go to integrations, and configure it. The output of this will be a secret key (which you choose) and the numeric account number of your account at TII.
+* Once you’ve built the code and started Sakai, login as admin. You need to add Turnitin as an LTI tool in “External tools”. Here’s Oxford’s instructions:
+* Remembers to set up Quartz jobs
+** Content Review Queue
+** Content Review Reports
+You will have to run jobs manually unless they're set up to auto-run. for testing I've been running them manually when needed
 
-	* assignment.useContentReviewService : this property indicates whether we are using the TII integration or not
-	
-	* assignment.useContentReviewLTI : this property indicates whether we are using the new LTI TII integration or the old API
-		Note: it will only be checked if the previous property is true
-		
-	* assignment.useContentReviewDirect : this property indicates whether we are using the direct/external submission way or the Sakai submission method
-		Note: it will only be checked if the previous properties are true
-	
-	For instance, if we want all the sites to use the new LTI integration, we'd need these properties (besides all the other TII configuration):
+LTI setup
 
-		assignment.useContentReviewService = true
-		assignment.useContentReviewLTI = true
+* As admin, create a site that you’ll install the turnitin API tool into. If you can manage to set the siteid to !turnitin, do so. For me the admin site interface doesn’t let me choose the site ID. Once you create the site, remember the ID.
+* Add an LTI tool via Admin Workspace > External Tools. The configuration for the tool on LIVE should be
 
+Properties for LTI tool:
 
-LTI GLOBAL TOOL CONFIGURATION:
-------------------------------
-Launch URL -> https://turnitinuk.com/api/lti/1p0/assignment
-Launch Key -> from the turnitin setup
-Launch Secret -> from the turnitin setup
-Send Names (ticked)
-Send Emails (ticked)
-Allow custom parameters (ticked)
-Allow tool title to be changed (ticked)
-Tool Visibility (stealthed)
-It must have a site ID of !turnitin
+* Site ID: !turnitin [or whatever site ID your site uses]
+* Tool Title: Turnitin
+* Allow tool title to be changed
+* Set Button Text - Turnitin
+* Do not allow button text to be changed
+* Description - optional
+* Tool status: Enabled
+* Tool visibility: stealthed [I don’t recommend this. It makes it hard to add the tool to the site]
+* Launch URL - https://api.turnitinuk.com/api/lti/1p0/assignment or equivalent for the US, Spain etc.
 
+For most people this will be https://api.turnitin.com/api/lti/1p0/assignment
 
-=============================== Old readme content
+* Do not allow URL to be changed
+* Tool Key - nnnn - your Turnitin account number
+* Do not allow Launch Key to be changed
+* Secret - the secret your Turnitin administrator created when configuring the LTI API
+* Do not allow Launch Secret to be changed
+* Do not allow frame height to be changed
+* Open in a New Windows - checked.
+* Send Names to the External Tool - checked.
+* Send Email Addresses to the External Tool. - checked.
+* Allow External Tool to return grades - checked.
+* Never Launch in pop-up
+* (In production) Never launch in debug mode
+* Allow additional custom parameters ********* very critical
 
-Installation
-------------
+For test, use  https://sandbox.turnitin.com/api/lti/1p0/assignment, though I'm not sure what kind of arrangements you need with Turnitin for that to work. We used the production URL.
 
-This module can be installed with the standard Sakai maven idiom.
-Additionally, it can be included with a Sakai distribution as a top
-level module as is typical with other 3rd party modules and tools.
+Note that properties aren’t identical in the current version of 11 to the list above, but I think this is clear enough.
 
-The standard build command is the same:
+More details at: http://turnitin.com/en_us/support/integrations/lti/
 
-::
+Starting
 
-  mvn clean install sakai:deploy
+Once you’re created the LTI tool, go to the turnitin Sakai site and add the tool. You should be able to do add tool. Turnitin should show under "plugins" in the tool list, unless you stealthed it.
 
-Post Install Configuration
---------------------------
+Configure turnitin in sakai.properties and restart. See sakai.properties here.
 
-After compiling and installing the code you need to add some
-sakai.properties with your account information, and then set up
-some quartz jobs that submit and fetch papers from the Turnitin
-web service.
+That file includes the values we were using for the old interface. I’m not sure whether you can remove them or not.
 
-Sakai Properties
-~~~~~~~~~~~~~~~~
-
-Sakai Turnitin Content Review configurations typically fall in to 
-2 categories.  The original iteration of development had a single 
-instructor account that controlled all the classes for the integration.
-More recent versions have allowed using an option that enables
-each instructor in Sakai to have a fully provisioned account as
-well which makes some tighter integration options possible.
-
-We'll cover the newer setup first.  Assuming you have a Turnitin
-Account/Contract already, you'll need to log in to turnitin.com
-and create a new subaccount on your main account. You'll then need
-to configure the integration to use the Open API.  Very soon there
-will be an option there for Sakai (along with the other Course Management
-Systems), but until then you'll need to email David Wu at Turnitin
-and request that this account be "Source 9 Enabled".  His email is
-davidw At iparadigms Dot com
-
-You'll need the shared key and Account ID for the properties.
-
-The properties then are as follows:
-
-:: 
-
-  turnitin.enable.assignment2=true # This assumes you are using Assignments 2
-  turnitin.apiURL=https://www.turnitin.com/api.asp?
-  turnitin.secretKey=mysecret # This is the secret you set online.
-  turnitin.said=12345 # These are the 5 digit account
-  turnitin.aid=12345  # ID you had enabled
-  turnitin.useSourceParameter=true
-
-If you wish to use (or are currently) a system with one Turnitin Instructor
-account provisioning all the assignments, the settings are as follows.
-
-:: 
-  
-  TODO
-
-Usefull logging settings for this project include:
-
-DEBUG.org.sakaiproject.contentreview.impl.turnitin
-DEBUG.org.sakaiproject.turnitin.util.TurnitinAPIUtil.apicalltrace
-
-Quartz (Cron) Jobs
-~~~~~~~~~~~~~~~~~~
-
-There are 2 mandatory quartz jobs that need to be set up, and a third
-Please see either the readme.txt or readme.html in the docs folder.
