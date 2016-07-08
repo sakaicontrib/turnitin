@@ -1154,11 +1154,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			ltiProps.put("custom_feedbackreleasedate", extraAsnnOpts.get("isodue").toString());
 			
 			String custom = BasicLTIConstants.RESOURCE_LINK_ID + "=" + taskId;
-			custom += ";" + BasicLTIConstants.RESOURCE_LINK_TITLE + "=" + title;
-			custom += ";" + BasicLTIConstants.RESOURCE_LINK_DESCRIPTION + "=" + description;
-			custom += ";" + "custom_startdate=" + extraAsnnOpts.get("isostart").toString();
-			custom += ";" + "custom_duedate=" + extraAsnnOpts.get("isodue").toString();
-			custom += ";" + "custom_feedbackreleasedate=" + extraAsnnOpts.get("isodue").toString();
+			custom += "\n" + BasicLTIConstants.RESOURCE_LINK_TITLE + "=" + title;
+			custom += "\n" + BasicLTIConstants.RESOURCE_LINK_DESCRIPTION + "=" + description;
+			custom += "\n" + "custom_startdate=" + extraAsnnOpts.get("isostart").toString();
+			custom += "\n" + "custom_duedate=" + extraAsnnOpts.get("isodue").toString();
+			custom += "\n" + "custom_feedbackreleasedate=" + extraAsnnOpts.get("isodue").toString();
 			
 			ltiProps = putInstructorInfo(ltiProps, siteId);
 
@@ -1173,12 +1173,12 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			//ONLY FOR TII UK
 			//ltiProps.setProperty("custom_anonymous_marking_enabled", extraAsnnOpts.get("s_paper_check"));
 			
-			custom += ";" + "custom_maxpoints=" + extraAsnnOpts.get("points").toString();
-			custom += ";" + "custom_studentpapercheck=" + extraAsnnOpts.get("s_paper_check").toString();
-			custom += ";" + "custom_journalcheck=" + extraAsnnOpts.get("journal_check").toString();
-			custom += ";" + "custom_internetcheck=" + extraAsnnOpts.get("internet_check").toString();
-			custom += ";" + "custom_institutioncheck=" + extraAsnnOpts.get("institution_check").toString();
-			custom += ";" + "custom_allow_non_or_submissions=" + extraAsnnOpts.get("allow_any_file").toString();
+			custom += "\n" + "custom_maxpoints=" + extraAsnnOpts.get("points").toString();
+			custom += "\n" + "custom_studentpapercheck=" + extraAsnnOpts.get("s_paper_check").toString();
+			custom += "\n" + "custom_journalcheck=" + extraAsnnOpts.get("journal_check").toString();
+			custom += "\n" + "custom_internetcheck=" + extraAsnnOpts.get("internet_check").toString();
+			custom += "\n" + "custom_institutioncheck=" + extraAsnnOpts.get("institution_check").toString();
+			custom += "\n" + "custom_allow_non_or_submissions=" + extraAsnnOpts.get("allow_any_file").toString();
  
 			if (extraAsnnOpts.containsKey("exclude_type") && extraAsnnOpts.containsKey("exclude_value")){
 				//exclude type 0=none, 1=words, 2=percentages
@@ -1188,8 +1188,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 				ltiProps.put("custom_exclude_type", typeAux);
 				ltiProps.put("custom_exclude_value", extraAsnnOpts.get("exclude_value").toString());
-				custom += ";" + "custom_exclude_type=" + typeAux;
-				custom += ";" + "custom_exclude_value=" + extraAsnnOpts.get("exclude_value").toString();
+				custom += "\n" + "custom_exclude_type=" + typeAux;
+				custom += "\n" + "custom_exclude_value=" + extraAsnnOpts.get("exclude_value").toString();
 			}
 
 	        ltiProps.put("custom_late_accept_flag", extraAsnnOpts.get("late_accept_flag").toString());
@@ -1197,18 +1197,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	        ltiProps.put("custom_s_view_reports", extraAsnnOpts.get("s_view_report").toString());			
 	        ltiProps.put("custom_submit_papers_to", extraAsnnOpts.get("submit_papers_to").toString());
 			
-			custom += ";" + "custom_late_accept_flag=" + extraAsnnOpts.get("late_accept_flag").toString();			
-			custom += ";" + "custom_report_gen_speed=" + extraAsnnOpts.get("report_gen_speed").toString();
-			custom += ";" + "custom_s_view_reports=" + extraAsnnOpts.get("s_view_report").toString();
-			custom += ";" + "custom_submit_papers_to=" + extraAsnnOpts.get("submit_papers_to").toString();
+			custom += "\n" + "custom_late_accept_flag=" + extraAsnnOpts.get("late_accept_flag").toString();			
+			custom += "\n" + "custom_report_gen_speed=" + extraAsnnOpts.get("report_gen_speed").toString();
+			custom += "\n" + "custom_s_view_reports=" + extraAsnnOpts.get("s_view_report").toString();
+			custom += "\n" + "custom_submit_papers_to=" + extraAsnnOpts.get("submit_papers_to").toString();
 
 			if (extraAsnnOpts.containsKey("exclude_biblio")){
 				ltiProps.put("custom_use_biblio_exclusion", extraAsnnOpts.get("exclude_biblio").toString());
-				custom += ";" + "custom_use_biblio_exclusion=" + extraAsnnOpts.get("exclude_biblio").toString();
+				custom += "\n" + "custom_use_biblio_exclusion=" + extraAsnnOpts.get("exclude_biblio").toString();
 			}
 			if (extraAsnnOpts.containsKey("exclude_quoted")){
 				ltiProps.put("custom_use_quoted_exclusion", extraAsnnOpts.get("exclude_quoted").toString());
-				custom += ";" + "custom_use_quoted_exclusion=" + extraAsnnOpts.get("exclude_quoted").toString();
+				custom += "\n" + "custom_use_quoted_exclusion=" + extraAsnnOpts.get("exclude_quoted").toString();
 			}
  			
 			//adding callback url
