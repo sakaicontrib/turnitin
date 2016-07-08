@@ -17,6 +17,9 @@ import org.json.JSONObject;
 import org.tsugi.json.IMSJSONRequest;
 import org.sakaiproject.assignment.api.AssignmentSubmissionEdit;
 import org.sakaiproject.assignment.cover.AssignmentService;
+import org.sakaiproject.authz.api.SecurityAdvisor;
+import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.basiclti.util.SakaiBLTIUtil;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
@@ -123,9 +126,10 @@ public class SubmissionCallbackServlet extends HttpServlet {
 		String submissionId = json.getString("lis_result_sourcedid");
 		int tiiPaperId = json.getInt("paperid");
 		//ext_outcomes_tool_placement_url parameter can also be processed if necessary
+		SecurityService securityService = (SecurityService) ComponentManager.get(SecurityService.class);
+		SecurityAdvisor yesMan = (String userId, String function, String reference)->{return SecurityAdvice.ALLOWED;};
 		try{
-			Session session = SessionManager.getCurrentSession();
-			session.setUserId("admin");
+			securityService.pushAdvisor(yesMan);
 			ContentReviewItem cri = contentReviewService.getFirstItemByContentId(submissionId);
 			if(cri == null){
 				M_log.debug("Could not find the content review item for content " + submissionId);
@@ -146,6 +150,10 @@ public class SubmissionCallbackServlet extends HttpServlet {
 		}catch(Exception e){
 			M_log.error("Could not find submission with id " + submissionId + " or store the TII submission id: " + e.getMessage());
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		}
+		finally
+		{
+			securityService.popAdvisor(yesMan);
 		}
 
         return;

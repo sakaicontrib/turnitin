@@ -18,6 +18,9 @@ import org.tsugi.json.IMSJSONRequest;
 import org.sakaiproject.assignment.api.AssignmentContent;
 import org.sakaiproject.assignment.api.AssignmentContentEdit;
 import org.sakaiproject.assignment.cover.AssignmentService;
+import org.sakaiproject.authz.api.SecurityAdvisor;
+import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.basiclti.util.SakaiBLTIUtil;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
@@ -116,9 +119,10 @@ public class TIICallbackServlet extends HttpServlet {
 		String assignmentId = json.getString("resource_link_id");
 		int tiiId = json.getInt("assignmentid");
 		//ext_resource_tool_placement_url parameter can also be processed if necessary
+		SecurityService securityService = (SecurityService) ComponentManager.get(SecurityService.class);
+		SecurityAdvisor yesMan = (String userId, String function, String reference)->{return SecurityAdvice.ALLOWED;};
 		try{
-			Session session = SessionManager.getCurrentSession();
-			session.setUserId("admin");
+			securityService.pushAdvisor(yesMan);
 			AssignmentContentEdit ace = AssignmentService.editAssignmentContent(assignmentId);
 			ResourcePropertiesEdit aPropertiesEdit = ace.getPropertiesEdit();
 			aPropertiesEdit.addProperty("turnitin_id", String.valueOf(tiiId));
@@ -126,6 +130,10 @@ public class TIICallbackServlet extends HttpServlet {
 		}catch(Exception e){
 			M_log.error("Could not find assignment with content id " + assignmentId + " or store the TII assignment id: " + e.getMessage());
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		}
+		finally
+		{
+			securityService.popAdvisor(yesMan);
 		}
 
         return;

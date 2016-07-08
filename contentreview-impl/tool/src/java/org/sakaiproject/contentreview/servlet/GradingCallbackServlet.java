@@ -29,6 +29,9 @@ import org.sakaiproject.assignment.api.Assignment;
 import org.sakaiproject.assignment.api.AssignmentContent;
 import org.sakaiproject.assignment.api.AssignmentSubmissionEdit;
 import org.sakaiproject.assignment.cover.AssignmentService;
+import org.sakaiproject.authz.api.SecurityAdvisor;
+import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.basiclti.util.SakaiBLTIUtil;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
@@ -126,6 +129,8 @@ public class GradingCallbackServlet extends HttpServlet {
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		String sourcedId = null;
+		SecurityService securityService = (SecurityService) ComponentManager.get(SecurityService.class);
+		SecurityAdvisor yesMan = (String userId, String function, String reference)->{return SecurityAdvice.ALLOWED;};
         try{
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			Document document = builder.parse(new InputSource(new StringReader(poxRequest.getPostBody())));
@@ -134,9 +139,8 @@ public class GradingCallbackServlet extends HttpServlet {
 			String score = doc.getElementsByTagName("textString").item(0).getChildNodes().item(0).getNodeValue();//catched exception if textString is null
 			//TODO if they remove grade it's considered as an exception and sakai external grade is not updated
 			M_log.debug("sourcedId " + sourcedId + ", score " + score);
+			securityService.pushAdvisor(yesMan);
 
-			Session session = SessionManager.getCurrentSession();
-			session.setUserId("admin");
 			if(contentReviewService == null){
 				M_log.warn("Can't find contentReviewService");
 				return;
@@ -204,6 +208,10 @@ public class GradingCallbackServlet extends HttpServlet {
 			M_log.error("Could not parse TII response (SAXException): " + se.getMessage());
 		} catch(Exception e){
 			M_log.error("Could not update the content review item " + sourcedId);
+		}
+		finally
+		{
+			securityService.popAdvisor(yesMan);
 		}
 
         return;
