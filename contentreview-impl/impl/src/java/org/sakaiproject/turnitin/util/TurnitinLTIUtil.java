@@ -141,7 +141,6 @@ public class TurnitinLTIUtil {
 					if(result != null){
 						log.warn("Error while submitting. " + result + " LTI props " + ltiProps.toString());
 						origLtiProps.put("returnedError", result);
-						(new Exception()).printStackTrace();
 						return -6;
 					}
 					return 1;
