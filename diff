@@ -217,7 +217,7 @@ index 22939a1..065a354 100644
  	public static void cancelEdit(
  			org.sakaiproject.assignment.api.AssignmentSubmissionEdit param0) {
 diff --git a/assignment/assignment-bundles/resources/assignment.properties b/assignment/assignment-bundles/resources/assignment.properties
-index 9d57756..2f13836 100644
+index 7205992..7564fd5 100644
 --- a/assignment/assignment-bundles/resources/assignment.properties
 +++ b/assignment/assignment-bundles/resources/assignment.properties
 @@ -97,6 +97,7 @@ gen.can.discard   = Your changes will be discarded. Are you sure you want to can
@@ -260,7 +260,7 @@ index 9d57756..2f13836 100644
  content_review.accepted.types.delimiter=,
  content_review.accepted.types.lparen=(
  content_review.accepted.types.rparen=)
-@@ -1011,6 +1016,24 @@ grades.late=Late submission
+@@ -1010,6 +1015,24 @@ grades.late=Late submission
  grades.lateness.late=Late
  grades.lateness.ontime=On time
  grades.lateness.unknown=Unknown
@@ -1145,7 +1145,7 @@ index f5ae6fe..0115ec1 100644
   		<!--use to allow group awareness option in assignments. 
   			By default this is true.-->
 diff --git a/assignment/assignment-tool/tool/src/java/org/sakaiproject/assignment/tool/AssignmentAction.java b/assignment/assignment-tool/tool/src/java/org/sakaiproject/assignment/tool/AssignmentAction.java
-index 9f219c7..cfe422d 100644
+index cb9585b..a1b6de1 100644
 --- a/assignment/assignment-tool/tool/src/java/org/sakaiproject/assignment/tool/AssignmentAction.java
 +++ b/assignment/assignment-tool/tool/src/java/org/sakaiproject/assignment/tool/AssignmentAction.java
 @@ -57,6 +57,7 @@ import java.util.SortedSet;
@@ -1488,18 +1488,39 @@ index 9f219c7..cfe422d 100644
  	{
  		//We will be replacing the inline submission's attachment
  		//firstly, disconnect any existing attachments with AssignmentSubmission.PROP_INLINE_SUBMISSION set
-@@ -7112,7 +7237,9 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -7079,7 +7204,10 @@ public class AssignmentAction extends PagedResourceActionII
+ 		String resourceId = StringUtils.substring(sb_resourceId.toString(), 0, maxChars) + fileExtension;
+ 
+ 		ResourcePropertiesEdit inlineProps = m_contentHostingService.newResourceProperties();
+-		inlineProps.addProperty(ResourceProperties.PROP_DISPLAY_NAME, rb.getString("submission.inline"));
++		String fileName = rb.getString("submission.inline");
++		if (!fileName.endsWith(".html"))
++		    fileName = fileName + ".html";
++		inlineProps.addProperty(ResourceProperties.PROP_DISPLAY_NAME, fileName);
+ 		inlineProps.addProperty(ResourceProperties.PROP_DESCRIPTION, resourceId);
+ 		inlineProps.addProperty(AssignmentSubmission.PROP_INLINE_SUBMISSION, "true");
+ 
+@@ -7101,6 +7229,8 @@ public class AssignmentAction extends PagedResourceActionII
+ 					return SecurityAdvice.ALLOWED;
+ 				}else if(function.equals(m_contentHostingService.AUTH_RESOURCE_WRITE_ANY)){
+ 					return SecurityAdvice.ALLOWED;
++				}else if(function.equals("content.hidden")) {
++					return SecurityAdvice.ALLOWED;
+ 				}else{
+ 					return SecurityAdvice.PASS;
+ 				}
+@@ -7112,7 +7242,9 @@ public class AssignmentAction extends PagedResourceActionII
  			ContentResource attachment = m_contentHostingService.addAttachmentResource(resourceId, siteId, toolName, contentType, contentStream, inlineProps);
  			// TODO: need to put this file in some kind of list to improve performance with web service impls of content-review service
  			String contentUserId = isOnBehalfOfStudent ? student.getId() : currentUser.getId();
 -			contentReviewService.queueContent(contentUserId, siteId, edit.getAssignment().getReference(), Arrays.asList(attachment));
-+			if(!isResubmission){
++			//			if(!isResubmission){
 +				contentReviewService.queueContent(null, null, edit.getAssignment().getReference(), Arrays.asList(attachment), edit.getId(), isResubmission);
-+			}
++				//			}
  
  			try
  			{
-@@ -7584,6 +7711,76 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -7584,6 +7716,76 @@ public class AssignmentAction extends PagedResourceActionII
  				//can't use content-review with non-electronic submissions
  				addAlert(state, rb.getFormattedMessage("review.switch.ne.1", contentReviewService.getServiceName()));
  			}
@@ -1576,7 +1597,7 @@ index 9f219c7..cfe422d 100644
  		}
  		state.setAttribute(NEW_ASSIGNMENT_USE_REVIEW_SERVICE, b);
  		
-@@ -7593,6 +7790,12 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -7593,6 +7795,12 @@ public class AssignmentAction extends PagedResourceActionII
  		else b = Boolean.TRUE.toString();
  		state.setAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW, b);
  		
@@ -1589,7 +1610,7 @@ index 9f219c7..cfe422d 100644
  		//set submit options
  		r = params.getString(NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO);
  		if(r == null || (!NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_STANDARD.equals(r) && !NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_INSITUTION.equals(r)))
-@@ -7642,6 +7845,12 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -7642,6 +7850,12 @@ public class AssignmentAction extends PagedResourceActionII
  		else b = Boolean.TRUE.toString();
  		state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_SMALL_MATCHES, b);
  		
@@ -1602,7 +1623,7 @@ index 9f219c7..cfe422d 100644
  		//exclude type:
  		//only options are 0=none, 1=words, 2=percentages
  		r = params.getString(NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_TYPE);
-@@ -8587,6 +8796,7 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -8587,6 +8801,7 @@ public class AssignmentAction extends PagedResourceActionII
  			boolean useReviewService = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_USE_REVIEW_SERVICE));
  			
  			boolean allowStudentViewReport = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW));
@@ -1610,7 +1631,7 @@ index 9f219c7..cfe422d 100644
  
  			// If the assignment switched to non-electronic, we need to use some of the assignment's previous content-review settings.
  			// This way, students will maintain access to their originality reports when appropriate.
-@@ -8602,6 +8812,7 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -8602,6 +8817,7 @@ public class AssignmentAction extends PagedResourceActionII
  			boolean checkInternet = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INTERNET));
  			boolean checkPublications = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_PUB));
  			boolean checkInstitution = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INSTITUTION));
@@ -1618,7 +1639,7 @@ index 9f219c7..cfe422d 100644
  			//exclude bibliographic materials
  			boolean excludeBibliographic = "true".equalsIgnoreCase((String) state.getAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC));
  			//exclude quoted materials
-@@ -8685,7 +8896,8 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -8685,7 +8901,8 @@ public class AssignmentAction extends PagedResourceActionII
  				state.setAttribute("contentReviewSuccess", Boolean.TRUE);
  
  				// commit the changes to AssignmentContent object
@@ -1628,7 +1649,7 @@ index 9f219c7..cfe422d 100644
  				
  				// set the Assignment Properties object
  				ResourcePropertiesEdit aPropertiesEdit = a.getPropertiesEdit();
-@@ -9833,7 +10045,7 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -9833,7 +10050,7 @@ public class AssignmentAction extends PagedResourceActionII
  		}
  	}
  
@@ -1637,7 +1658,7 @@ index 9f219c7..cfe422d 100644
  	{
  		ac.setTitle(title);
  		ac.setInstructions(description);
-@@ -9842,6 +10054,7 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -9842,6 +10059,7 @@ public class AssignmentAction extends PagedResourceActionII
  		ac.setTypeOfSubmission(submissionType);
  		ac.setAllowReviewService(useReviewService);
  		ac.setAllowStudentViewReport(allowStudentViewReport);
@@ -1645,7 +1666,7 @@ index 9f219c7..cfe422d 100644
  		ac.setSubmitReviewRepo(submitReviewRepo);
  		ac.setGenerateOriginalityReport(generateOriginalityReport);
  		ac.setCheckInstitution(checkInstitution);
-@@ -9852,6 +10065,7 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -9852,6 +10070,7 @@ public class AssignmentAction extends PagedResourceActionII
  		ac.setExcludeQuoted(excludeQuoted);
  		ac.setExcludeType(excludeType);
  		ac.setExcludeValue(excludeValue);
@@ -1653,7 +1674,7 @@ index 9f219c7..cfe422d 100644
  		ac.setTypeOfGrade(gradeType);
  		if (gradeType == 3)
  		{
-@@ -9908,12 +10122,18 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -9908,12 +10127,18 @@ public class AssignmentAction extends PagedResourceActionII
          Map opts = new HashMap();
          
          opts.put("submit_papers_to", assign.getSubmitReviewRepo());
@@ -1675,7 +1696,7 @@ index 9f219c7..cfe422d 100644
          if(ServerConfigurationService.getBoolean("turnitin.option.exclude_bibliographic", true)){
  			//we don't want to pass parameters if the user didn't get an option to set it
          	opts.put("exclude_biblio", assign.isExcludeBibliographic() ? "1" : "0");
-@@ -9928,16 +10148,32 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -9928,16 +10153,33 @@ public class AssignmentAction extends PagedResourceActionII
          	opts.put("exclude_type", Integer.toString(assign.getExcludeType()));
          	opts.put("exclude_value", Integer.toString(assign.getExcludeValue()));
          }
@@ -1696,7 +1717,8 @@ index 9f219c7..cfe422d 100644
 -        opts.put("points", assign.getMaxGradePoint());
 +        TimeZone tz = TimeZone.getTimeZone("UTC");
 +        dform.setTimeZone(tz);
-+        dform.applyPattern("yyyy-MM-dd'T'HH:mm");
++	// Turnitin doesn't interpret +00:00 correctly. It has to be Z
++        dform.applyPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 +        opts.put("isostart", dform.format(openTime.getTime()));
 +        opts.put("isodue", dform.format(dueTime.getTime()));
          opts.put("title", assign.getTitle());
@@ -1711,7 +1733,7 @@ index 9f219c7..cfe422d 100644
          if(assign.getAttachments() != null && assign.getAttachments().size() > 0){
          	List<String> attachments = new ArrayList<String>();
          	for(Reference ref : assign.getAttachments()){
-@@ -9952,7 +10188,8 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -9952,7 +10194,8 @@ public class AssignmentAction extends PagedResourceActionII
              M_log.error(e);
  			String uiService = ServerConfigurationService.getString("ui.service", "Sakai");
  			String[] args = new String[]{contentReviewService.getServiceName(), uiService, e.toString()};
@@ -1721,7 +1743,7 @@ index 9f219c7..cfe422d 100644
          }
  		return false;
      }
-@@ -10476,6 +10713,8 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -10476,6 +10719,8 @@ public class AssignmentAction extends PagedResourceActionII
  				
  				//set whether students can view the review service results
  				state.setAttribute(NEW_ASSIGNMENT_ALLOW_STUDENT_VIEW, Boolean.valueOf(a.getContent().getAllowStudentViewReport()).toString());
@@ -1730,7 +1752,7 @@ index 9f219c7..cfe422d 100644
  				
  				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_SUBMIT_RADIO, a.getContent().getSubmitReviewRepo());
  				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_RADIO, a.getContent().getGenerateOriginalityReport());
-@@ -10483,6 +10722,7 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -10483,6 +10728,7 @@ public class AssignmentAction extends PagedResourceActionII
  				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INTERNET, Boolean.valueOf(a.getContent().isCheckInternet()).toString());
  				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_PUB, Boolean.valueOf(a.getContent().isCheckPublications()).toString());
  				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_CHECK_INSTITUTION, Boolean.valueOf(a.getContent().isCheckInstitution()).toString());
@@ -1738,7 +1760,7 @@ index 9f219c7..cfe422d 100644
  				//exclude bibliographic
  				state.setAttribute(NEW_ASSIGNMENT_REVIEW_SERVICE_EXCLUDE_BIBLIOGRAPHIC, Boolean.valueOf(a.getContent().isExcludeBibliographic()).toString());
  				//exclude quoted
-@@ -10500,6 +10740,38 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -10500,6 +10746,38 @@ public class AssignmentAction extends PagedResourceActionII
  				setAssignmentSupplementItemInState(state, a);
  				
  				state.setAttribute(STATE_MODE, MODE_INSTRUCTOR_NEW_EDIT_ASSIGNMENT);
@@ -1777,7 +1799,7 @@ index 9f219c7..cfe422d 100644
  			}
  		}
  		else
-@@ -10746,6 +11018,9 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -10746,6 +11024,9 @@ public class AssignmentAction extends PagedResourceActionII
  				
  				// remove related announcement if there is one
  				removeAnnouncement(state, pEdit);
@@ -1787,7 +1809,7 @@ index 9f219c7..cfe422d 100644
  
  				// remove from Gradebook
  				integrateGradebook(state, (String) ids.get (i), associateGradebookAssignment, "remove", null, null, -1, null, null, null, -1);
-@@ -10768,6 +11043,21 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -10768,6 +11049,21 @@ public class AssignmentAction extends PagedResourceActionII
  
  	} // doDelete_Assignment
  
@@ -1809,7 +1831,7 @@ index 9f219c7..cfe422d 100644
  
  	/**
  	 * private function to remove assignment related announcement
-@@ -13065,7 +13355,7 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -13065,7 +13361,7 @@ public class AssignmentAction extends PagedResourceActionII
  		// SAK-17606
  		state.removeAttribute(NEW_ASSIGNMENT_CHECK_ANONYMOUS_GRADING);
  
@@ -1818,7 +1840,7 @@ index 9f219c7..cfe422d 100644
  	
  	/**
  	 * reset the attributes for assignment
-@@ -17201,6 +17491,14 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -17201,6 +17497,14 @@ public class AssignmentAction extends PagedResourceActionII
  		}
  	}
  	
@@ -1833,7 +1855,7 @@ index 9f219c7..cfe422d 100644
  	/******************* model answer *********/
  	/**
  	 * add model answer input into state variables
-@@ -17592,6 +17890,11 @@ public class AssignmentAction extends PagedResourceActionII
+@@ -17591,6 +17895,11 @@ public class AssignmentAction extends PagedResourceActionII
  						// of further permissions
  						m_securityService.pushAdvisor(sa);
  						ContentResource attachment = m_contentHostingService.addAttachmentResource(resourceId, siteId, "Assignments", contentType, fileContentStream, props);
@@ -2014,7 +2036,7 @@ index 1881a56..9d9339c 100644
  	
  	#if ($assignmentContent.getInstructions().length()==0)
 diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm
-index 1048cfb..f61b903 100644
+index 1048cfb..6f75b2f 100644
 --- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm
 +++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm
 @@ -9,6 +9,14 @@
@@ -2048,7 +2070,8 @@ index 1048cfb..f61b903 100644
 -					<div id="reviewServiceOptions" class="indnt3">
 +					<div id="reviewServiceOptions" class="indnt3 tiioptions">
  				#else
- 					<div id="reviewServiceOptions" style="display:none" class="indnt3">
+-					<div id="reviewServiceOptions" style="display:none" class="indnt3">
++					<div id="reviewServiceOptions" style="display:none" class="indnt3 tiioptions">
  				#end
 -					<div class="checkbox">
 +					<div>
@@ -2215,24 +2238,6 @@ index 956c88b..2c44bd8 100644
  											#end
  											</a>
  										</h4>
-diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_lti_access.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_lti_access.vm
-new file mode 100644
-index 0000000..9fd001b
---- /dev/null
-+++ b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_lti_access.vm
-@@ -0,0 +1,11 @@
-+<div>
-+	<iframe 
-+		id="ltiiframe"
-+		style="width:99%;padding:0 !important; height:750px"
-+		frameborder="0"
-+		marginwidth="0"
-+		marginheight="0"
-+		src="$!ltiLink"
-+		height="750px">
-+	</iframe>
-+</div>
-\ No newline at end of file
 diff --git a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_grade.vm b/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_grade.vm
 index a0f400e..506c02f 100644
 --- a/assignment/assignment-tool/tool/src/webapp/vm/assignment/chef_assignments_student_view_grade.vm
@@ -2330,7 +2335,7 @@ index 7213078..54f3167 100644
  		<table class="itemSummary" border="0" cellspacing="0" summary="$tlang.getString('confirm.submission.title')">
  			## user
 diff --git a/basiclti/basiclti-common/src/java/org/sakaiproject/basiclti/util/SakaiBLTIUtil.java b/basiclti/basiclti-common/src/java/org/sakaiproject/basiclti/util/SakaiBLTIUtil.java
-index 08db4a9..3dc7994 100644
+index 8e6fe2c..122daa9 100644
 --- a/basiclti/basiclti-common/src/java/org/sakaiproject/basiclti/util/SakaiBLTIUtil.java
 +++ b/basiclti/basiclti-common/src/java/org/sakaiproject/basiclti/util/SakaiBLTIUtil.java
 @@ -167,7 +167,7 @@ public class SakaiBLTIUtil {
@@ -2342,21 +2347,7 @@ index 08db4a9..3dc7994 100644
  	public static String getCorrectProperty(Properties config,
  			String propName, Placement placement)
  	{
-@@ -926,10 +926,12 @@ public class SakaiBLTIUtil {
- 		}
- 
- 		int allowCustom = getInt(tool.get(LTIService.LTI_ALLOWCUSTOM));
--		if ( allowCustom == 1 ) 
-+		if ( allowCustom == 1 )  {
- 			LTI2Util.mergeLTI1Custom(custom, (String) content.get(LTIService.LTI_CUSTOM));
-+		}
- 
- 		LTI2Util.mergeLTI1Custom(custom, (String) tool.get(LTIService.LTI_CUSTOM));
-+		M_log.debug("custom props="+custom);
- 
- 		if ( isLTI2 ) {
- 			M_log.debug("before ltiProps="+ltiProps);
-@@ -956,10 +958,83 @@ public class SakaiBLTIUtil {
+@@ -1007,10 +1007,83 @@ public class SakaiBLTIUtil {
  				M_log.debug("Launching with SHA256 Signing");
  			}
  		}
@@ -3032,16 +3023,3 @@ index 3adb351..c7a25b3a 100644
          <groupId>org.sakaiproject.taggable</groupId>
          <artifactId>sakai-taggable-api</artifactId>
          <version>${sakai.version}</version>
-diff --git a/pom.xml b/pom.xml
-index 4b83e75..7af1022 100644
---- a/pom.xml
-+++ b/pom.xml
-@@ -120,7 +120,7 @@
- 				<module>rubrics</module>
- 				<module>kaltura</module>
- 				<module>evaluation</module>
--				<module>gradebook2</module>
-+<!--				<module>gradebook2</module> -->
- 				<module>assignment2</module>
- 				<module>etudes-util</module>
- 				<module>jforum</module>
