@@ -2363,6 +2363,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						continue;
 					}
 					ResourceProperties rp = cr.getProperties();
+					// we saw an unexplained null paperid. can't reproduce. In case we get it again
+					if (log.isDebugEnabled()) {
+					    Iterator<String> names = rp.getPropertyNames();
+					    String debugMsg = "resource properties";
+					    while (names.hasNext()) 
+						debugMsg = debugMsg + " " + names.next();
+					    log.debug(debugMsg);
+					}
 					paperId = rp.getProperty("turnitin_id");
 				}
 				
@@ -2382,6 +2390,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setReviewScore(result);
 					currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
 					currentItem.setDateReportReceived(new Date());
+					currentItem.setLastError(null);
+					currentItem.setErrorCode(null);
 					dao.update(currentItem);
 					//log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
 					log.debug("new report received: " + paperId + " -> " + currentItem.getReviewScore());
@@ -2572,6 +2582,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem
 					.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
 					currentItem.setDateReportReceived(new Date());
+					currentItem.setLastError(null);
+					currentItem.setErrorCode(null);
 					dao.update(currentItem);
 					log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
 				}
