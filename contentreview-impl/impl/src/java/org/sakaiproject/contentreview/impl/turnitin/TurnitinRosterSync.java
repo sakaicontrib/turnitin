@@ -29,7 +29,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.SubmissionException;
@@ -197,13 +196,26 @@ public class TurnitinRosterSync {
 	public boolean swapTurnitinRoles(String siteId, User user, int currentRole ) {
 
 		if (user != null) {
-                	String uem = turnitinReviewServiceImpl.getEmail(user);
+			String uem = turnitinReviewServiceImpl.getEmail(user);
+			// Ensure we have all the data we need; abort if we can't proceed
+			if (uem == null)
+			{
+				return false;
+			}
+			// Get names, considering nulls
+			String fName = turnitinReviewServiceImpl.getUserFirstName(user);
+			String lName = turnitinReviewServiceImpl.getUserLastName(user);
+			String tem = (String) turnitinReviewServiceImpl.getInstructorInfo(siteId).get("uem");
+			if (tem == null)
+			{
+				return false;
+			}
 			Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
 					"fid","19","fcmd", "3", "uem", uem, "uid", user.getId(),
-					"ufn", user.getFirstName(), "uln", user.getLastName(),
+					"ufn", fName, "uln", lName,
 					"username", user.getDisplayName(), "ctl", siteId, "cid", siteId,
 					"utp", currentRole+"",
-					"tem", turnitinReviewServiceImpl.getInstructorInfo(siteId).get("uem"));
+					"tem", tem);
 
 			Map ret = new HashMap();
 			try {

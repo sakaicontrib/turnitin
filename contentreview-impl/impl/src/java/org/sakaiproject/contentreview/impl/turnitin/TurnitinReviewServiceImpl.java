@@ -2973,7 +2973,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * @param user a sakai user
 	 * @return the first name or at least an initial if possible, "X" if no fn can be made
 	 */
-	private String getUserFirstName(User user) {
+	public String getUserFirstName(User user) {
 		String ufn = user.getFirstName().trim();
 		if (ufn == null || ufn.equals("")) {
 			boolean genFN = (boolean) serverConfigurationService.getBoolean("turnitin.generate.first.name", true);
@@ -2996,7 +2996,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 * @param user
 	 * @return
 	 */
-	private String getUserLastName(User user){
+	public String getUserLastName(User user){
 		String uln = user.getLastName().trim();
 		if (uln == null || uln.equals("")) {
 			boolean genLN = serverConfigurationService.getBoolean("turnitin.generate.last.name", false);
