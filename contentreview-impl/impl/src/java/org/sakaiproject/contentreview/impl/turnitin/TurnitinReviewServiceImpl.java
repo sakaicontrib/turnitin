@@ -3345,19 +3345,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		dao.update(item);
 		releaseLock(item);
 	}
-	
-	public boolean allowAllContent() {
-		return true;
-	}
-	
-	public Map<String, SortedSet<String>> getAcceptableExtensionsToMimeTypes() {
-		return new HashMap<String, SortedSet<String>>();
-	}
 
-	public Map<String, SortedSet<String>> getAcceptableFileTypesToExtensions() {
-		return new HashMap<String, SortedSet<String>>();
-	}
-	
 	/**
 	 * A simple SecurityAdviser that can be used to override permissions for one user for one function.
 	 */
