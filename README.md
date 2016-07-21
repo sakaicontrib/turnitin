@@ -65,3 +65,12 @@ Configure turnitin in sakai.properties and restart. See sakai.properties here.
 
 That file includes the values we were using for the old interface. I’m not sure whether you can remove them or not.
 
+WARNING:
+
+If you have used other code, your database may have a definition for
+CONTENTREVIEW_ITEM that will prevent Content Review from being able to
+add new assignments. If you have auto.ddl on, Hibernate will add any
+necessary fields. But it won't remove fields that shouldn't be there.
+The two fields that shouldn't be there but may be are "version" and
+"providerId". Either remove them or change the definition is that they
+default to null if no value is supplied.
