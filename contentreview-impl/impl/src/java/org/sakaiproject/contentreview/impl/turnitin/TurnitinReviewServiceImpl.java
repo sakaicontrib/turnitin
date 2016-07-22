@@ -137,15 +137,82 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 	private List<String> enabledSiteTypes;
 
-	// TII-157 define Turnitin's acceptable file extensions and MIME types	--bbailla2
-	private final String[] DEFAULT_ACCEPTABLE_FILE_EXTENSIONS = new String[] {".doc", ".docx", ".xls", ".xls", ".xls", ".xls", ".xlsx", ".ppt", ".ppt", ".ppt", ".ppt", ".pptx", ".pps", ".pps", ".ppsx", ".pdf", ".ps", ".eps", ".txt", ".html", ".htm", ".wpd", ".wpd", ".odt", ".rtf", ".rtf", ".rtf", ".rtf", ".hwp"};
-	private final String[] DEFAULT_ACCEPTABLE_MIME_TYPES = new String[] {"application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/excel", "application/vnd.ms-excel", "application/x-excel", "application/x-msexcel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/mspowerpoint", "application/powerpoint", "application/vnd.ms-powerpoint", "application/x-mspowerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/mspowerpoint", "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.slideshow", "application/pdf", "application/postscript", "application/postscript", "text/plain", "text/html", "text/html", "application/wordperfect", "application/x-wpwin", "application/vnd.oasis.opendocument.text", "text/rtf", "application/rtf", "application/x-rtf", "text/richtext", "application/x-hwp"};
+	// Define Turnitin's acceptable file extensions and MIME types, order of these arrays DOES matter
+	private final String[] DEFAULT_ACCEPTABLE_FILE_EXTENSIONS = new String[] {
+		".doc", 
+		".docx", 
+		".xls", 
+		".xls", 
+		".xls", 
+		".xls", 
+		".xlsx", 
+		".ppt", 
+		".ppt", 
+		".ppt", 
+		".ppt", 
+		".pptx", 
+		".pps", 
+		".pps", 
+		".ppsx", 
+		".pdf", 
+		".ps", 
+		".eps", 
+		".txt", 
+		".html", 
+		".htm", 
+		".wpd", 
+		".wpd", 
+		".odt", 
+		".rtf", 
+		".rtf", 
+		".rtf", 
+		".rtf", 
+		".hwp", 
+		".gdoc", 
+		".gslide", 
+		".gsheet"
+	};
+	private final String[] DEFAULT_ACCEPTABLE_MIME_TYPES = new String[] {
+		"application/msword", 
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+		"application/excel", 
+		"application/vnd.ms-excel", 
+		"application/x-excel", 
+		"application/x-msexcel", 
+		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+		"application/mspowerpoint", 
+		"application/powerpoint", 
+		"application/vnd.ms-powerpoint", 
+		"application/x-mspowerpoint", 
+		"application/vnd.openxmlformats-officedocument.presentationml.presentation", 
+		"application/mspowerpoint", 
+		"application/vnd.ms-powerpoint", 
+		"application/vnd.openxmlformats-officedocument.presentationml.slideshow", 
+		"application/pdf", 
+		"application/postscript", 
+		"application/postscript", 
+		"text/plain", 
+		"text/html", 
+		"text/html", 
+		"application/wordperfect", 
+		"application/x-wpwin", 
+		"application/vnd.oasis.opendocument.text", 
+		"text/rtf", 
+		"application/rtf", 
+		"application/x-rtf", 
+		"text/richtext", 
+		"application/x-hwp", 
+		"application/vnd.google-apps.document", 
+		"application/vnd.google-apps.presentation", 
+		"application/vnd.google-apps.spreadsheet"
+	};
 
 	// Sakai.properties overriding the arrays above
 	private final String PROP_ACCEPT_ALL_FILES = "turnitin.accept.all.files";
 
 	private final String PROP_ACCEPTABLE_FILE_EXTENSIONS = "turnitin.acceptable.file.extensions";
 	private final String PROP_ACCEPTABLE_MIME_TYPES = "turnitin.acceptable.mime.types";
+
 	// A list of the displayable file types (ie. "Microsoft Word", "WordPerfect document", "Postscript", etc.)
 	private final String PROP_ACCEPTABLE_FILE_TYPES = "turnitin.acceptable.file.types";
 
