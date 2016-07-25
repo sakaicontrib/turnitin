@@ -2350,7 +2350,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			if (currentItem.getNextRetryTime() == null)
 				currentItem.setNextRetryTime(new Date());
 
-			if (currentItem.getNextRetryTime().after(new Date())) {
+			else if (currentItem.getNextRetryTime().after(new Date())) {
 				//we haven't reached the next retry time
 				log.info("next retry time not yet reached for item: " + currentItem.getId());
 				dao.update(currentItem);
