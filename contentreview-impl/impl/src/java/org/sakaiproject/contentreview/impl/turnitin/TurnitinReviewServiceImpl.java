@@ -28,6 +28,11 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -1216,16 +1221,33 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 			}
 			ltiProps.put("resource_link_description", description);
-			ltiProps.put("custom_startdate", extraAsnnOpts.get("isostart").toString());//TODO take care of null values
-			ltiProps.put("custom_duedate", extraAsnnOpts.get("isodue").toString());
-			ltiProps.put("custom_feedbackreleasedate", extraAsnnOpts.get("isodue").toString());
 			
 			String custom = BasicLTIConstants.RESOURCE_LINK_ID + "=" + taskId;
 			custom += "\n" + BasicLTIConstants.RESOURCE_LINK_TITLE + "=" + title;
 			custom += "\n" + BasicLTIConstants.RESOURCE_LINK_DESCRIPTION + "=" + description;
-			custom += "\n" + "custom_startdate=" + extraAsnnOpts.get("isostart").toString();
-			custom += "\n" + "custom_duedate=" + extraAsnnOpts.get("isodue").toString();
-			custom += "\n" + "custom_feedbackreleasedate=" + extraAsnnOpts.get("isodue").toString();
+
+			try
+			{
+				long timestampOpen = (Long) extraAsnnOpts.get("timestampOpen");
+				long timestampDue = (Long) extraAsnnOpts.get("timestampDue");
+				ZonedDateTime open = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestampOpen), ZoneOffset.UTC);
+				ZonedDateTime due = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestampDue), ZoneOffset.UTC);
+				// Turnitin requires dates in ISO8601 format. The example from their documentation is "2014-12-10T07:43:43Z".
+				// This matches the Java formatter ISO_INSTANT
+				String isoStart = open.format(DateTimeFormatter.ISO_INSTANT);
+				String isoDue = due.format(DateTimeFormatter.ISO_INSTANT);
+				ltiProps.put("custom_startdate", isoStart);
+				ltiProps.put("custom_duedate", isoDue);
+				ltiProps.put("custom_feedbackreleasedate", isoDue);
+				custom += "\n" + "custom_startdate=" + isoStart;
+				custom += "\n" + "custom_duedate=" + isoDue;
+				custom += "\n" + "custom_feedbackreleasedate=" + isoDue;
+			}
+			catch (DateTimeException e)
+			{
+				log.error(e);
+				throw new TransientSubmissionException("Create Assignment not successful. Invalid open and/or due date.");
+			}
 			
 			ltiProps = putInstructorInfo(ltiProps, siteId);
 
