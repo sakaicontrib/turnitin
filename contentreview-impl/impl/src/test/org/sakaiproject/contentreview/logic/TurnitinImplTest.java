@@ -119,10 +119,8 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
         opts.put("exclude_type", "1");
         opts.put("exclude_value", "5");
 		opts.put("late_accept_flag", "1");
-        SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
-		dform.applyPattern("yyyy-MM-dd'T'HH:mm");
-		opts.put("isostart", dform.format(new Date()));
-		opts.put("isodue", dform.format(new Date()));
+		opts.put("timestampOpen", 0L);
+		opts.put("timestampDue", 0L);
 		opts.put("title", "Title");
 		opts.put("instructions", "Instructions");
 		opts.put("points", 100);
