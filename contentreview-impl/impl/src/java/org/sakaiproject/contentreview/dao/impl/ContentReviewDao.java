@@ -61,5 +61,11 @@ public interface ContentReviewDao extends CompleteGenericDao {
 	   @SuppressWarnings("unchecked")
 	   public Boolean releaseLock(String lockId, String executerId);
 	
-	
+	   /**
+	    * Updates the 'isUrlAccessed' field of the content review item with the specified boolean value
+	    * @param contentID the content ID of the content review item to be updated
+	    * @param isUrlAccessed the boolean value to be updated for the given content review item
+	    * @return whether the update was successful
+	    */
+	   public boolean updateIsUrlAccessed( String contentID, boolean isUrlAccessed );
 }

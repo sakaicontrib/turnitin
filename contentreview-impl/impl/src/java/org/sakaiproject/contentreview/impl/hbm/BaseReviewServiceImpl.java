@@ -181,7 +181,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		Search search = new Search();
 		search.addRestriction(new Restriction("contentId", contentId));
 		List<ContentReviewItem> existingItems = dao.findBySearch(ContentReviewItem.class, search);
-		if (existingItems.size() == 0) {
+		if (existingItems.isEmpty()) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			return null;
 		}
@@ -200,7 +200,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		search.addRestriction(new Restriction("externalId", externalId));
 		search.addOrder(new Order("id", false));
 		List<ContentReviewItem> existingItems = dao.findBySearch(ContentReviewItem.class, search);
-		if (existingItems.size() == 0) {
+		if (existingItems.isEmpty()) {
 			log.debug("Content with paper id " + externalId + " has not been queued previously");
 			return null;
 		}
@@ -216,7 +216,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		Search search = new Search();
 		search.addRestriction(new Restriction("id", Long.valueOf(id)));
 		List<ContentReviewItem> existingItems = dao.findBySearch(ContentReviewItem.class, search);
-		if (existingItems.size() == 0) {
+		if (existingItems.isEmpty()) {
 			log.debug("Content " + id + " has not been queued previously");
 			return null;
 		}
@@ -233,7 +233,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		log.debug("Getting review score for content: " + contentId);
 
 		List<ContentReviewItem> matchingItems = getItemsByContentId(contentId);
-		if (matchingItems.size() == 0) {
+		if (matchingItems.isEmpty()) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
 		}
@@ -247,7 +247,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 			throw new ReportException("Report not available: " + item.getStatus());
 		}
 		
-		return item.getReviewScore().intValue();
+		return item.getReviewScore();
 	}
 
 	
@@ -258,7 +258,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 
 		List<ContentReviewItem> matchingItems = getItemsByContentId(contentId);
 		
-		if (matchingItems.size() == 0) {
+		if (matchingItems.isEmpty()) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
 		}
@@ -274,7 +274,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		log.debug("Returning date queued for content: " + contentId);
 
 		List<ContentReviewItem> matchingItems = getItemsByContentId(contentId);
-		if (matchingItems.size() == 0) {
+		if (matchingItems.isEmpty()) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
 		}
@@ -291,7 +291,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 
 		List<ContentReviewItem> matchingItems = getItemsByContentId(contentId);
 		
-		if (matchingItems.size() == 0) {
+		if (matchingItems.isEmpty()) {
 			log.debug("Content " + contentId + " has not been queued previously");
 			throw new QueueException("Content " + contentId + " has not been queued previously");
 		}
@@ -376,13 +376,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 	}
 
 	public boolean updateItemAccess(String contentId){
-		ContentReviewItem cri = getFirstItemByContentId(contentId);
-		if(cri != null){
-			cri.setUrlAccessed(true);
-			dao.update(cri);
-			return true;
-		}
-		return false;
+		return dao.updateIsUrlAccessed( contentId, true );
 	}
 		
 	public boolean updateExternalGrade(String contentId, String score){
@@ -453,10 +447,4 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		// TODO Auto-generated method stub
 		
 	}
-
-	
-
-
-	
-
 }
