@@ -58,10 +58,8 @@ import org.apache.commons.validator.EmailValidator;
 import org.tsugi.basiclti.BasicLTIConstants;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
-//import org.sakaiproject.assignment.api.Assignment;
 import org.sakaiproject.assignment.api.AssignmentContent;
 import org.sakaiproject.assignment.api.AssignmentContentEdit;
-import org.sakaiproject.assignment.api.AssignmentEdit;
 import org.sakaiproject.assignment.api.AssignmentService;
 import org.sakaiproject.assignment.api.AssignmentSubmission;
 import org.sakaiproject.authz.api.SecurityAdvisor;
@@ -1251,7 +1249,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			
 			ltiProps = putInstructorInfo(ltiProps, siteId);
 
-			ltiProps.put("custom_maxpoints", extraAsnnOpts.get("points").toString());
+			/*
+			 * Force TII max points to 100 so we can interpret the result as a direct percentage.
+			 * This is done because Assignments now has the ability to grade to an arbitrary number of decimal places.
+			 * Due to the limitation of TII requiring whole integers for grading, we would have to inflate the grade by a
+			 * factor to the power of the number of decimal places allowed. This would result in unusually large numbers
+			 * on the TII, which could be confusing for the end user.
+			 */
+			ltiProps.put("custom_maxpoints", "100");
+			custom += "\n" + "custom_maxpoints=100";
+
 	        ltiProps.put("custom_studentpapercheck", extraAsnnOpts.get("s_paper_check").toString());
 	        ltiProps.put("custom_journalcheck",extraAsnnOpts.get("journal_check").toString());
 
@@ -1262,7 +1269,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			//ONLY FOR TII UK
 			//ltiProps.setProperty("custom_anonymous_marking_enabled", extraAsnnOpts.get("s_paper_check"));
 			
-			custom += "\n" + "custom_maxpoints=" + extraAsnnOpts.get("points").toString();
 			custom += "\n" + "custom_studentpapercheck=" + extraAsnnOpts.get("s_paper_check").toString();
 			custom += "\n" + "custom_journalcheck=" + extraAsnnOpts.get("journal_check").toString();
 			custom += "\n" + "custom_internetcheck=" + extraAsnnOpts.get("internet_check").toString();
