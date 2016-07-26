@@ -73,6 +73,30 @@ The following sakai.properties are relevant to the Turnitin LTI integration:
 * Defines the maximum number of times an item (submission) will attempt to be submitted to Turnitin
 * Defaults to "100"
 
+##### contentreview.site.min=5
+* Defines the minimum number of characters allowed in a site title by Turnitin
+* Defaults to "0"
+* You **must** set this to 5 for use with Turnitin
+* If you don't set this property, the integration will fail in sites with titles less than 5 characters, and this error will not be apparent to the end user
+
+##### contentreview.site.max=50
+* Defines the maximum number of characters allowed in a site title by Turnitin
+* Defaults to "0"
+* You **must** set this to 50 for use with Turnitin
+* If you don't set this property, the integration will fail in sites with titles greater than 50 characters, and this error will not be apparent to the end user
+
+##### contentreview.assign.min=3
+* Defines the minimum number of characters allowed in an assignment title by Turnitin
+* Defaults to "0"
+* You **must** set this to 3 for use with Turnitin
+* If you don't set this property, the integration will fail in sites with assignment titles less than 3 characters, and this error will not be apparent to the end user
+
+##### contentreview.assign.max=100
+* Defines the maximum number of characters allowed in an assignment title by Turnitin
+* Defaults to "0"
+* You **must** set this to 100 for use with Turnitin
+* If you don't set this property, the integration will fail in sites with assignment titles greater than 100 characters, and this error will not be apparent to the end user
+
 ##### turnitin.enable.assignment2
 ##### turnitin.apiURL
 ##### turnitin.secretKey
