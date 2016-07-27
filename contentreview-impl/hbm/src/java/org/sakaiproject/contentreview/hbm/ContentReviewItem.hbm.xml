@@ -26,7 +26,7 @@
         <property name="retryCount" type="long" not-null="false" />
         <property name="nextRetryTime" type="java.util.Date" not-null="false"/>
         <property name="errorCode" type="integer" not-null="false"/>
-        <property name="urlAccessed" type="boolean">
+        <property name="urlAccessed" type="boolean" insert="true" update="false">
 			<column name="urlAccessed" not-null="true" default="false" />
         </property>
         <property name="submissionId" type="string" length="255" not-null="false" />

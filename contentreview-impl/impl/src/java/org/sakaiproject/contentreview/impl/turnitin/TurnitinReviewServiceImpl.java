@@ -1924,7 +1924,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
 			if(siteAdvisor.siteCanUseLTIReviewService(s) && currentItem.getSubmissionId()!=null){
 				
-				Map<String,String> ltiProps = new HashMap<String,String> ();	
+				Map<String,String> ltiProps = new HashMap<>();
 				ltiProps.put("context_id", currentItem.getSiteId());
 				ltiProps.put("resource_link_id", currentItem.getTaskId());
 				ltiProps.put("roles", "Learner");
@@ -1938,7 +1938,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				String[] parts = currentItem.getTaskId().split("/");
 				log.debug(parts[parts.length -1] + " " + parts.length);
 				String httpAccess = serverConfigurationService.getServerUrl() + "/access/assignment/s/" + currentItem.getSiteId() + "/" + parts[parts.length -1] + "/" + currentItem.getSubmissionId();
-				httpAccess += ":" + currentItem.getId();
+				httpAccess += ":" + currentItem.getId() + ":" + currentItem.getContentId().hashCode();
 				log.debug("httpAccess url: " + httpAccess);//debug
 				ltiProps.put("custom_submission_url", httpAccess);
 				ltiProps.put("custom_submission_title", fileName);

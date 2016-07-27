@@ -26,9 +26,11 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.sakaiproject.contentreview.model.ContentReviewLock;
 import org.sakaiproject.genericdao.hibernate.HibernateCompleteGenericDao;
-import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 
 /**
  * Implementations of any specialized DAO methods from the specialized DAO 
@@ -39,7 +41,9 @@ public class ContentReviewDaoImpl
 	extends HibernateCompleteGenericDao 
 		implements ContentReviewDao {
 
-	private static Log log = LogFactory.getLog(ContentReviewDaoImpl.class);
+	private static final Log log = LogFactory.getLog(ContentReviewDaoImpl.class);
+
+	private static final String SQL_UPDATE_IS_URL_ACCESSED = "UPDATE contentreview_item SET urlAccessed = :isUrlAccessed WHERE contentId = :contentID";
 
 	public void init() {
 		log.debug("init");
@@ -48,6 +52,22 @@ public class ContentReviewDaoImpl
 		} catch (Exception e) {
 			log.error(e);
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean updateIsUrlAccessed( String contentID, boolean isUrlAccessed )
+	{
+		Session session = getSessionFactory().openSession();
+		Transaction tx = session.beginTransaction();
+		SQLQuery query = session.createSQLQuery( SQL_UPDATE_IS_URL_ACCESSED );
+		query.setParameter( "isUrlAccessed", isUrlAccessed );
+		query.setParameter( "contentID", contentID );
+		int result = query.executeUpdate();
+		tx.commit();
+		session.close();
+		return result > 0;
 	}
 
 	/**
