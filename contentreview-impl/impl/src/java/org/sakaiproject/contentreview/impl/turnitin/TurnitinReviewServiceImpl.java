@@ -170,10 +170,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		".rtf", 
 		".rtf", 
 		".rtf", 
-		".hwp", 
-		".gdoc", 
-		".gslide", 
-		".gsheet"
+		".hwp"
 	};
 	private final String[] DEFAULT_ACCEPTABLE_MIME_TYPES = new String[] {
 		"application/msword", 
@@ -204,10 +201,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		"application/rtf", 
 		"application/x-rtf", 
 		"text/richtext", 
-		"application/x-hwp", 
-		"application/vnd.google-apps.document", 
-		"application/vnd.google-apps.presentation", 
-		"application/vnd.google-apps.spreadsheet"
+		"application/x-hwp"
 	};
 
 	// Sakai.properties overriding the arrays above
