@@ -1792,8 +1792,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
 				dao.update(currentItem);
 			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
-				dao.update(currentItem);
+				processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED, null, null );
 				errors++;
 				continue;
 			} else {
@@ -1810,10 +1809,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				user = userDirectoryService.getUser(currentItem.getUserId());
 			} catch (UserNotDefinedException e1) {
 				log.error("Submission attempt unsuccessful - User not found.", e1);
-				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-				dao.update(currentItem);
-				releaseLock(currentItem);*/
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, null);
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, null, null);
 				errors++;
 				continue;
 			}
@@ -1822,11 +1818,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String uem = getEmail(user);
 			if (uem == null ){
 				log.error("User: " + user.getEid() + " has no valid email");
-				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
-				currentItem.setLastError("no valid email");
-				dao.update(currentItem);
-				releaseLock(currentItem);*/
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "no valid email");
+				processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "no valid email", null );
 				errors++;
 				continue;
 			}
@@ -1834,11 +1826,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String ufn = getUserFirstName(user);
 			if (ufn == null || ufn.equals("")) {
 				log.error("Submission attempt unsuccessful - User has no first name");
-				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
-				currentItem.setLastError("has no first name");
-				dao.update(currentItem);
-				releaseLock(currentItem);*/
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "has no first name");
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "has no first name", null);
 				errors++;
 				continue;
 			}
@@ -1846,11 +1834,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			String uln = getUserLastName(user);
 			if (uln == null || uln.equals("")) {
 				log.error("Submission attempt unsuccessful - User has no last name");
-				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
-				currentItem.setLastError("has no last name");
-				dao.update(currentItem);
-				releaseLock(currentItem);*/
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "has no last name");
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "has no last name", null);
 				errors++;
 				continue;
 			}
@@ -1861,11 +1845,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 			catch (IdUnusedException iue) {
 				log.error("processQueue: Site " + currentItem.getSiteId() + " not found!" + iue.getMessage());
-				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("IdUnusedException: site not found. " + iue.getMessage());
-				dao.update(currentItem);
-				releaseLock(currentItem);*/
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "site not found");
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "site not found", null);
 				errors++;
 				continue;
 			}
@@ -1878,7 +1858,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				try {
 					resource = contentHostingService.getResource(currentItem.getContentId());
 				} catch (IdUnusedException e4) {
-					//ToDo we should probably remove these from the Queue
+					// Remove this item
 					log.warn("IdUnusedException: no resource with id " + currentItem.getContentId());
 					dao.delete(currentItem);
 					releaseLock(currentItem);
@@ -1891,21 +1871,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 			catch (PermissionException e2) {
 				log.error("Submission failed due to permission error.", e2);
-				/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError("Permission exception: " + e2.getMessage());
-				dao.update(currentItem);
-				releaseLock(currentItem);*/
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "permission exception");
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "permission exception", null);
 				errors++;
 				continue;
 			}
 			catch (TypeException e) {
 				log.error("Submission failed due to content Type error.", e);
-				/*urrentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-				currentItem.setLastError("Type Exception: " + e.getMessage());
-				dao.update(currentItem);
-				releaseLock(currentItem);*/
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "Type Exception: " + e.getMessage());
+				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "Type Exception: " + e.getMessage(), null);
 				errors++;
 				continue;
 			}
@@ -1953,31 +1925,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					tiiId = aProperties.getProperty("turnitin_id");
 				} catch (IdUnusedException e) {
 					log.error("IdUnusedException: no assignment with id: " + currentItem.getTaskId());
-					/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-					currentItem.setLastError("IdUnusedException: no assignment found. " + e.getMessage());
-					dao.update(currentItem);
-					releaseLock(currentItem);*/
-					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "IdUnusedException: no assignment found. " + e.getMessage());
+					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "IdUnusedException: no assignment found. " + e.getMessage(), null);
 					errors++;
 					continue;
 				} catch (PermissionException e) {
 					log.error("PermissionException: no permission for assignment with id: " + currentItem.getTaskId());
-					/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-					currentItem.setLastError("PermissionException: no permission for assignment. " + e.getMessage());
-					dao.update(currentItem);
-					releaseLock(currentItem);*/
-					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "PermissionException: no permission for assignment. " + e.getMessage());
+					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "PermissionException: no permission for assignment. " + e.getMessage(), null);
 					errors++;
 					continue;
 				}
 				
 				if(tiiId == null){
 					log.error("Could not find tiiId for assignment: " + currentItem.getTaskId());
-					/*currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);//TODO we can add more info, change it here and getreviewreport on assignments
-					currentItem.setLastError("Could not find tiiId");
-					dao.update(currentItem);
-					releaseLock(currentItem);*/
-					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Could not find tiiId");
+					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Could not find tiiId", null);
 					errors++;
 					continue;
 				}
@@ -2033,6 +1993,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setDateSubmitted(new Date());
 					success++;
 					dao.update(currentItem);
+					releaseLock(currentItem);
 				} else {
 					//log.warn("invalid external id");
 					//currentItem.setLastError("Submission error: no external id received");
@@ -2042,17 +2003,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setRetryCount(Long.valueOf(l));
 					currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
 					String returnedError = ltiProps.get("returnedError");
-					if (returnedError != null)
-					    currentItem.setLastError(returnedError);
-					else
-					    currentItem.setLastError(switchLTIError(result, "LTI Submission Error"));	
+					if( returnedError == null )
+					{
+						returnedError = switchLTIError(result, "LTI Submission Error");
+					}
 					log.warn("LTI submission error");
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, returnedError, null );
 					errors++;
-					dao.update(currentItem);
 				}
-				
-				releaseLock(currentItem);
+
 				continue;
 			}	
 			
@@ -2063,17 +2022,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					createClass(currentItem.getSiteId());
 				} catch (SubmissionException t) {
 					log.error ("Submission attempt unsuccessful: Could not create class", t);
-					currentItem.setLastError("Class creation error: " + t.getMessage());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-					dao.update(currentItem);
-					releaseLock(currentItem);
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Class creation error: " + t.getMessage(), null );
 					errors++;
 					continue;
 				} catch (TransientSubmissionException tse) {
-					currentItem.setLastError("Class creation error: " + tse.getMessage());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-					dao.update(currentItem);
-					releaseLock(currentItem);
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Class creation error: " + tse.getMessage(), null );
 					errors++;
 					continue;
 				}
@@ -2084,15 +2037,17 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			} catch (Exception t) {
 				log.error("Submission attempt unsuccessful: Could not enroll user in class", t);
 
+				Long status;
+				String error;
 				if (t.getClass() == IOException.class) {
-					currentItem.setLastError("Enrolment error: " + t.getMessage() );
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					error = "Enrolment error: " + t.getMessage();
+					status = ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE;
 				} else {
-					currentItem.setLastError("Enrolment error: " + t.getMessage());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					error = "Enrolment error: " + t.getMessage();
+					status = ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE;
 				}
-				dao.update(currentItem);
-				releaseLock(currentItem);
+
+				processError( currentItem, status, error, null );
 				errors++;
 				continue;
 			}
@@ -2104,24 +2059,15 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
 					}
 				} catch (SubmissionException se) {
-					currentItem.setLastError("Assign creation error: " + se.getMessage());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					if (se.getErrorCode() != null) {
-						currentItem.setErrorCode(se.getErrorCode());
-					}
-					dao.update(currentItem);
-					releaseLock(currentItem);
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "Assign creation error: " + se.getMessage(), se.getErrorCode() );
 					errors++;
 					continue;
 				} catch (TransientSubmissionException tse) {
-					currentItem.setLastError("Assign creation error: " + tse.getMessage());
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
 					if (tse.getErrorCode() != null) {
 						currentItem.setErrorCode(tse.getErrorCode());
 					}
 
-					dao.update(currentItem);
-					releaseLock(currentItem);
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Assign creation error: " + tse.getMessage(), null );
 					errors++;
 					continue;
 
@@ -2184,19 +2130,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			try {
 				document = turnitinConn.callTurnitinReturnDocument(params, true);
 			}
-			catch (TransientSubmissionException e) {
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("Error Submitting Assignment for Submission: " + e.getMessage() + ". Assume unsuccessful");
-				dao.update(currentItem);
-				releaseLock(currentItem);
-				errors++;
-				continue;
-			}
-			catch (SubmissionException e) {
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
-				currentItem.setLastError("Error Submitting Assignment for Submission: " + e.getMessage() + ". Assume unsuccessful");
-				dao.update(currentItem);
-				releaseLock(currentItem);
+			catch (TransientSubmissionException | SubmissionException e) {
+				processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Error Submitting Assignment for Submission: " + e.getMessage() + ". Assume unsuccessful", null );
 				errors++;
 				continue;
 			}
@@ -2228,46 +2163,38 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setDateSubmitted(new Date());
 					success++;
 					dao.update(currentItem);
+					releaseLock( currentItem );
 				} else {
 					log.warn("invalid external id");
-					currentItem.setLastError("Submission error: no external id received");
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Submission error: no external id received", null );
 					errors++;
-					dao.update(currentItem);
 				}
 			} else {
 				log.debug("Submission not successful: " + ((CharacterData) (root.getElementsByTagName("rmessage").item(0).getFirstChild())).getData().trim());
 
+				Long status;
 				if (rMessage.equals("User password does not match user email")
 						|| "1001".equals(rCode) || "".equals(rMessage) || "413".equals(rCode) || "1025".equals(rCode) || "250".equals(rCode)) {
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					status = ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE;
 					log.warn("Submission not successful. It will be retried.");
-					errors++;
 				} else if (rCode.equals("423")) {
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE);
-					errors++;
-
+					status = ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE;
 				} else if (rCode.equals("301")) {
 					//this took a long time
 					log.warn("Submission not successful due to timeout. It will be retried.");
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE);
+					status = ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE;
 					Calendar cal = Calendar.getInstance();
 					cal.set(Calendar.HOUR_OF_DAY, 22);
 					currentItem.setNextRetryTime(cal.getTime());
-					errors++;
-
 				}else {
 					log.error("Submission not successful. It will NOT be retried.");
-					currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					errors++;
+					status = ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE;
 				}
-				currentItem.setLastError("Submission Error: " + rMessage + "(" + rCode + ")");
-				currentItem.setErrorCode(Integer.valueOf(rCode));
-				dao.update(currentItem);
 
+				processError( currentItem, status, "Submission Error: " + rMessage + "(" + rCode + ")", Integer.valueOf(rCode) );
+				errors++;
 			}
-			//release the lock so the reports job can handle it
-			releaseLock(currentItem);
+
 			getNextItemInSubmissionQueue();
 		}
 
@@ -2295,14 +2222,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					eae.printStackTrace();
 					//as the result is likely to cause a MD5 exception use the ID
 					return contentId;
-				/*	currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE);
-					currentItem.setLastError("FileName decode exception: " + fileName);
-					dao.update(currentItem);
-					releaseLock(currentItem);
-					errors++;
-					throw new SubmissionException("Can't decode fileName!");*/
 				}
-
 			}
 		}
 		catch (IllegalArgumentException eae) {
@@ -2383,8 +2303,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				currentItem.setRetryCount(Long.valueOf(0));
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
 			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
-				currentItem.setStatus(ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED);
-				dao.update(currentItem);
+				processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED, null, null );
 				continue;
 			} else {
 				log.debug("Still have retries left, continuing. ItemID: " + currentItem.getId());
@@ -3425,14 +3344,64 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				return method + ": generic LTI error";
 		}
 	}
-	
-	private void processError(ContentReviewItem item, Long status, String error){//TODO resto de llamadas
-		item.setStatus(status);
-		if(error != null){
-			item.setLastError(error);
+
+	private void processError( ContentReviewItem item, Long status, String error, Integer errorCode )
+	{
+		try
+		{
+			if( status == null )
+			{
+				IllegalArgumentException ex = new IllegalArgumentException( "Status is null; you must supply a valid status to update when calling processError()" );
+				throw ex;
+			}
+			else
+			{
+				item.setStatus( status );
+			}
+			if( error != null )
+			{
+				item.setLastError(error);
+			}
+			if( errorCode != null )
+			{
+				item.setErrorCode( errorCode );
+			}
+
+			dao.update( item );
+
+			// Update urlAccessed to true if status is being updated to one of the dead states (5, 6, 8 and 9)
+			if( isDeadState( status ) )
+			{
+				try
+				{
+					ContentResource resource = contentHostingService.getResource( item.getContentId() );
+					boolean itemUpdated = updateItemAccess( resource.getId() );
+					if (!itemUpdated)
+					{
+						log.error( "Could not update cr item access status" );
+					}
+				}
+				catch( PermissionException | IdUnusedException | TypeException ex )
+				{
+					log.error( "Error updating cr item access status; item id = " + item.getContentId(), ex );
+				}
+			}
 		}
-		dao.update(item);
-		releaseLock(item);
+		finally
+		{
+			releaseLock( item );
+		}
+	}
+
+	/**
+	 * Returns true/false if the given status is one of the 'dead' TII states
+	 * @param status the status to check
+	 * @return true if the status given is of one of the dead states; false otherwise
+	 */
+	private boolean isDeadState( Long status )
+	{
+		return status != null && (status.equals( ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE ) || status.equals( ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE ) 
+			|| status.equals( ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED ));
 	}
 
 	/**
