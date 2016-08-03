@@ -111,6 +111,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.sakaiproject.basiclti</groupId>
+            <artifactId>basiclti-common</artifactId>
+            <version>11-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.sakaiproject.assignment</groupId>
             <artifactId>sakai-assignment-api</artifactId>
         </dependency>
