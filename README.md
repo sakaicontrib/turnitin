@@ -104,6 +104,7 @@ The following sakai.properties are relevant to the Turnitin LTI integration:
 ##### turnitin.aid
 ##### turnitin.useSourceParameter
 ##### turnitin.generate.last.name
+##### turnitin.generate.first.name
 ##### turnitin.option.institution_check
 ##### turnitin.ltiURL
 ##### assignment.useContentReview
