@@ -41,6 +41,10 @@
             <groupId>org.sakaiproject.contentreview</groupId>
             <artifactId>contentreview-service-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.sakaiproject.contentreview</groupId>
+            <artifactId>contentreview-turnitin-api</artifactId>
+        </dependency>
 		<dependency>
             <groupId>org.sakaiproject.kernel</groupId>
             <artifactId>sakai-component-manager</artifactId>
