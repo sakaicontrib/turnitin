@@ -180,7 +180,7 @@ public class TurnitinLTIUtil {
 			}
 		
 		} catch (Exception e) {
-			log.error("Exception while making TII LTI call " + e.getMessage());
+			log.error("Exception while making TII LTI call " + e.getMessage(), e);
 			return -4;
 	    }
 		
@@ -304,13 +304,14 @@ public class TurnitinLTIUtil {
 		return null;
 	}
 
-	private Map<String, String> cleanUpProperties(Map<String, String> rawProperties) {
-		for (String okey : rawProperties.keySet()) {
+	Map<String, String> cleanUpProperties(Map<String, String> rawProperties) {
+		for (Iterator<String> iterator = rawProperties.keySet().iterator(); iterator.hasNext(); ) {
+			String okey = iterator.next();
 			String key = okey.trim();
 			String value = rawProperties.get(key);
 			if (value == null || "".equals(value)) {
 				// remove null or empty values
-				rawProperties.remove(key);
+				iterator.remove();
 			}
 		}
 		return rawProperties;
