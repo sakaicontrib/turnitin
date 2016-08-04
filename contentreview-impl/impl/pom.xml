@@ -29,6 +29,11 @@
 
         <dependency>
             <groupId>org.sakaiproject.contentreview</groupId>
+            <artifactId>contentreview-turnitin-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.sakaiproject.contentreview</groupId>
             <artifactId>contentreview-service-api</artifactId>
         </dependency>
 
@@ -107,6 +112,12 @@
         <dependency>
             <groupId>org.sakaiproject.basiclti</groupId>
             <artifactId>basiclti-api</artifactId>
+            <version>11-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.sakaiproject.basiclti</groupId>
+            <artifactId>basiclti-common</artifactId>
             <version>11-SNAPSHOT</version>
         </dependency>
 

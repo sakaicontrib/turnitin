@@ -1,11 +1,8 @@
 package org.sakaiproject.turnitin.util;
 
 import java.io.StringReader;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -26,13 +23,15 @@ import org.tsugi.basiclti.BasicLTIUtil;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.lti.api.LTIService;
 
+import org.sakaiproject.turnitin.api.TurnitinLTIAPI;
+
 /**
  * This is a utility class for wrapping the LTI calls to the TurnItIn Service.
  * 
  * @author bgarcia
  *
  */
-public class TurnitinLTIUtil {
+public class TurnitinLTIUtil implements TurnitinLTIAPI {
 	private static final Log log = LogFactory.getLog(TurnitinLTIUtil.class);
 	
 	private static final Log apiTraceLog = LogFactory.getLog("org.sakaiproject.turnitin.util.TurnitinLTIUtil.apicalltrace");
@@ -229,6 +228,14 @@ public class TurnitinLTIUtil {
 		log.debug("Global tool id: " + globalId);
 		
 		return globalId;
+	}
+
+	public String getGlobalSecret() {
+		return secret;
+	}
+
+	public String getGlobalKey() {
+		return aid;
 	}
 	
 	public Object insertTIIToolContent(String globalToolId, Properties props){

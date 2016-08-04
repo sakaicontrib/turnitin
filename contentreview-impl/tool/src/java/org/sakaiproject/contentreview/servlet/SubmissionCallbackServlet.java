@@ -32,6 +32,7 @@ import org.sakaiproject.event.cover.NotificationService;
 import org.sakaiproject.lti.api.LTIService;
 import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.cover.SessionManager;
+import org.sakaiproject.turnitin.api.TurnitinLTIAPI;
 
 /** 
  * This servlet will receive callbacks from TII. Then it will process the data
@@ -45,6 +46,7 @@ public class SubmissionCallbackServlet extends HttpServlet {
 	
 	private ContentReviewService contentReviewService;
 	private LTIService ltiService;
+	private TurnitinLTIAPI turnitinLTIAPI;
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
@@ -53,6 +55,8 @@ public class SubmissionCallbackServlet extends HttpServlet {
 		Objects.requireNonNull(contentReviewService);
 		ltiService = (LTIService) ComponentManager.get(LTIService.class);
 		Objects.requireNonNull(ltiService);
+		turnitinLTIAPI = (TurnitinLTIAPI) ComponentManager.get(TurnitinLTIAPI.class);
+		Objects.requireNonNull(turnitinLTIAPI);
 		super.init(config);
 	}
 	
@@ -96,13 +100,8 @@ public class SubmissionCallbackServlet extends HttpServlet {
 			M_log.debug(jsonRequest.getPostBody());
 		}
 		
-		String turnitinSite = ServerConfigurationService.getString("turnitin.lti.site", "!turnitin");
-		Map<String,Object> tiiData = ServletUtils.obtainGlobalTurnitinLTITool(turnitinSite);
-		if(tiiData == null){
-			M_log.error("Turnitin global LTI tool does not exist or properties are wrongly configured.");
-		}
-		String key = String.valueOf(tiiData.get(LTIService.LTI_CONSUMERKEY));
-		String secret = String.valueOf(tiiData.get(LTIService.LTI_SECRET));
+		String key = turnitinLTIAPI.getGlobalKey();
+		String secret = turnitinLTIAPI.getGlobalSecret();
 		
 		// Lets check the signature
 		if ( key == null || secret == null ) {
