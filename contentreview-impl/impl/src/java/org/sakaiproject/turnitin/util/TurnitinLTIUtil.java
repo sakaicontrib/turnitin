@@ -8,6 +8,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.json.JSONObject;
+import org.sakaiproject.basiclti.util.SakaiBLTIUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -80,6 +81,10 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		endpoint = serverConfigurationService.getString("turnitin.ltiURL", "https://sandbox.turnitin.com/api/lti/1p0/");
 		if(StringUtils.isEmpty(endpoint)){
 			log.error("Turnitin LTI endpoint property does not exist or is wrongly configured.");
+		}
+		// If we're being asked to create it.
+		if (serverConfigurationService.getBoolean("turnitin.lti.globalCreate", false)) {
+			addGlobalTurnitinLTIToolData();
 		}
 	}
 	
@@ -199,16 +204,57 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 			return false;
 		}
 		Map<String,Object> tool  = tools.get(0);
-		globalId = String.valueOf(tool.get(ltiService.LTI_ID));
+		globalId = String.valueOf(tool.get(LTIService.LTI_ID));
 		log.debug("Global tool id: " + globalId);
-		aid = String.valueOf(tool.get(ltiService.LTI_CONSUMERKEY));
+		aid = String.valueOf(tool.get(LTIService.LTI_CONSUMERKEY));
 		log.debug("Global tool key: " + aid);
-		secret = String.valueOf(tool.get(ltiService.LTI_SECRET));
+		secret = String.valueOf(tool.get(LTIService.LTI_SECRET));
 		log.debug("Global tool secret: " + secret);
 		if(globalId == null || aid == null || secret == null){
 			return false;
 		} else {
 			return true;
+		}
+	}
+
+	public void addGlobalTurnitinLTIToolData() {
+		log.debug("Creating global TII LTI tool");
+		if (obtainGlobalTurnitinLTIToolData()) {
+			log.debug("TII LTI tool already exists.");
+			return;
+		}
+		Map<String, Object> props = new HashMap<>();
+		// TODO validate it's set
+		String key = serverConfigurationService.getString("turnitin.aid");
+		String secret = serverConfigurationService.getString("turnitin.lti.globalCreate.secretKey");
+		secret = SakaiBLTIUtil.encryptSecret(secret.trim());
+
+		props.put(LTIService.LTI_SITE_ID, turnitinSite);
+		props.put(LTIService.LTI_TITLE, "Turnitin");
+		props.put(LTIService.LTI_ALLOWTITLE, 0);
+		props.put(LTIService.LTI_PAGETITLE, "Turnitin");
+		props.put(LTIService.LTI_ALLOWPAGETITLE, 0);
+		props.put(LTIService.LTI_STATUS, 0);
+		props.put(LTIService.LTI_VISIBLE, 0);
+		props.put(LTIService.LTI_LAUNCH, endpoint+ "assignment");
+		props.put(LTIService.LTI_ALLOWLAUNCH, 1);
+		props.put(LTIService.LTI_CONSUMERKEY, key);
+		props.put(LTIService.LTI_ALLOWCONSUMERKEY, 0);
+		props.put(LTIService.LTI_SECRET, secret);
+		props.put(LTIService.LTI_ALLOWSECRET, 0);
+		props.put(LTIService.LTI_SENDEMAILADDR, 1);
+		props.put(LTIService.LTI_SENDNAME, 1);
+		props.put(LTIService.LTI_ALLOWOUTCOMES, 1);
+		props.put(LTIService.LTI_PL_ASSESSMENTSELECTION, 1);
+		props.put(LTIService.LTI_NEWPAGE, 0);
+		props.put(LTIService.LTI_DEBUG, 0);
+		props.put(LTIService.LTI_CUSTOM, 1);
+
+		Object result = ltiService.insertToolDao(props, turnitinSite, true, true);
+		if (result instanceof String) {
+			log.warn("Failed to add TII LTI tool: "+ result);
+		} else if (result instanceof Long) {
+			log.info("Added global TII LTI tool: "+ result);
 		}
 	}
 	

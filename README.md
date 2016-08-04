@@ -65,6 +65,14 @@ The following sakai.properties are relevant to the Turnitin LTI integration:
 * This is the ID of the LTI tool you created above (likely "!turnitin)
 * There is no default for this property
 
+##### turnitin.lti.globalCreate
+* This boolean property if set to true will check if the LTI tool exists and if it doesn't create it.
+* Defaults to false
+
+##### turnitin.lti.globalCreate.secretKey
+* If you're autocreating the LTI tool, this is the secret that is used to create the tool
+* There is no default for this property 
+
 ##### turnitin.grademark.integration.enabled
 * Enables or disables the ability for Sakai to receive Grademark grades from Turnitin
 * Defaults to "true"
