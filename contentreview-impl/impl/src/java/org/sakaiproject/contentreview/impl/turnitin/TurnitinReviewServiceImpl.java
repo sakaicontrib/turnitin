@@ -1727,29 +1727,53 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 */
 	private ContentReviewItem getNextItemInSubmissionQueue() {
 
-
+		// Submit items that haven't yet been submitted
 		Search search = new Search();
 		search.addRestriction(new Restriction("status", ContentReviewItem.NOT_SUBMITTED_CODE));
-
 		List<ContentReviewItem> notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
-		for (int i =0; i < notSubmittedItems.size(); i++) {
-			ContentReviewItem item = (ContentReviewItem) notSubmittedItems.get(i);
+		for( ContentReviewItem item : notSubmittedItems ) {
 
 			// can we get a lock?
-			if (obtainLock("item." + Long.valueOf(item.getId()).toString()))
+			if (obtainLock("item." + item.getId().toString())) {
 				return item;
+			}
 		}
 
+		// Submit items that should be retried
 		search = new Search();
 		search.addRestriction(new Restriction("status", ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE));
 		notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
+		ContentReviewItem nextItem = getNotSubmittedItemPastRetryTime( notSubmittedItems );
+		if( nextItem != null )
+		{
+			return nextItem;
+		}
 
-		//we need the next one whose retry time has not been reached
-		for  (int i =0; i < notSubmittedItems.size(); i++ ) {
-			ContentReviewItem item = (ContentReviewItem)notSubmittedItems.get(i);
-			if (hasReachedRetryTime(item) && obtainLock("item." + Long.valueOf(item.getId()).toString()))
+		// Submit items that were previously marked as missing submitter details (first name, last name, email)
+		search = new Search();
+		search.addRestriction( new Restriction( "status", ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE ) );
+		notSubmittedItems = dao.findBySearch( ContentReviewItem.class, search );
+		nextItem = getNotSubmittedItemPastRetryTime( notSubmittedItems );
+
+		// At this point, nextItem could be null (indicating the submission queue is empty)
+		return nextItem;
+	}
+
+	/**
+	 * Returns the first item in the list which has surpassed it's next retry time, and we can get a lock on the object.
+	 * Otherwise returns null.
+	 * 
+	 * @param notSubmittedItems the list of ContentReviewItems to iterate over.
+	 * @return the first item in the list that meets the requirements, or null.
+	 */
+	private ContentReviewItem getNotSubmittedItemPastRetryTime( List<ContentReviewItem> notSubmittedItems )
+	{
+		for( ContentReviewItem item : notSubmittedItems )
+		{
+			if( hasReachedRetryTime( item ) && obtainLock( "item." + item.getId().toString() ) )
+			{
 				return item;
-
+			}
 		}
 
 		return null;
@@ -1817,7 +1841,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String uem = getEmail(user);
 			if (uem == null ){
-				log.error("User: " + user.getEid() + " has no valid email");
+				if( currentItem.getRetryCount() == 0 )
+				{
+					log.error("User: " + user.getEid() + " has no valid email");
+				}
 				processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "no valid email", null );
 				errors++;
 				continue;
@@ -1825,7 +1852,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String ufn = getUserFirstName(user);
 			if (ufn == null || ufn.equals("")) {
-				log.error("Submission attempt unsuccessful - User has no first name");
+				if( currentItem.getRetryCount() == 0 )
+				{
+					log.error("Submission attempt unsuccessful - User has no first name");
+				}
 				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "has no first name", null);
 				errors++;
 				continue;
@@ -1833,7 +1863,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			String uln = getUserLastName(user);
 			if (uln == null || uln.equals("")) {
-				log.error("Submission attempt unsuccessful - User has no last name");
+				if( currentItem.getRetryCount() == 0 )
+				{
+					log.error("Submission attempt unsuccessful - User has no last name");
+				}
 				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE, "has no last name", null);
 				errors++;
 				continue;
