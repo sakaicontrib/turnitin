@@ -30,6 +30,8 @@ import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.model.ContentReviewRosterSyncItem;
 import org.sakaiproject.contentreview.service.ContentReviewService;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
+import org.sakaiproject.entity.api.Entity;
+import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.event.api.EventTrackingService;
 import org.sakaiproject.event.api.Event;
 import org.sakaiproject.exception.IdUnusedException;
@@ -49,8 +51,8 @@ import org.sakaiproject.site.api.SiteService;
 public class MembershipChangeObserver implements Observer {
 	private static final Log log = LogFactory.getLog(MembershipChangeObserver.class);
 
-	public static final String MEMBERSHIP_EVENT = "site.upd.site.mbrshp";
-	public static final String SITE_UPDATE_EVENT = "site.upd";
+	public static final String MEMBERSHIP_EVENT = SiteService.SECURE_UPDATE_SITE_MEMBERSHIP;
+	public static final String SITE_UPDATE_EVENT = SiteService.SECURE_UPDATE_SITE;
 
 	private EventTrackingService eventTrackingService;
 	public void setEventTrackingService(EventTrackingService eventTrackingService) {
@@ -77,9 +79,9 @@ public class MembershipChangeObserver implements Observer {
 		this.contentReviewSiteAdvisor = contentReviewSiteAdvisor;
 	}
 
-	private SiteService siteService;
-	public void setSiteService(SiteService siteService) {
-		this.siteService = siteService;
+	private EntityManager entityManager;
+	public void setEntityManager(EntityManager entityManager) {
+		this.entityManager = entityManager;
 	}
 
 	public void init() {
@@ -91,11 +93,12 @@ public class MembershipChangeObserver implements Observer {
 		if (arg instanceof Event) {
 			Event event = (Event) arg;
 			if (event.getEvent().equals(MEMBERSHIP_EVENT) || event.getEvent().equals(SITE_UPDATE_EVENT)) {
+				Entity entity = entityManager.newReference(event.getResource()).getEntity();
 				Site site = null;
-				try {
-					site = siteService.getSite(event.getContext());
-				} catch (IdUnusedException e) {
-					log.error("Error observing Turnitin Membership update because we couldn't look up site: " + event.getContext(), e);
+				if (entity instanceof Site) {
+					site = (Site) entity;
+				} else {
+					log.warn("Error observing Turnitin Membership update because we failed to find site: " + event.getResource());
 				}
 				if (site != null && contentReviewService.isSiteAcceptable(site) && !contentReviewSiteAdvisor.siteCanUseLTIReviewService(site)) {
 					Restriction notFinished = new Restriction("status", ContentReviewRosterSyncItem.FINISHED_STATUS, Restriction.NOT_EQUALS);

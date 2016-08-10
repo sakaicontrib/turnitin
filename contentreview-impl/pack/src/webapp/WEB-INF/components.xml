@@ -225,7 +225,7 @@
     <property name="eventTrackingService" ref="org.sakaiproject.event.api.EventTrackingService" />
     <property name="turnitinRosterSync" ref="org.sakaiproject.contentreview.impl.turnitin.TurnitinRosterSync" />
     <property name="dao" ref="org.sakaiproject.contentreview.dao.ContentReviewDao" />
-    <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+    <property name="entityManager" ref="org.sakaiproject.entity.api.EntityManager" />
     <property name="contentReviewService" ref="org.sakaiproject.contentreview.service.ContentReviewServiceTii" />
 	<property name="contentReviewSiteAdvisor" ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" />	
    </bean>
