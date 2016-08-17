@@ -100,6 +100,7 @@ import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.turnitin.util.TurnitinAPIUtil;
 import org.sakaiproject.turnitin.util.TurnitinLTIUtil;
+import org.sakaiproject.turnitin.util.TurnitinReturnValue;
 import org.sakaiproject.user.api.PreferencesService;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
@@ -1305,8 +1306,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("callbackUrl: " + callbackUrl);
 			ltiProps.put("ext_resource_tool_placement_url", callbackUrl);
 			
-			int result = tiiUtil.makeLTIcall(tiiUtil.BASIC_ASSIGNMENT, null, ltiProps);
-			if(result < 0){
+			TurnitinReturnValue result = tiiUtil.makeLTIcall(TurnitinLTIUtil.BASIC_ASSIGNMENT, null, ltiProps);
+			if(result.getResult() < 0){
 				log.error("Error making LTI call");
 				throw new TransientSubmissionException("Create Assignment not successful. Check the logs to see message.");
 			}
@@ -1975,7 +1976,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					continue;
 				}
 				
-				int result = -1;
+				TurnitinReturnValue result = new TurnitinReturnValue();
+				result.setResult( -1 );
 				if(currentItem.isResubmission()){//TODO decide resubmission process
 					log.debug("It's a resubmission");
 					//check we have TII id
@@ -2015,7 +2017,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					result = tiiUtil.makeLTIcall(tiiUtil.SUBMIT, tiiId, ltiProps);
 				}
 				
-				if(result >= 0){
+				if(result.getResult() >= 0){
 					log.debug("LTI submission successful");
 					//problems overriding this on callback
 					//currentItem.setExternalId(externalId);
@@ -2028,9 +2030,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					dao.update(currentItem);
 					releaseLock(currentItem);
 				} else {
-					//log.warn("invalid external id");
-					//currentItem.setLastError("Submission error: no external id received");
-					
 					long l = currentItem.getRetryCount().longValue();
 					l++;
 					currentItem.setRetryCount(Long.valueOf(l));
@@ -2038,7 +2037,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					String returnedError = ltiProps.get("returnedError");
 					if( returnedError == null )
 					{
-						returnedError = switchLTIError(result, "LTI Submission Error");
+						returnedError = "LTI Submission Error: " + returnedError;
 					}
 					log.warn("LTI submission error");
 					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, returnedError, null );
@@ -2092,7 +2091,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						createAssignment(currentItem.getSiteId(), currentItem.getTaskId());
 					}
 				} catch (SubmissionException se) {
-					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "Assign creation error: " + se.getMessage(), se.getErrorCode() );
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE, "Assignment creation error: " + se.getMessage(), se.getErrorCode() );
 					errors++;
 					continue;
 				} catch (TransientSubmissionException tse) {
@@ -2100,7 +2099,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						currentItem.setErrorCode(tse.getErrorCode());
 					}
 
-					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Assign creation error: " + tse.getMessage(), null );
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Assignment creation error: " + tse.getMessage(), null );
 					errors++;
 					continue;
 
@@ -2426,9 +2425,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					continue;
 				}
 				
-				int result = tiiUtil.makeLTIcall(tiiUtil.INFO_SUBMISSION, paperId, ltiProps);
-				if(result >= 0){
-					currentItem.setReviewScore(result);
+				TurnitinReturnValue result = tiiUtil.makeLTIcall(TurnitinLTIUtil.INFO_SUBMISSION, paperId, ltiProps);
+				if(result.getResult() >= 0){
+					currentItem.setReviewScore(result.getResult());
 					currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
 					currentItem.setDateReportReceived(new Date());
 					currentItem.setLastError(null);
@@ -2437,11 +2436,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					//log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
 					log.debug("new report received: " + paperId + " -> " + currentItem.getReviewScore());
 				} else {
-					if(result == -7){
+					if(result.getResult() == -7){
 						log.debug("report is still pending for paper " + paperId);
 						currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
-						currentItem.setLastError(null);
-						currentItem.setErrorCode(null);
+						currentItem.setLastError( result.getErrorMessage() );
+						currentItem.setErrorCode( result.getResult() );
 					} else {
 						log.error("Error making LTI call");
 						long l = currentItem.getRetryCount().longValue();
@@ -2449,7 +2448,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						currentItem.setRetryCount(Long.valueOf(l));
 						currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
 						currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-						currentItem.setLastError(switchLTIError(result, "LTI Report Data Error"));
+						currentItem.setLastError("LTI Report Data Error: " + result.getResult());
 					}
 					dao.update(currentItem);
 				}
@@ -3355,27 +3354,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
             }
         }
         return resources;
-	}
-	
-	private String switchLTIError(int result, String method){
-		switch(result){
-			case -1:
-				return method + ": type is not correct";
-			case -2:
-				return method + ": error while signing TII LTI properties";
-			case -3:
-				return method + ": status 400, bad request";
-			case -4:
-				return method + ": exception while making TII LTI call";
-			case -5:
-				return method + ": other LTI error";
-			case -6:
-				return method + ": error while submitting (XML response)";
-			case -9:
-				return method + ": TII global LTI tool doesn't exist or properties are wrongly configured";
-			default:
-				return method + ": generic LTI error";
-		}
 	}
 
 	private void processError( ContentReviewItem item, Long status, String error, Integer errorCode )
