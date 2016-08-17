@@ -1,5 +1,6 @@
 package org.sakaiproject.turnitin.util;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.json.JSONObject;
 import org.sakaiproject.basiclti.util.SakaiBLTIUtil;
@@ -23,12 +25,15 @@ import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONException;
 
 import org.tsugi.basiclti.BasicLTIUtil;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.lti.api.LTIService;
 
 import org.sakaiproject.turnitin.api.TurnitinLTIAPI;
+import org.w3c.dom.DOMException;
+import org.xml.sax.SAXException;
 
 /**
  * This is a utility class for wrapping the LTI calls to the TurnItIn Service.
@@ -61,7 +66,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 	private String endpoint = null;
 	private String turnitinSite = null;
 	
-	private String SUCCESS_TEXT = "fullsuccess";
+	private static final String SUCCESS_TEXT = "fullsuccess";
 	
 	private LTIService ltiService;
 	public void setLtiService(LTIService ltiService) {
@@ -109,7 +114,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 			client.setParams(httpParams);
 			client.getParams().setParameter("http.protocol.content-charset", "UTF-8");
 			
-			Map<String,String> extra = new HashMap<String,String> ();
+			Map<String,String> extra = new HashMap<> ();
 			
 			String defUrl = formUrl(type, urlParam);
 			if(defUrl == null){
@@ -207,7 +212,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 				log.debug(method.getResponseBodyAsString());
 			}
 		
-		} catch (Exception e) {
+		} catch (IllegalArgumentException | IOException | JSONException e) {
 			log.error("Exception while making TII LTI call " + e.getMessage(), e);
 			retVal.setResult( -4 );
 			retVal.setErrorMessage( "Exception while making TII LTI call " + e.getMessage() );
@@ -238,11 +243,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		log.debug("Global tool key: " + aid);
 		secret = String.valueOf(tool.get(LTIService.LTI_SECRET));
 		log.debug("Global tool secret: " + secret);
-		if(globalId == null || aid == null || secret == null){
-			return false;
-		} else {
-			return true;
-		}
+		return !(globalId == null || aid == null || secret == null);
 	}
 
 	public void addGlobalTurnitinLTIToolData() {
@@ -298,7 +299,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 			return null;
 		}
 		Map<String,Object> tool  = tools.get(0);
-		globalId = String.valueOf(tool.get(ltiService.LTI_ID));
+		globalId = String.valueOf(tool.get(LTIService.LTI_ID));
 		log.debug("Global tool id: " + globalId);
 		
 		return globalId;
@@ -378,7 +379,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 				log.error("Error when submitting to TII: " + errorMessage);//TODO return the error and store it?
 				return errorMessage;
 			}
-		} catch(Exception ee){
+		} catch(ParserConfigurationException | SAXException | IOException | DOMException ee){
 			log.error("Could not parse TII response: " + ee.getMessage());
 			return ee.getMessage();
 		}
