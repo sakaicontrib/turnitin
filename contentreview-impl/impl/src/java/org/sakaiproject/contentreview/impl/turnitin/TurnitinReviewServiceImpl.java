@@ -824,6 +824,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
                                     } catch(DOMException | NumberFormatException e){
                                         //No score returned
                                         grade="";
+                                    } catch(Exception e) {
+                                        grade="";
+                                        log.error( "Unexpected exception getting grade", e );
                                     }
 
                                     if(!grade.equals("")){
@@ -912,6 +915,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
                                     log.error("Error update grade GradebookNotFoundException "+e.toString());
                                 }catch(AssessmentNotFoundException e){
                                     log.error("Error update grade "+e.toString());
+                                }catch(Exception e){
+                                    log.error("Unexpected exception updating grade", e);
                                 }
                         }
             } catch (Exception e) {
@@ -955,6 +960,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
                         document = turnitinConn.callTurnitinReturnDocument(params);
                 }catch (TransientSubmissionException | SubmissionException e) {
                         log.warn("Failed to get enrollment data using user: "+user.getDisplayName(), e);
+                }catch (Exception e) {
+                        log.error( "Unexpected exception getting document", e );
                 }
 
                 Element root = document.getDocumentElement();
@@ -1065,13 +1072,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 				Entity ent = ep.getEntity(ref);
 				log.debug("got entity " + ent);
-				String title =
-                        scrubSpecialCharacters(ent.getClass().getMethod("getTitle").invoke(ent).toString());
+				String title = scrubSpecialCharacters(ent.getClass().getMethod("getTitle").invoke(ent).toString());
 				log.debug("Got reflected assignemment title from entity " + title);
 				togo = URLDecoder.decode(title,"UTF-8");
 
 			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | UnsupportedEncodingException e) {
 				log.debug( e );
+			} catch (Exception e) {
+				log.error( "Unexpected exception getting assignment title", e );
 			}
 		}
 
@@ -1563,13 +1571,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		params.putAll(instructorInfo);
 
 		if (extraAsnnOpts != null) {
-		for (Object key: extraAsnnOpts.keySet()) {
-			if (extraAsnnOpts.get(key) == null) {
-				continue;
+			for (Object key: extraAsnnOpts.keySet()) {
+				if (extraAsnnOpts.get(key) == null) {
+					continue;
+				}
+				params = TurnitinAPIUtil.packMap(params, key.toString(),
+						extraAsnnOpts.get(key).toString());
 			}
-			params = TurnitinAPIUtil.packMap(params, key.toString(),
-					extraAsnnOpts.get(key).toString());
-		}
 		}
 
 		// We only need to use a session id if we are creating this
@@ -1943,8 +1951,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				ltiProps.put("custom_submission_url", httpAccess);
 				ltiProps.put("custom_submission_title", fileName);
 				// must have an extension or they can't process it
-				if (fileName.equals("Inline_Submission"))
-				{
+				if (fileName.equals("Inline_Submission")) {
 					fileName = "Inline_Submission.html";
 				}
 				ltiProps.put("custom_submission_filename", fileName);
@@ -2006,6 +2013,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						}
 					} catch(IdUnusedException | PermissionException | TypeException e){
 						log.error("Couldn't get TII paper id for content " + currentItem.getContentId() + ": " + e.getMessage());
+					} catch(Exception e) {
+						log.error( "Unexpected exception getting TII paper ID", e );
 					}
 					if(tiiPaperId != null){
 						log.debug("This content has associated the following TII id: " + tiiPaperId);
@@ -2068,7 +2077,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			try {
 				enrollInClass(currentItem.getUserId(), uem, currentItem.getSiteId());
-			} catch (SubmissionException | TransientSubmissionException t) {
+			} catch (Exception t) {
 				log.error("Submission attempt unsuccessful: Could not enroll user in class", t);
 
 				Long status;
@@ -2394,12 +2403,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						}
 					} catch(IdUnusedException | PermissionException e){
 						log.error("Couldn't get TII paper id for content " + currentItem.getContentId() + ": " + e.getMessage());
+					} catch(Exception e) {
+						log.error( "Unexpected exception getting TII paper id", e );
 					}
 				} else {//preferred way			
 					ContentResource cr;
 					try{
 						cr = contentHostingService.getResource(currentItem.getContentId());
-					} catch(PermissionException | IdUnusedException | TypeException ex){
+					} catch(Exception ex){
 						log.warn("Could not get content by id " + currentItem.getContentId() + " " + ex.getMessage());
 						long l = currentItem.getRetryCount();
 						l++;
@@ -3321,6 +3332,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.debug("getLTIAccess: " + ltiUrl);
 		} catch(IdUnusedException | PermissionException e){
 			log.warn("Exception while trying to get LTI access for task " + taskId + " and site " + contextId + ": " + e.getMessage());
+		} catch(Exception e) {
+			log.error( "Unexpected exception getting LTI access", e );
 		}
 		return ltiUrl;
 	}
@@ -3337,6 +3350,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			deleted = tiiUtil.deleteTIIToolContent(ltiId);
 		} catch(IdUnusedException | PermissionException e){
 			log.warn("Error trying to delete TII tool content: " + e.getMessage());
+		} catch(Exception e) {
+			log.error( "Unexpected exception deleting TII tool", e );
 		} finally {
 			securityService.popAdvisor(advisor);
 		}

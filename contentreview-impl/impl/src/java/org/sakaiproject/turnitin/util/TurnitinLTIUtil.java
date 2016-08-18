@@ -212,7 +212,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 				log.debug(method.getResponseBodyAsString());
 			}
 		
-		} catch (IllegalArgumentException | IOException | JSONException e) {
+		} catch (Exception e) {
 			log.error("Exception while making TII LTI call " + e.getMessage(), e);
 			retVal.setResult( -4 );
 			retVal.setErrorMessage( "Exception while making TII LTI call " + e.getMessage() );
@@ -382,6 +382,9 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		} catch(ParserConfigurationException | SAXException | IOException | DOMException ee){
 			log.error("Could not parse TII response: " + ee.getMessage());
 			return ee.getMessage();
+		} catch(Exception e){
+			log.error( "Unexpected exception parsing XML response", e );
+			return e.getMessage();
 		}
 		return null;
 	}
