@@ -49,6 +49,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -2434,6 +2436,21 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setLastError(null);
 					currentItem.setErrorCode(null);
 					dao.update(currentItem);
+
+					try
+					{
+						ContentResource resource = contentHostingService.getResource( currentItem.getContentId() );
+						boolean itemUpdated = updateItemAccess( resource.getId() );
+						if( !itemUpdated )
+						{
+							log.error( "Could not update cr item access status" );
+						}
+					}
+					catch( PermissionException | IdUnusedException | TypeException ex )
+					{
+						log.error( "Could not update cr item access status", ex );
+					}
+
 					//log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
 					log.debug("new report received: " + paperId + " -> " + currentItem.getReviewScore());
 				} else {
@@ -2620,12 +2637,26 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				log.debug("reportVal for " + currentItem.getExternalId() + ": " + reportVal);
 				if (reportVal != -1) {
 					currentItem.setReviewScore(reportVal);
-					currentItem
-					.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
+					currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
 					currentItem.setDateReportReceived(new Date());
 					currentItem.setLastError(null);
 					currentItem.setErrorCode(null);
 					dao.update(currentItem);
+
+					try
+					{
+						ContentResource resource = contentHostingService.getResource( currentItem.getContentId() );
+						boolean itemUpdated = updateItemAccess( resource.getId() );
+						if( !itemUpdated )
+						{
+							log.error( "Could not update cr item access status" );
+						}
+					}
+					catch( PermissionException | IdUnusedException | TypeException ex )
+					{
+						log.error( "Could not update cr item access status", ex );
+					}
+
 					log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
 				}
 			}
