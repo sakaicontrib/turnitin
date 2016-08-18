@@ -1,11 +1,17 @@
 package org.sakaiproject.turnitin.util;
 
+import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.json.JSONObject;
 import org.sakaiproject.basiclti.util.SakaiBLTIUtil;
@@ -19,12 +25,15 @@ import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONException;
 
 import org.tsugi.basiclti.BasicLTIUtil;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.lti.api.LTIService;
 
 import org.sakaiproject.turnitin.api.TurnitinLTIAPI;
+import org.w3c.dom.DOMException;
+import org.xml.sax.SAXException;
 
 /**
  * This is a utility class for wrapping the LTI calls to the TurnItIn Service.
@@ -57,7 +66,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 	private String endpoint = null;
 	private String turnitinSite = null;
 	
-	private String SUCCESS_TEXT = "fullsuccess";
+	private static final String SUCCESS_TEXT = "fullsuccess";
 	
 	private LTIService ltiService;
 	public void setLtiService(LTIService ltiService) {
@@ -88,11 +97,14 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		}
 	}
 	
-	public int makeLTIcall(int type, String urlParam, Map<String, String> ltiProps){
+	public TurnitinReturnValue makeLTIcall(int type, String urlParam, Map<String, String> ltiProps){
+		TurnitinReturnValue retVal = new TurnitinReturnValue();
 		Map<String, String> origLtiProps = ltiProps;
 		if(!obtainGlobalTurnitinLTIToolData()){
 			log.error("makeLTIcall - Turnitin global LTI tool does not exist or properties are wrongly configured.");
-			return -9;
+			retVal.setResult( -9 );
+			retVal.setErrorMessage( "TII global LTI tool doesn't exist or properties are wrongly configured" );
+			return retVal;
 		}
 		try {
 	        
@@ -102,12 +114,14 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 			client.setParams(httpParams);
 			client.getParams().setParameter("http.protocol.content-charset", "UTF-8");
 			
-			Map<String,String> extra = new HashMap<String,String> ();
+			Map<String,String> extra = new HashMap<> ();
 			
 			String defUrl = formUrl(type, urlParam);
 			if(defUrl == null){
 				log.error("makeLTIcall: type " + type + " is not correct");
-				return -1;
+				retVal.setResult( -1 );
+				retVal.setErrorMessage( "Type is not correct; type = " + type );
+				return retVal;
 			}
 			
 			PostMethod method = new PostMethod(defUrl);
@@ -115,7 +129,9 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 			ltiProps = BasicLTIUtil.signProperties(ltiProps, defUrl, "POST", aid, secret, null, null, null, null, null, extra);
 			if(ltiProps == null){
 				log.error("Error while signing TII LTI properties.");
-				return -2;
+				retVal.setResult( -2 );
+				retVal.setErrorMessage( "Error while signing TII LTI properties" );
+				return retVal;
 			}
 			
 			for (Entry<String, String> entry : ltiProps.entrySet()) {
@@ -128,14 +144,17 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 			
 			int statusCode = client.executeMethod(method);
 			if(statusCode == 400){
-				log.warn("Status 400: Bad request: " + defUrl);
+				String errorMessage = parseSubmissionXMLResponse( method.getResponseBodyAsString() );
+				log.error("Status 400: Bad request: " + defUrl + "; message: " + errorMessage);
 				log.warn("LTI props " + ltiProps.toString());
-				return -3;
+				retVal.setResult( -3 );
+				retVal.setErrorMessage( errorMessage );
+				return retVal;
 			} else if(statusCode == 200){
 				log.debug("Status 200: OK request: " + defUrl);
 				if(method.getResponseBodyAsString().contains("api_errorblock")){//TODO only way since TII does not return xml response
 					log.warn("LTI props " + ltiProps.toString());
-					log.warn(method.getResponseBodyAsString());
+					log.error(method.getResponseBodyAsString());
 				} else {
 					log.debug("LTI props " + ltiProps.toString());
 					log.debug(method.getResponseBodyAsString());
@@ -143,11 +162,15 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 				if(type == SUBMIT || type == RESUBMIT){
 					String result = parseSubmissionXMLResponse(method.getResponseBodyAsString());
 					if(result != null){
-						log.warn("Error while submitting. " + result + " LTI props " + ltiProps.toString());
+						log.error("Error while submitting. " + result + " LTI props " + ltiProps.toString());
 						origLtiProps.put("returnedError", result);
-						return -6;
+						retVal.setResult( -6 );
+						retVal.setErrorMessage( result );
+						return retVal;
 					}
-					return 1;
+
+					retVal.setResult( 1 );
+					return retVal;
 				} else if(type == INFO_SUBMISSION){
 					//move this?
 					String jsonResponse = method.getResponseBodyAsString();
@@ -157,7 +180,9 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 					String text = originality.getString("text");//null when no reports set on turniting, catch?
 					log.debug("Originality text value: " + text);
 					if(text != null && text.equals("Pending")){
-						return -7;
+						retVal.setResult( -7 );
+						retVal.setErrorMessage( "Report is still pending for paper" );
+						return retVal;
 					}
 					JSONObject numeric = originality.getJSONObject("numeric");
 					int score = numeric.getInt("score");
@@ -166,16 +191,20 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 						JSONObject breakdown = originality.getJSONObject("breakdown");
 						log.debug("Breakdown originality values: " + breakdown.toString());//TODO when should this be showed?
 					}
-					return score;
+
+					retVal.setResult( score );
+					return retVal;
 				} else if (type == BASIC_ASSIGNMENT) {
 					// If we get a 200 back and don't want more information it's ok.
-					return 1;
+					retVal.setResult( 1 );
+					return retVal;
 				}
 			} else if(statusCode == 302){
 				log.debug("Successful call: " + defUrl);
 				log.debug("LTI props " + ltiProps.toString());
 				log.debug(method.getResponseBodyAsString());
-				return 1;
+				retVal.setResult( 1 );
+				return retVal;
 			} else {
 				log.warn("Not controlled status: " + statusCode + " - " + method.getStatusText());
 				origLtiProps.put("returnedError", statusCode + " - " + method.getStatusText());
@@ -185,10 +214,14 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		
 		} catch (Exception e) {
 			log.error("Exception while making TII LTI call " + e.getMessage(), e);
-			return -4;
-	    }
-		
-		return -5;
+			retVal.setResult( -4 );
+			retVal.setErrorMessage( "Exception while making TII LTI call " + e.getMessage() );
+			return retVal;
+		}
+
+		retVal.setResult( -5 );
+		retVal.setErrorMessage( "Other LTI error" );
+		return retVal;
 	}
 	
 	public boolean obtainGlobalTurnitinLTIToolData(){
@@ -210,11 +243,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		log.debug("Global tool key: " + aid);
 		secret = String.valueOf(tool.get(LTIService.LTI_SECRET));
 		log.debug("Global tool secret: " + secret);
-		if(globalId == null || aid == null || secret == null){
-			return false;
-		} else {
-			return true;
-		}
+		return !(globalId == null || aid == null || secret == null);
 	}
 
 	public void addGlobalTurnitinLTIToolData() {
@@ -270,7 +299,7 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 			return null;
 		}
 		Map<String,Object> tool  = tools.get(0);
-		globalId = String.valueOf(tool.get(ltiService.LTI_ID));
+		globalId = String.valueOf(tool.get(LTIService.LTI_ID));
 		log.debug("Global tool id: " + globalId);
 		
 		return globalId;
@@ -350,9 +379,12 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 				log.error("Error when submitting to TII: " + errorMessage);//TODO return the error and store it?
 				return errorMessage;
 			}
-		} catch(Exception ee){
+		} catch(ParserConfigurationException | SAXException | IOException | DOMException ee){
 			log.error("Could not parse TII response: " + ee.getMessage());
 			return ee.getMessage();
+		} catch(Exception e){
+			log.error( "Unexpected exception parsing XML response", e );
+			return e.getMessage();
 		}
 		return null;
 	}
