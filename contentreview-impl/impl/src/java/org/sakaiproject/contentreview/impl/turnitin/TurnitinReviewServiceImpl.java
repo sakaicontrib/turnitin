@@ -2050,7 +2050,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					String returnedError = ltiProps.get("returnedError");
 					if( returnedError == null )
 					{
-						returnedError = "LTI Submission Error: " + returnedError;
+						returnedError = "Submission Error: " + returnedError;
 					}
 					log.warn("LTI submission error");
 					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, returnedError, null );
@@ -2486,7 +2486,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						currentItem.setRetryCount(l);
 						currentItem.setNextRetryTime(this.getNextRetryTime(l));
 						currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-						currentItem.setLastError("LTI Report Data Error: " + result.getResult());
+						currentItem.setLastError("Report Data Error: " + result.getResult());
 					}
 					dao.update(currentItem);
 				}
