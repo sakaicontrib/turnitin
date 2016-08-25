@@ -43,7 +43,7 @@ public class ContentReviewDaoImpl
 
 	private static final Log log = LogFactory.getLog(ContentReviewDaoImpl.class);
 
-	private static final String SQL_UPDATE_IS_URL_ACCESSED = "UPDATE contentreview_item SET urlAccessed = :isUrlAccessed WHERE contentId = :contentID";
+	private static final String SQL_UPDATE_IS_URL_ACCESSED = "UPDATE CONTENTREVIEW_ITEM SET URLACCESSED = :isUrlAccessed WHERE CONTENTID = :contentID";
 
 	public void init() {
 		log.debug("init");
