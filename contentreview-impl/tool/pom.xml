@@ -45,6 +45,11 @@
             <groupId>org.sakaiproject.contentreview</groupId>
             <artifactId>contentreview-turnitin-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.sakaiproject.contentreview</groupId>
+            <artifactId>sakai-contentreview-common-tii</artifactId>
+            <version>11-SNAPSHOT</version>
+        </dependency>
 		<dependency>
             <groupId>org.sakaiproject.kernel</groupId>
             <artifactId>sakai-component-manager</artifactId>

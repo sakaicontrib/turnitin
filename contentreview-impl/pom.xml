@@ -21,6 +21,7 @@
 		<module>scheduler-jobs</module>
 		<module>tool</module>
 		<module>turnitin-api</module>
+		<module>common</module>
 	</modules>
 	<issueManagement>
 		<system>jira</system>
