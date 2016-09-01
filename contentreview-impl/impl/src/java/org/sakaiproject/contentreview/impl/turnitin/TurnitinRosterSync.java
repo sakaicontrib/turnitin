@@ -336,7 +336,7 @@ public class TurnitinRosterSync {
 		try {
 			user = userDirectoryService.getUser(userid);
 		} catch (UserNotDefinedException e) {
-			log.warn("Attemping to lookup user for Turnitn Sync that does not exist: " + userid, e);
+			log.debug("Attemping to lookup user for Turnitn Sync that does not exist: " + userid, e);
 		}
 		return user;
 	}
