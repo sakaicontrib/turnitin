@@ -44,6 +44,7 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import static org.mockito.Mockito.*;
+import org.sakaiproject.contentreview.mocks.FakeTime;
 
  @ContextConfiguration(locations={
 		"/hibernate-test.xml",
@@ -134,12 +135,15 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		expect(M_ss.getSite("siteId")).andStubReturn(siteA);
 		replay(M_ss);
 		
+		Assignment assignA = createMock(Assignment.class);
+		expect(M_assi.getAssignment("taskId")).andStubReturn(assignA);
+		expect(assignA.getTimeCreated()).andStubReturn(new FakeTime());
 		ContentReviewSiteAdvisor siteAdvisor = createMock(ContentReviewSiteAdvisor.class);
-		expect(siteAdvisor.siteCanUseLTIReviewService(siteA)).andStubReturn(true);
+		expect(siteAdvisor.siteCanUseLTIReviewServiceForAssignment(siteA, new Date(0))).andStubReturn(true);
 		replay(siteAdvisor);
 		tiiService.setSiteAdvisor(siteAdvisor);
 		
-		Assignment assignA = createMock(Assignment.class);
+		
 		List l = new ArrayList();
 		l.add(assignA);
 		AssignmentContent contentA = createMock(AssignmentContent.class);
@@ -154,10 +158,13 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		expect(contentEdA.getPropertiesEdit()).andStubReturn(rpEdit);
 		replay(contentEdA);
 		expect(M_assi.getAssignments(contentA)).andStubReturn(l.iterator());
+		expect(assignA.getId()).andStubReturn("1234");
+		expect(assignA.getTitle()).andStubReturn("Asn1");
 		M_assi.commitEdit(contentEdA);
 		EasyMock.expectLastCall();
 		expect(M_assi.getSubmissions(assignA)).andStubReturn(null);
 		replay(M_assi);
+		replay(assignA);
 		
 		TurnitinAccountConnection tac = new TurnitinAccountConnection();
 		tac.setUseSourceParameter(false);
@@ -241,14 +248,16 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		replay(r);
 		replay(rp);
 		
+		M_assi = createMock(AssignmentService.class);
+		org.sakaiproject.assignment.api.Assignment assignA = createMock(org.sakaiproject.assignment.api.Assignment.class);
+		expect(assignA.getTimeCreated()).andStubReturn(new FakeTime());
+		expect(M_assi.getAssignment("taskId")).andStubReturn(assignA);
 		ContentReviewSiteAdvisor siteAdvisor = createMock(ContentReviewSiteAdvisor.class);
-		expect(siteAdvisor.siteCanUseLTIReviewService(siteA)).andStubReturn(true);
+		expect(siteAdvisor.siteCanUseLTIReviewServiceForAssignment(siteA, new Date(0))).andStubReturn(true);
 		replay(siteAdvisor);
 		tiiService.setSiteAdvisor(siteAdvisor);
 		
-		M_assi = createMock(AssignmentService.class);
 		tiiService.setAssignmentService(M_assi);
-		org.sakaiproject.assignment.api.Assignment assignA = createMock(org.sakaiproject.assignment.api.Assignment.class);
 		expect(M_assi.getAssignment("taskId")).andStubReturn(assignA);
 		expect(M_assi.getAssignment("task")).andStubReturn(assignA);//from dao test
 		AssignmentContent contentA = createMock(AssignmentContent.class);

@@ -45,6 +45,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
@@ -413,6 +414,18 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 		return siteAdvisor != null && siteAdvisor.siteCanUseReviewService(s) && siteAdvisor.siteCanUseLTIReviewService(s) && siteAdvisor.siteCanUseLTIDirectSubmission(s);
 	}
+	
+	@Override
+	public boolean isDirectAccess(Site s, Date assignmentCreationDate)
+	{
+		if (s == null || siteAdvisor == null)
+		{
+			return false;
+		}
+		
+		return siteAdvisor.siteCanUseReviewService(s) && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, assignmentCreationDate)
+				&& siteAdvisor.siteCanUseLTIDirectSubmission(s);
+	}
 
 
 	public String getIconUrlforScore(Long score) {
@@ -634,22 +647,29 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
             }catch(Exception e){
                 log.error("(getReviewScore)"+e);
             }
-			
-			Site s;
-			try {
-				s = siteService.getSite(item.getSiteId());
-				
-				//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
-				if(siteAdvisor.siteCanUseLTIReviewService(s)){
-					log.debug("getReviewScore using the LTI integration");			
-					return item.getReviewScore();
-				}
-				//////////////////////////////  OLD API INTEGRATION  ///////////////////////////////
-			} catch (IdUnusedException iue) {
-				log.warn("getReviewScore: Site " + item.getSiteId() + " not found!" + iue.getMessage());
-			}
-			
-			String[] assignData = null;
+
+            Site s = null;
+            try {
+                s = siteService.getSite(item.getSiteId());
+            } catch (IdUnusedException iue) {
+                log.warn("getReviewScore: Site " + item.getSiteId() + " not found!" + iue.getMessage());
+            }
+
+            //////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
+            try
+            {
+                org.sakaiproject.assignment.api.Assignment asn = assignmentService.getAssignment(assignmentRef);
+                if(s != null && asn != null && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, new Date(asn.getTimeCreated().getTime()))){
+                    log.debug("getReviewScore using the LTI integration");			
+                    return item.getReviewScore();
+                }
+            }
+            catch (IdUnusedException | PermissionException e)
+            {
+                log.warn("getReviewScore: Assignment " + assignmentRef + " not found!" + e.getMessage(), e);
+            }
+            //////////////////////////////  OLD API INTEGRATION  ///////////////////////////////
+            String[] assignData = null;
             try{
                    assignData = getAssignData(contentId);
             }catch(Exception e){
@@ -1182,7 +1202,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		
 		//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
-		if(siteAdvisor.siteCanUseLTIReviewService(s)){
+		
+		Optional<Date> asnCreationDateOpt = getAssignmentCreationDate(taskId);
+		if(asnCreationDateOpt.isPresent() && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, asnCreationDateOpt.get())){
 			log.debug("Creating new TII assignment using the LTI integration");
 			
 			if (extraAsnnOpts == null){
@@ -1934,7 +1956,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 		
 			//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
-			if(siteAdvisor.siteCanUseLTIReviewService(s) && currentItem.getSubmissionId()!=null){
+			Optional<Date> dateOpt = getAssignmentCreationDate(currentItem.getTaskId());
+			if(dateOpt.isPresent() && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, dateOpt.get()) && currentItem.getSubmissionId()!=null){
 				
 				Map<String,String> ltiProps = new HashMap<>();
 				ltiProps.put("context_id", currentItem.getSiteId());
@@ -2382,7 +2405,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 			//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
-			if(siteAdvisor.siteCanUseLTIReviewService(s)){			
+			Optional<Date> dateOpt = getAssignmentCreationDate(currentItem.getTaskId());
+			if(dateOpt.isPresent() && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, dateOpt.get())){			
 				log.debug("getReviewScore using the LTI integration");			
 				
 				Map<String,String> ltiProps = new HashMap<> ();
@@ -3465,6 +3489,20 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	{
 		return status != null && (status.equals( ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE ) || status.equals( ContentReviewItem.REPORT_ERROR_NO_RETRY_CODE ) 
 			|| status.equals( ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED ));
+	}
+	
+	private Optional<Date> getAssignmentCreationDate(String assignmentRef)
+	{
+		try
+		{
+			org.sakaiproject.assignment.api.Assignment asn = assignmentService.getAssignment(assignmentRef);
+			Date date = new Date(asn.getTimeCreated().getTime());
+			return Optional.of(date);
+		}
+		catch(IdUnusedException | PermissionException e)
+		{
+			return Optional.empty();
+		}
 	}
 
 	/**

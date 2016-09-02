@@ -100,7 +100,10 @@ public class MembershipChangeObserver implements Observer {
 				} else {
 					log.warn("Error observing Turnitin Membership update because we failed to find site: " + event.getResource());
 				}
-				if (site != null && contentReviewService.isSiteAcceptable(site) && !contentReviewSiteAdvisor.siteCanUseLTIReviewService(site)) {
+				// removing this canUseLTIReviewService check for now because due to the cutover date feature a site may have both types of integrations
+				// active and could still need roster sync
+				// this should be revisited once the TII legacy api ceases to function
+				if (site != null && contentReviewService.isSiteAcceptable(site) /*&& !contentReviewSiteAdvisor.siteCanUseLTIReviewService(site)*/) {
 					Restriction notFinished = new Restriction("status", ContentReviewRosterSyncItem.FINISHED_STATUS, Restriction.NOT_EQUALS);
 					Restriction siteIdEquals = new Restriction("siteId", event.getContext(), Restriction.EQUALS);
 					Search search = new Search(new Restriction[] {notFinished,siteIdEquals});
