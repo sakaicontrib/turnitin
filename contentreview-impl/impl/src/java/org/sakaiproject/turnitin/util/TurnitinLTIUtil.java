@@ -63,8 +63,10 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 	private String aid = null;
 	private String secret = null;
 	private String globalId = null;
+	private String globalReportsId = null;
 	private String endpoint = null;
 	private String turnitinSite = null;
+	private String turnitinReportsSite = null;
 	
 	private static final String SUCCESS_TEXT = "fullsuccess";
 	
@@ -87,6 +89,11 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		if(StringUtils.isEmpty(turnitinSite)){
 			log.error("Turnitin global site property does not exist or is wrongly configured.");
 		}
+		turnitinReportsSite = serverConfigurationService.getString("turnitin.reports.lti.site", "!turnitin_reports");
+		if (StringUtils.isEmpty(turnitinReportsSite)){
+			log.error("TurnitinReports global site property does not exist or is wrongly configured.");
+		}
+
 		endpoint = serverConfigurationService.getString("turnitin.ltiURL", "https://sandbox.turnitin.com/api/lti/1p0/");
 		if(StringUtils.isEmpty(endpoint)){
 			log.error("Turnitin LTI endpoint property does not exist or is wrongly configured.");
@@ -303,6 +310,23 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		log.debug("Global tool id: " + globalId);
 		
 		return globalId;
+	}
+
+	public String getGlobalTurnitinReportsLTIToolId()
+	{
+		log.debug("Setting global TII Reports LTI tool Id");
+		List<Map<String, Object>> tools = ltiService.getToolsDao("lti_tools.site_id = '" + turnitinReportsSite + "'", null, 0, 0, turnitinReportsSite);
+		if (tools == null || tools.size() != 1)
+		{
+			log.warn(tools == null ? "No tools found" : "Found: " + tools.size());
+			log.error("getGlobalTurnitinReportsLTIToolId: wrong global TII LTI tool configured");
+			return null;
+		}
+		Map<String, Object> tool = tools.get(0);
+		globalReportsId = String.valueOf(tool.get(ltiService.LTI_ID));
+		log.debug("Global reports tool id: " + globalReportsId);
+
+		return globalReportsId;
 	}
 
 	public String getGlobalSecret() {
