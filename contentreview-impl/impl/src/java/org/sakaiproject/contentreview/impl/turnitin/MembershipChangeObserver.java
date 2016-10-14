@@ -102,20 +102,20 @@ public class MembershipChangeObserver implements Observer {
 				}
 				if (site != null && contentReviewService.isSiteAcceptable(site) && !contentReviewSiteAdvisor.siteCanUseLTIReviewService(site)) {
 					Restriction notFinished = new Restriction("status", ContentReviewRosterSyncItem.FINISHED_STATUS, Restriction.NOT_EQUALS);
-					Restriction siteIdEquals = new Restriction("siteId", event.getContext(), Restriction.EQUALS);
+					Restriction siteIdEquals = new Restriction("siteId", site.getId(), Restriction.EQUALS);
 					Search search = new Search(new Restriction[] {notFinished,siteIdEquals});
 					ContentReviewRosterSyncItem syncitem = 
 						dao.findOneBySearch(ContentReviewRosterSyncItem.class, search);
 					if (syncitem == null) {
-						log.info("Adding site to Turnitin Roster Sync Queue: " + event.getContext());
+						log.info("Adding site to Turnitin Roster Sync Queue: " + site.getId());
 						syncitem = new ContentReviewRosterSyncItem();
-						syncitem.setSiteId(event.getContext());
+						syncitem.setSiteId(site.getId());
 						syncitem.setDateQueued(new Date());
 						syncitem.setStatus(ContentReviewRosterSyncItem.NOT_STARTED_STATUS);
 						syncitem.setMessages("");
 					}
 					else {
-						log.info("Updating existing site in Turnitin Roster Sync Queue: " + event.getContext());
+						log.info("Updating existing site in Turnitin Roster Sync Queue: " + site.getId());
 						StringBuilder sb = syncitem.getMessages() == null ? new StringBuilder() 
 									: new StringBuilder(syncitem.getMessages());
 						sb.append("\n"+(new Date()).toLocaleString()+"Additional Sakai Membership change triggered.");
