@@ -414,6 +414,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return siteAdvisor != null && siteAdvisor.siteCanUseReviewService(s) && siteAdvisor.siteCanUseLTIReviewService(s) && siteAdvisor.siteCanUseLTIDirectSubmission(s);
 	}
 
+	public boolean allowMultipleAttachments()
+	{
+		return serverConfigurationService.getBoolean("turnitin.allow.multiple.attachments", false);
+	}
+
 
 	public String getIconUrlforScore(Long score) {
 
