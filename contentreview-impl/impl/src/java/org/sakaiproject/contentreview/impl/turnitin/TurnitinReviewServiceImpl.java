@@ -56,6 +56,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.EmailValidator;
+import org.hibernate.criterion.Restrictions;
 import org.tsugi.basiclti.BasicLTIConstants;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
@@ -3375,6 +3376,106 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			securityService.popAdvisor(advisor);
 		}
 		return deleted;
+	}
+	
+	/**
+	 * Migrates the original LTI XML settings from the assignments table into the new activity config table.
+	 * Also moves the external value from the assignment submission/content resource binary entity back into the contentreviewitem table.
+	 * You need to run this ONLY if you have previously deployed the LTI integration prior to the introduction of TII-219 and TII-221.
+	 */
+	@Override
+	public void migrateLtiXml()
+	{
+		// 1. find all the assignments that have the "turnitin_id" and/or "lti_id" values in their content XML
+		// For each assignment, insert a row for the turnitin/lti id values
+		// Use LTI service to find all the assignments that have Turnitin LTI instances
+		Set<String> tiiSites = tiiUtil.getSitesUsingLTI();
+		for (String siteId : tiiSites)
+		{
+			Iterator iter = assignmentService.getAssignmentsForContext(siteId);
+			while(iter.hasNext())
+			{
+				org.sakaiproject.assignment.api.Assignment asn = (org.sakaiproject.assignment.api.Assignment) iter.next();
+				AssignmentContent asnContent = asn.getContent();
+				if (asnContent == null)
+				{
+					log.error("No content for assignment: " + asn.getId());
+					continue;
+				}
+				ResourceProperties asnProps = asnContent.getProperties();
+				if (asnProps == null)
+				{
+					log.error("No properties for assignment: " + asn.getId());
+					continue;
+				}
+				String turnitinId = (String) asnProps.get("turnitin_id");
+				String ltiId = (String) asnProps.get("lti_id");
+				if (StringUtils.isNotBlank(turnitinId))
+				{
+					// update cfg table
+					log.info(String.format("Add tii id %s for asn %s", turnitinId, asn.getId()));
+					boolean success = saveOrUpdateActivityConfigEntry(TurnitinConstants.TURNITIN_ASN_ID, turnitinId, asn.getId(),
+					TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, TurnitinConstants.PROVIDER_ID, false);
+					if (!success)
+					{
+						log.error(String.format("Unable to migrate turnitinId %s for assignment %s to the activity_cfg table. An entry for this assignment may already exist.", turnitinId, asn.getId()));
+					}
+				}
+				if (StringUtils.isNotBlank(ltiId))
+				{
+					//update cfg table
+					log.info(String.format("Add lti id %s for asn %s", ltiId, asn.getId()));
+					boolean success = saveOrUpdateActivityConfigEntry(TurnitinConstants.STEALTHED_LTI_ID, ltiId, asn.getId(),
+					TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, TurnitinConstants.PROVIDER_ID, false);
+					if (!success)
+					{
+						log.error(String.format("Unable to migrate ltiId %s for assignment %s to the activity_cfg table. An entry for this assignment may already exist.", ltiId, asn.getId()));
+					}
+				}
+				
+				// 2. for each contentreviewitem related to this assignment with a null external id, retrieve the 
+				// assignment submission and perhaps the binary entity for the resource item.
+				// If the submission/entity has a turnitin_id value, insert it into the contentreviewitem table
+				Search search = new Search();
+				search.addRestriction(new Restriction("siteId", siteId));
+				search.addRestriction(new Restriction("taskId", asn.getReference()));
+				List<ContentReviewItem> ltiContentItems = dao.findBySearch(ContentReviewItem.class, search);
+				for (ContentReviewItem item : ltiContentItems)
+				{
+					if (StringUtils.isNotBlank(item.getExternalId()))
+					{
+						continue;
+					}
+					
+					try
+					{
+						String tiiPaperId;
+						AssignmentSubmission as = assignmentService.getSubmission(item.getSubmissionId());						
+						ResourceProperties aProperties = as.getProperties();
+						tiiPaperId = aProperties.getProperty("turnitin_id");
+						if (StringUtils.isBlank(tiiPaperId)) // not found in submission, check content item
+						{
+							ContentResource content = contentHostingService.getResource(item.getContentId());
+							ResourceProperties cProperties = content.getProperties();
+							tiiPaperId = cProperties.getProperty("turnitin_id");
+						}
+						
+						if (StringUtils.isNotBlank(tiiPaperId))
+						{
+							log.info("Will write " + tiiPaperId + " as external id for item " + item.getId());
+							item.setExternalId(tiiPaperId);
+							dao.update(item);
+						}
+					}
+					catch (Exception e)
+					{
+						log.error("Exception attempting to read/write paperId/externalId", e);
+					}
+				}
+				
+			}
+			
+		}
 	}
 		
 	private List<ContentResource> getAllAcceptableAttachments(AssignmentSubmission sub, boolean allowAnyFile){
