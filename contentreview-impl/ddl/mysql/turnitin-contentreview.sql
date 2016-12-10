@@ -17,6 +17,18 @@
         primary key (id)
     );
 
+    create table CONTENTREVIEW_ACTIVITY_CFG
+    (
+        ID bigint not null auto_increment,
+        TOOL_ID varchar(255) not null,
+        ACTIVITY_ID varchar(255) not null,
+        PROVIDER_ID bigint not null,
+        NAME varchar(255) not null,
+        VALUE varchar(2000) not null,
+        primary key (ID),
+        unique key CFG_ATTRIBUTE (TOOL_ID, ACTIVITY_ID, PROVIDER_ID, NAME)
+    );
+
     create table CONTENTREVIEW_LOCK (
         ID bigint not null auto_increment,
         LAST_MODIFIED datetime not null,
