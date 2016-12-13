@@ -63,11 +63,11 @@
 
 	<!--  Uncomment this to use a site property to define which sites use c-r -->
 	
-	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.advisors.SitePropertyAdvisor">
+	<!--<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.advisors.SitePropertyAdvisor">
 		<property name="siteProperty"><value>useContentReviewService</value></property>
 		<property name="siteLTIProperty"><value>useContentReviewLTIService</value></property>
 		<property name="siteDirectSubmissionProperty"><value>useContentReviewDirectSubmission</value></property>
-	</bean>
+	</bean>-->
 	
 	<!-- uncomment this bean to make cr available to only sites of the type course -->
 	<!--
@@ -76,13 +76,14 @@
 	-->
 	
 	<!--  Uncomment this to use a global property to define if every site uses c-r -->
-	<!--<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.advisors.GlobalPropertyAdvisor">
+	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" class="org.sakaiproject.contentreview.impl.advisors.GlobalPropertyAdvisor">
 		<property name="tiiProperty"><value>assignment.useContentReview</value></property>
 		<property name="tiiLTIProperty"><value>assignment.useContentReviewLTI</value></property>
 		<property name="tiiDirectSubmissionProperty"><value>assignment.useContentReviewDirect</value></property>
+		<property name="tiiLTICutoverDateProperty"><value>assignment.useContentReviewLTICutoverDate</value></property>
 		<property name="serverConfigurationService"
 			ref="org.sakaiproject.component.api.ServerConfigurationService" />
-	</bean>-->
+	</bean>
 
 	<!-- uncomment this bean to make cr available using chained advisors -->
 	<!--

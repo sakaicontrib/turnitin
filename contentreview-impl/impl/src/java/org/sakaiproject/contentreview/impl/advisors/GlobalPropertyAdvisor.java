@@ -1,12 +1,20 @@
 package org.sakaiproject.contentreview.impl.advisors;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
-import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.site.api.Site;
 
 public class GlobalPropertyAdvisor implements ContentReviewSiteAdvisor {
 
+	private static final Log LOG = LogFactory.getLog(GlobalPropertyAdvisor.class);
+	
 	private String tiiProperty;
 	public void setTiiProperty(String p){
 		tiiProperty = p;
@@ -22,6 +30,12 @@ public class GlobalPropertyAdvisor implements ContentReviewSiteAdvisor {
 		tiiDirectSubmissionProperty = p;
 	}
 	
+	private String tiiLTICutoverDateProperty;
+	public void setTiiLTICutoverDateProperty(String p)
+	{
+		tiiLTICutoverDateProperty = p;
+	}
+	
 	private ServerConfigurationService serverConfigurationService;
 	public void setServerConfigurationService(ServerConfigurationService s){
 		serverConfigurationService = s;
@@ -33,6 +47,29 @@ public class GlobalPropertyAdvisor implements ContentReviewSiteAdvisor {
 	
 	public boolean siteCanUseLTIReviewService(Site site) {
 		return serverConfigurationService.getBoolean(tiiLTIProperty, false);
+	}
+	
+	@Override
+	public boolean siteCanUseLTIReviewServiceForAssignment(Site site, Date assignmentCreationDate)
+	{
+		boolean canUseLTI = siteCanUseLTIReviewService(site);
+		String cutoverDateStr = serverConfigurationService.getString(tiiLTICutoverDateProperty);
+		if (StringUtils.isBlank(cutoverDateStr))
+		{
+			return canUseLTI;
+		}
+		
+		DateFormat df = new SimpleDateFormat("yyyy-MMM-dd");
+		try
+		{
+			Date cutover = df.parse(cutoverDateStr);
+			return canUseLTI && assignmentCreationDate.after(cutover);
+		}
+		catch (ParseException e)
+		{
+			LOG.error("Unable to parse cutover date from property: " + cutoverDateStr, e);
+			return canUseLTI;
+		}
 	}
 	
 	public boolean siteCanUseLTIDirectSubmission(Site site){

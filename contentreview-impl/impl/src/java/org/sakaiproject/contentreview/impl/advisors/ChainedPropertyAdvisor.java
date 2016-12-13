@@ -1,5 +1,6 @@
 package org.sakaiproject.contentreview.impl.advisors;
 
+import java.util.Date;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
 import org.sakaiproject.site.api.Site;
 
@@ -31,6 +32,16 @@ public class ChainedPropertyAdvisor implements ContentReviewSiteAdvisor {
     public boolean siteCanUseLTIReviewService(Site site) {
         for(ContentReviewSiteAdvisor advisor: advisors) {
             if (advisor.siteCanUseLTIReviewService(site)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean siteCanUseLTIReviewServiceForAssignment(Site site, Date asnCreationDate) {
+        for(ContentReviewSiteAdvisor advisor: advisors) {
+            if (advisor.siteCanUseLTIReviewServiceForAssignment(site, asnCreationDate)) {
                 return true;
             }
         }
