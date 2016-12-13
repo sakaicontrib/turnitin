@@ -16,6 +16,7 @@
 				<value>org.sakaiproject.contentreview.model.ContentReviewItem</value>
 				<value>org.sakaiproject.contentreview.model.ContentReviewLock</value>
 				<value>org.sakaiproject.contentreview.model.ContentReviewRosterSyncItem</value>
+				<value>org.sakaiproject.contentreview.model.ContentReviewActivityConfigEntry</value>
 			</list>
 		</property>
 	</bean>

@@ -8,6 +8,7 @@
             this should be the classpath location (typically after the src directory) -->
         <mapping resource="org/sakaiproject/contentreview/hbm/ContentReviewLock.hbm.xml" />
         <mapping resource="org/sakaiproject/contentreview/hbm/ContentReviewItem.hbm.xml" />
-        <mapping resource="org/sakaiproject/contentreview/hbm/ContentReviewRosterSyncItem.hbm.xml" /> 
+        <mapping resource="org/sakaiproject/contentreview/hbm/ContentReviewRosterSyncItem.hbm.xml" />
+        <mapping resource="org/sakaiproject/contentreview/hbm/ContentReviewActivityConfigEntry.hbm.xml" />
     </session-factory>
 </hibernate-configuration>

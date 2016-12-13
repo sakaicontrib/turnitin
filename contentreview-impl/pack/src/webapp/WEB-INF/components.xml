@@ -175,6 +175,33 @@
 				bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
 		</property>
 	</bean>
+	
+	<bean id="TiiLtiXmlMigration"
+		class="org.sakaiproject.component.app.scheduler.jobs.LtiXmlMigrationJob">
+		<property name="contentReviewService">
+			<ref
+				bean="org.sakaiproject.contentreview.service.ContentReviewServiceTii" />
+		</property>
+		<property name="sessionManager">
+			<ref bean="org.sakaiproject.tool.api.SessionManager" />
+		</property>
+	</bean>
+
+	<bean
+		id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerLtiXmlMigrationJob"
+		class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
+		init-method="init">
+		<property name="beanId">
+			<value>TiiLtiXmlMigration</value>
+		</property>
+		<property name="jobName">
+			<value>Migrate TII LTI XML Settings</value>
+		</property>
+		<property name="schedulerManager">
+			<ref
+				bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
+		</property>
+	</bean>
 
 	<bean id="TiiContentReviewRosterSync"
         class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewTurnitinRosterSync">

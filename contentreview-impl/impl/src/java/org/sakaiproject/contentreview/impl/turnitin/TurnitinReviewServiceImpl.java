@@ -51,19 +51,17 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.EmailValidator;
+import org.hibernate.criterion.Restrictions;
 import org.tsugi.basiclti.BasicLTIConstants;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.assignment.api.AssignmentContent;
-import org.sakaiproject.assignment.api.AssignmentContentEdit;
 import org.sakaiproject.assignment.api.AssignmentService;
 import org.sakaiproject.assignment.api.AssignmentSubmission;
 import org.sakaiproject.authz.api.SecurityAdvisor;
@@ -86,10 +84,8 @@ import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.EntityProducer;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
-import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.entitybroker.EntityReference;
 import org.sakaiproject.exception.IdUnusedException;
-import org.sakaiproject.exception.InUseException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.exception.TypeException;
 import org.sakaiproject.genericdao.api.search.Restriction;
@@ -117,6 +113,7 @@ import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.sakaiproject.contentreview.turnitin.TurnitinConstants;
 
 public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
@@ -425,6 +422,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		
 		return siteAdvisor.siteCanUseReviewService(s) && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, assignmentCreationDate)
 				&& siteAdvisor.siteCanUseLTIDirectSubmission(s);
+	}
+
+	public boolean allowMultipleAttachments()
+	{
+		return serverConfigurationService.getBoolean("turnitin.allow.multiple.attachments", false);
 	}
 
 
@@ -1184,12 +1186,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 *
 	 *
 	 * @param siteId
-	 * @param taskId
+	 * @param taskId an assignment reference
 	 * @param extraAsnnOpts
 	 * @throws SubmissionException
 	 * @throws TransientSubmissionException
 	 */
 	@SuppressWarnings("unchecked")
+	@Override
 	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts) throws SubmissionException, TransientSubmissionException {
 
 		Site s = null;
@@ -1207,26 +1210,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		if(asnCreationDateOpt.isPresent() && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, asnCreationDateOpt.get())){
 			log.debug("Creating new TII assignment using the LTI integration");
 			
+			String asnId = asnRefToId(taskId);  // taskId is an assignment reference, but we sometimes only want the assignment id
+			String ltiId = getActivityConfigValue(TurnitinConstants.STEALTHED_LTI_ID, asnId, TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, TurnitinConstants.PROVIDER_ID);
+			
 			if (extraAsnnOpts == null){
 				throw new TransientSubmissionException("Create Assignment not successful. Empty extraAsnnOpts map");
 			}
-			taskId = extraAsnnOpts.get("assignmentContentId").toString();
-		
-			//check if it was already created
-			String tiiId;
-			String ltiId = null;
-			try {
-				AssignmentContent ac = assignmentService.getAssignmentContent(taskId);
-				ResourceProperties aProperties = ac.getProperties();
-				tiiId = aProperties.getProperty("turnitin_id");
-				log.debug("This assignment has associated the following TII id: " + tiiId);				
-				ltiId = aProperties.getProperty("lti_id");
-				log.debug("This assignment has associated the following LTI id: " + ltiId);
-			} catch (Exception e) {
-				log.debug("New TII assignment: " + taskId);
-			}
-		
-			Map<String,String> ltiProps = new HashMap<> ();
+			
+			Map<String,String> ltiProps = new HashMap<>();
 			ltiProps.put("context_id", siteId);
 			ltiProps.put("context_title", s.getTitle());
 			String contextLabel = s.getTitle();
@@ -1361,7 +1352,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			Object ltiContent = null;
 			try{
 				securityService.pushAdvisor(advisor);
-				if(ltiId == null){
+				if(ltiId.isEmpty()){
 					ltiContent = tiiUtil.insertTIIToolContent(globalId, sakaiProps);
 				} else {//don't create lti tool if exists
 					ltiContent = tiiUtil.updateTIIToolContent(ltiId, sakaiProps);
@@ -1374,7 +1365,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				
 			if(ltiContent == null){
 				throw new TransientSubmissionException("Create Assignment not successful. Could not create LTI tool for the task: " + custom);
-			} else if(ltiId != null){
+			} else if(!ltiId.isEmpty()){
 				if(ltiContent instanceof String){
 					throw new TransientSubmissionException("Update Assignment not successful. Error updating LTI stealthed tool: " + ltiId);
 				}//boolean if everything went fine
@@ -1382,14 +1373,11 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				throw new TransientSubmissionException("Create Assignment not successful. Error creating LTI stealthed tool: " + ltiContent);
 			} else {//long if everything went fine
 				log.debug("LTI content tool id: " + ltiContent);
-				try{
-					AssignmentContentEdit ace = assignmentService.editAssignmentContent(taskId);
-					ResourcePropertiesEdit aPropertiesEdit = ace.getPropertiesEdit();
-					aPropertiesEdit.addProperty("lti_id", String.valueOf(ltiContent));
-					assignmentService.commitEdit(ace);
-				}catch(Exception e){
-					log.error("Could not store LTI tool ID " + ltiContent +" for assignment " + taskId);
-					log.error(e.getClass().getName() + " : " + e.getMessage());
+				boolean added = saveOrUpdateActivityConfigEntry(TurnitinConstants.STEALTHED_LTI_ID, String.valueOf(ltiContent), asnId, TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID,
+						TurnitinConstants.PROVIDER_ID, true);
+				if (!added)
+				{
+					log.error("Could not store LTI tool ID " + ltiContent + " for assignment " + taskId);
 					throw new TransientSubmissionException("Create Assignment not successful. Error storing LTI stealthed tool: " + ltiContent);
 				}
 			}
@@ -1398,12 +1386,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			try{
 				log.debug("Adding previous submissions");
 				//this will be done always - no problem, extra checks
-				Iterator it = assignmentService.getAssignments(assignmentService.getAssignmentContent(taskId));
 				org.sakaiproject.assignment.api.Assignment a = null;
-				while(it.hasNext()){
-					a = (org.sakaiproject.assignment.api.Assignment) it.next();
-					break;
-				}
+				a = assignmentService.getAssignment(taskId);
 				if(a == null) return;
 				log.debug("Assignment " + a.getId() + " - " + a.getTitle());
 				List<AssignmentSubmission> submissions = assignmentService.getSubmissions(a);
@@ -1987,25 +1971,29 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				ltiProps.put("lis_result_sourcedid", currentItem.getContentId());
 				ltiProps.put("custom_xmlresponse","1");//mandatatory
 				
-				String tiiId;
-				try {
-					org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(currentItem.getTaskId());
-					AssignmentContent ac = a.getContent();
-					ResourceProperties aProperties = ac.getProperties();
-					tiiId = aProperties.getProperty("turnitin_id");
-				} catch (IdUnusedException e) {
-					log.error("IdUnusedException: no assignment with id: " + currentItem.getTaskId());
-					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "IdUnusedException: no assignment found. " + e.getMessage(), null);
-					errors++;
-					continue;
-				} catch (PermissionException e) {
-					log.error("PermissionException: no permission for assignment with id: " + currentItem.getTaskId());
-					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "PermissionException: no permission for assignment. " + e.getMessage(), null);
-					errors++;
-					continue;
+				org.sakaiproject.assignment.api.Assignment a;
+				try
+				{
+					a = assignmentService.getAssignment(currentItem.getTaskId());
 				}
-				
-				if(tiiId == null){
+				catch (IdUnusedException e)
+				{
+					log.error("IdUnusedException: no assignment with id: " + currentItem.getTaskId(), e);
+					a = null;
+				}
+				catch (PermissionException e)
+				{
+					log.error("PermissionException: no permission for assignment with id: " + currentItem.getTaskId(), e);
+					a = null;
+				}
+				String tiiId = "";
+				if (a != null)
+				{
+					tiiId = getActivityConfigValue(TurnitinConstants.TURNITIN_ASN_ID, a.getId(), TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID,
+						TurnitinConstants.PROVIDER_ID);
+				}
+
+				if(tiiId.isEmpty()){
 					log.error("Could not find tiiId for assignment: " + currentItem.getTaskId());
 					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Could not find tiiId", null);
 					errors++;
@@ -2019,10 +2007,17 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					//check we have TII id
 					String tiiPaperId = null;
 					try{
-						org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(currentItem.getTaskId());
-						AssignmentContent ac = a.getContent();
+						AssignmentContent ac = null;
+						if (a == null)
+						{
+							log.error("Could not find the assignment: " + currentItem.getTaskId());
+						}
+						else
+						{
+							ac = a.getContent();
+						}
 						if(ac == null){
-							log.debug("Could not find the assignment content " + currentItem.getTaskId());
+							log.debug("Could not find the assignment content for assignment: " + currentItem.getTaskId());
 						} else {
 							log.debug("Got assignment content " + currentItem.getTaskId());
 							//1 - inline, 2 - attach, 3 - both, 4 - non elec, 5 - single file
@@ -3381,14 +3376,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	public String getLTIAccess(String taskId, String contextId){
 		String ltiUrl = null;
 		try{
-			org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(taskId);
-			AssignmentContent ac = a.getContent();
-			ResourceProperties aProperties = ac.getProperties();
-			String ltiId = aProperties.getProperty("lti_id");
+			String ltiId = getActivityConfigValue(TurnitinConstants.STEALTHED_LTI_ID, asnRefToId(taskId), TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID,
+					TurnitinConstants.PROVIDER_ID);
 			ltiUrl = "/access/basiclti/site/" + contextId + "/content:" + ltiId;
 			log.debug("getLTIAccess: " + ltiUrl);
-		} catch(IdUnusedException | PermissionException e){
-			log.warn("Exception while trying to get LTI access for task " + taskId + " and site " + contextId + ": " + e.getMessage());
 		} catch(Exception e) {
 			log.error( "Unexpected exception getting LTI access", e );
 		}
@@ -3399,14 +3390,10 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		SecurityAdvisor advisor = new SimpleSecurityAdvisor(sessionManager.getCurrentSessionUserId(), "site.upd", "/site/!admin");
 		boolean deleted = false;
 		try{
-			org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(taskId);
-			AssignmentContent ac = a.getContent();
-			ResourceProperties aProperties = ac.getProperties();
-			String ltiId = aProperties.getProperty("lti_id");
+			String ltiId = getActivityConfigValue(TurnitinConstants.STEALTHED_LTI_ID, asnRefToId(taskId), TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID,
+					TurnitinConstants.PROVIDER_ID);
 			securityService.pushAdvisor(advisor);
 			deleted = tiiUtil.deleteTIIToolContent(ltiId);
-		} catch(IdUnusedException | PermissionException e){
-			log.warn("Error trying to delete TII tool content: " + e.getMessage());
 		} catch(Exception e) {
 			log.error( "Unexpected exception deleting TII tool", e );
 		} finally {
@@ -3415,6 +3402,106 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		return deleted;
 	}
 	
+	/**
+	 * Migrates the original LTI XML settings from the assignments table into the new activity config table.
+	 * Also moves the external value from the assignment submission/content resource binary entity back into the contentreviewitem table.
+	 * You need to run this ONLY if you have previously deployed the LTI integration prior to the introduction of TII-219 and TII-221.
+	 */
+	@Override
+	public void migrateLtiXml()
+	{
+		// 1. find all the assignments that have the "turnitin_id" and/or "lti_id" values in their content XML
+		// For each assignment, insert a row for the turnitin/lti id values
+		// Use LTI service to find all the assignments that have Turnitin LTI instances
+		Set<String> tiiSites = tiiUtil.getSitesUsingLTI();
+		for (String siteId : tiiSites)
+		{
+			Iterator iter = assignmentService.getAssignmentsForContext(siteId);
+			while(iter.hasNext())
+			{
+				org.sakaiproject.assignment.api.Assignment asn = (org.sakaiproject.assignment.api.Assignment) iter.next();
+				AssignmentContent asnContent = asn.getContent();
+				if (asnContent == null)
+				{
+					log.error("No content for assignment: " + asn.getId());
+					continue;
+				}
+				ResourceProperties asnProps = asnContent.getProperties();
+				if (asnProps == null)
+				{
+					log.error("No properties for assignment: " + asn.getId());
+					continue;
+				}
+				String turnitinId = (String) asnProps.get("turnitin_id");
+				String ltiId = (String) asnProps.get("lti_id");
+				if (StringUtils.isNotBlank(turnitinId))
+				{
+					// update cfg table
+					log.info(String.format("Add tii id %s for asn %s", turnitinId, asn.getId()));
+					boolean success = saveOrUpdateActivityConfigEntry(TurnitinConstants.TURNITIN_ASN_ID, turnitinId, asn.getId(),
+					TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, TurnitinConstants.PROVIDER_ID, false);
+					if (!success)
+					{
+						log.error(String.format("Unable to migrate turnitinId %s for assignment %s to the activity_cfg table. An entry for this assignment may already exist.", turnitinId, asn.getId()));
+					}
+				}
+				if (StringUtils.isNotBlank(ltiId))
+				{
+					//update cfg table
+					log.info(String.format("Add lti id %s for asn %s", ltiId, asn.getId()));
+					boolean success = saveOrUpdateActivityConfigEntry(TurnitinConstants.STEALTHED_LTI_ID, ltiId, asn.getId(),
+					TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, TurnitinConstants.PROVIDER_ID, false);
+					if (!success)
+					{
+						log.error(String.format("Unable to migrate ltiId %s for assignment %s to the activity_cfg table. An entry for this assignment may already exist.", ltiId, asn.getId()));
+					}
+				}
+				
+				// 2. for each contentreviewitem related to this assignment with a null external id, retrieve the 
+				// assignment submission and perhaps the binary entity for the resource item.
+				// If the submission/entity has a turnitin_id value, insert it into the contentreviewitem table
+				Search search = new Search();
+				search.addRestriction(new Restriction("siteId", siteId));
+				search.addRestriction(new Restriction("taskId", asn.getReference()));
+				List<ContentReviewItem> ltiContentItems = dao.findBySearch(ContentReviewItem.class, search);
+				for (ContentReviewItem item : ltiContentItems)
+				{
+					if (StringUtils.isNotBlank(item.getExternalId()))
+					{
+						continue;
+					}
+					
+					try
+					{
+						String tiiPaperId;
+						AssignmentSubmission as = assignmentService.getSubmission(item.getSubmissionId());						
+						ResourceProperties aProperties = as.getProperties();
+						tiiPaperId = aProperties.getProperty("turnitin_id");
+						if (StringUtils.isBlank(tiiPaperId)) // not found in submission, check content item
+						{
+							ContentResource content = contentHostingService.getResource(item.getContentId());
+							ResourceProperties cProperties = content.getProperties();
+							tiiPaperId = cProperties.getProperty("turnitin_id");
+						}
+						
+						if (StringUtils.isNotBlank(tiiPaperId))
+						{
+							log.info("Will write " + tiiPaperId + " as external id for item " + item.getId());
+							item.setExternalId(tiiPaperId);
+							dao.update(item);
+						}
+					}
+					catch (Exception e)
+					{
+						log.error("Exception attempting to read/write paperId/externalId", e);
+					}
+				}
+				
+			}
+			
+		}
+	}
+		
 	private List<ContentResource> getAllAcceptableAttachments(AssignmentSubmission sub, boolean allowAnyFile){
 		List attachments = sub.getSubmittedAttachments();
 		List<ContentResource> resources = new ArrayList<>();
@@ -3530,6 +3617,17 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			}
 			return rv;
 		}
+	}
+	
+	// copied from protected method assignmentId() in BaseAssignmentService
+	// might be better to just make that method public
+	private String asnRefToId(String ref)
+	{
+		if (ref == null) return ref;
+		int i = ref.lastIndexOf(Entity.SEPARATOR);
+		if (i == -1) return ref;
+		String id = ref.substring(i + 1);
+		return id;
 	}
 
 }

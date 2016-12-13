@@ -45,6 +45,8 @@ import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import static org.mockito.Mockito.*;
 import org.sakaiproject.contentreview.mocks.FakeTime;
+import org.sakaiproject.contentreview.model.ContentReviewActivityConfigEntry;
+import org.sakaiproject.contentreview.turnitin.TurnitinConstants;
 
  @ContextConfiguration(locations={
 		"/hibernate-test.xml",
@@ -98,6 +100,12 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		
 		M_util = new FakeTiiUtil();
 		TurnitinReviewServiceImpl tiiService = new TurnitinReviewServiceImpl();
+		
+		M_dao = createNiceMock(ContentReviewDao.class);
+		expect(M_dao.findOneBySearch(ContentReviewActivityConfigEntry.class, null)).andStubReturn(null);
+		EasyMock.expectLastCall();
+		replay(M_dao);
+		tiiService.setDao(M_dao);
 
 		M_assi = createMock(AssignmentService.class);
 		tiiService.setAssignmentService(M_assi);
@@ -143,7 +151,6 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		replay(siteAdvisor);
 		tiiService.setSiteAdvisor(siteAdvisor);
 		
-		
 		List l = new ArrayList();
 		l.add(assignA);
 		AssignmentContent contentA = createMock(AssignmentContent.class);
@@ -162,6 +169,9 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		expect(assignA.getTitle()).andStubReturn("Asn1");
 		M_assi.commitEdit(contentEdA);
 		EasyMock.expectLastCall();
+
+		Assignment assignA = createMock(Assignment.class);
+		expect(M_assi.getAssignment("taskId")).andStubReturn(assignA);
 		expect(M_assi.getSubmissions(assignA)).andStubReturn(null);
 		replay(M_assi);
 		replay(assignA);
@@ -262,13 +272,10 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		expect(M_assi.getAssignment("task")).andStubReturn(assignA);//from dao test
 		AssignmentContent contentA = createMock(AssignmentContent.class);
 		expect(assignA.getContent()).andStubReturn(contentA);
-		ResourceProperties rp2 = createMock(ResourceProperties.class);
-		expect(contentA.getProperties()).andStubReturn(rp2);
-		expect(rp2.getProperty("turnitin_id")).andStubReturn("123456");
+		expect(assignA.getId()).andStubReturn("taskId");
 		replay(M_assi);
 		replay(assignA);
 		replay(contentA);
-		replay(rp2);
 		
 		FakeTiiUtil M_util = new FakeTiiUtil();
 		tiiService.setTiiUtil(M_util);

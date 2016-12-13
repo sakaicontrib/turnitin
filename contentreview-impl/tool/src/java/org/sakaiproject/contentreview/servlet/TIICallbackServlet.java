@@ -1,7 +1,6 @@
 package org.sakaiproject.contentreview.servlet;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Objects;
 
 import javax.servlet.ServletConfig;
@@ -9,25 +8,21 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang.StringUtils;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.tsugi.json.IMSJSONRequest;
-import org.sakaiproject.assignment.api.AssignmentContent;
-import org.sakaiproject.assignment.api.AssignmentContentEdit;
-import org.sakaiproject.assignment.cover.AssignmentService;
-import org.sakaiproject.authz.api.SecurityAdvisor;
-import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
-import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.basiclti.util.SakaiBLTIUtil;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
-import org.sakaiproject.entity.api.ResourcePropertiesEdit;
+import org.sakaiproject.contentreview.service.ContentReviewService;
+import org.sakaiproject.contentreview.turnitin.TurnitinConstants;
+import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.lti.api.LTIService;
-import org.sakaiproject.tool.api.Session;
-import org.sakaiproject.tool.cover.SessionManager;
 import org.sakaiproject.turnitin.api.TurnitinLTIAPI;
 
 /** 
@@ -116,27 +111,27 @@ public class TIICallbackServlet extends HttpServlet {
 		JSONObject json = new JSONObject(jsonRequest.getPostBody());
 		//M_log.debug(json.toString());
 		
-		String assignmentId = json.getString("resource_link_id");
-		int tiiId = json.getInt("assignmentid");
-		//ext_resource_tool_placement_url parameter can also be processed if necessary
-		SecurityService securityService = (SecurityService) ComponentManager.get(SecurityService.class);
-		SecurityAdvisor yesMan = (String userId, String function, String reference)->{return SecurityAdvice.ALLOWED;};
-		try{
-			securityService.pushAdvisor(yesMan);
-			AssignmentContentEdit ace = AssignmentService.editAssignmentContent(assignmentId);
-			ResourcePropertiesEdit aPropertiesEdit = ace.getPropertiesEdit();
-			aPropertiesEdit.addProperty("turnitin_id", String.valueOf(tiiId));
-			AssignmentService.commitEdit(ace);
-		}catch(Exception e){
-			M_log.error("Could not find assignment with content id " + assignmentId + " or store the TII assignment id: " + e.getMessage());
+		try
+		{
+			String asnRef = StringUtils.trimToEmpty(json.getString("resource_link_id"));
+			int sepIndex = asnRef.lastIndexOf(Entity.SEPARATOR);
+			String asnId = sepIndex == -1 ? asnRef : asnRef.substring(sepIndex + 1);
+			String tiiAsnId = String.valueOf(json.getInt("assignmentid"));
+			ContentReviewService crs = (ContentReviewService) ComponentManager.get(ContentReviewService.class);
+			boolean success = crs.saveOrUpdateActivityConfigEntry(TurnitinConstants.TURNITIN_ASN_ID, tiiAsnId, asnId,
+					TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, TurnitinConstants.PROVIDER_ID, true);
+			if (!success)
+			{
+				M_log.error(String.format("Could not set turnitin assignment id %s for assignment with id %s", tiiAsnId, asnId));
+				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			}
+		}
+		catch (JSONException e)
+		{
+			M_log.error("Unable to parse required assignment data from Turnitin json response.", e);
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
-		finally
-		{
-			securityService.popAdvisor(yesMan);
-		}
 
-        return;
     }
 	
 	public void doErrorJSON(HttpServletRequest request,HttpServletResponse response, 
