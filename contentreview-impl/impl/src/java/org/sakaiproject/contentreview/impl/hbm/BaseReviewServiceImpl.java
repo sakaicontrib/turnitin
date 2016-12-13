@@ -22,14 +22,18 @@ package org.sakaiproject.contentreview.impl.hbm;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import org.apache.commons.lang.StringUtils;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.exception.ConstraintViolationException;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.exception.QueueException;
 import org.sakaiproject.contentreview.exception.ReportException;
 import org.sakaiproject.contentreview.exception.SubmissionException;
+import org.sakaiproject.contentreview.model.ContentReviewActivityConfigEntry;
 import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.contentreview.service.ContentReviewService;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
@@ -39,6 +43,7 @@ import org.sakaiproject.genericdao.api.search.Search;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.user.api.UserDirectoryService;
+import org.springframework.dao.DataIntegrityViolationException;
 
 public abstract class BaseReviewServiceImpl implements ContentReviewService {
 
@@ -446,5 +451,58 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 	public void processQueue() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public String getActivityConfigValue(String name, String activityId, String toolId, int providerId)
+	{
+		return getActivityConfigEntry(name, activityId, toolId, providerId)
+				.map(e -> StringUtils.trimToEmpty(e.getValue())).orElse("");
+
+	}
+	
+	private Optional<ContentReviewActivityConfigEntry> getActivityConfigEntry(String name, String activityId, String toolId, int providerId)
+	{
+		Search search = new Search();
+		search.addRestriction(new Restriction("name", name));
+		search.addRestriction(new Restriction("activityId", activityId));
+		search.addRestriction(new Restriction("toolId", toolId));
+		search.addRestriction(new Restriction("providerId", providerId));
+		return Optional.ofNullable(dao.findOneBySearch(ContentReviewActivityConfigEntry.class, search));
+	}
+
+	@Override
+	public boolean saveOrUpdateActivityConfigEntry(String name, String value, String activityId, String toolId, int providerId, boolean overrideIfSet)
+	{
+		if (StringUtils.isBlank(name) || StringUtils.isBlank(value) || StringUtils.isBlank(activityId) || StringUtils.isBlank(toolId))
+		{
+			return false;
+		}
+		
+		Optional<ContentReviewActivityConfigEntry> optEntry = getActivityConfigEntry(name, activityId, toolId, providerId);
+		if (!optEntry.isPresent())
+		{
+			try
+			{
+				dao.create(new ContentReviewActivityConfigEntry(name, value, activityId, toolId, providerId));
+				return true;
+			}
+			catch (DataIntegrityViolationException | ConstraintViolationException e)
+			{
+				// there is a uniqueness constraint on entry keys in the database
+				// a row with the same key was written after we checked, retrieve new data and continue
+				optEntry = getActivityConfigEntry(name, activityId, toolId, providerId);
+			}
+		}
+
+		if (overrideIfSet)
+		{
+			ContentReviewActivityConfigEntry entry = optEntry.orElseThrow( () -> new RuntimeException("Unique constraint violated during insert attempt, yet unable to retrieve row."));
+			entry.setValue(value);
+			dao.update(entry);
+			return true;
+		}
+
+		return false;
 	}
 }

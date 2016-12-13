@@ -1,10 +1,11 @@
 # The new implementation of turnitin for Sakai 11.0
 
 This is based on Oxford's code, but with slight changes for
-the current state of 11.x ,and a couple of bug fixes and
+the current state of 11.x, and a couple of bug fixes and
 improvements. This will track Rutgers production code.
 
-* apply diff to your source
+* deploy https://github.com/sakaicontrib/sakai-turnitin
+** at the very least, deploy the modified tools: assignment, basiclti, content-review
 * then completely replace content-review/contentreview-impl with the copy here
 * sakai.properties has the properties I used for debugging. This includes
   our properties for the old implementation, so it may have more than you need
@@ -25,7 +26,7 @@ You will have to run jobs manually unless they're set up to auto-run. for testin
 
 ## Properties for LTI tool:
 
-* Site ID: !turnitin [or whatever site ID your site uses]
+* Site ID: !turnitin [Ie. the value of turnitin.lti.site as you will specify in sakai.properties]
 * Tool Title: Turnitin
 * Allow tool title to be changed
 * Set Button Text - Turnitin
@@ -62,8 +63,9 @@ More details at: http://turnitin.com/en_us/support/integrations/lti/
 The following sakai.properties are relevant to the Turnitin LTI integration:
 
 ##### turnitin.lti.site
-* This is the ID of the LTI tool you created above (likely "!turnitin)
+* This is the ID of the LTI tool you created above (likely "!turnitin")
 * There is no default for this property
+* This is not intended to be an actual site id; if such a site with this id exists, it will break the integration
 
 ##### turnitin.lti.globalCreate
 * This boolean property if set to true will check if the LTI tool exists and if it doesn't create it.
@@ -104,6 +106,11 @@ The following sakai.properties are relevant to the Turnitin LTI integration:
 * Defaults to "0"
 * You **must** set this to 100 for use with Turnitin
 * If you don't set this property, the integration will fail in sites with assignment titles greater than 100 characters, and this error will not be apparent to the end user
+
+##### turnitin.allow.mutliple.attachments=false
+* Defines whether you can submit multiple attachments to Turnitin in one assignment submission
+* Ie. it no longer limits to inline only / single uploaded file only
+* Defaults to false
 
 ##### turnitin.enable.assignment2
 ##### turnitin.apiURL

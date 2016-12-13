@@ -2,12 +2,15 @@ package org.sakaiproject.turnitin.util;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -424,5 +427,24 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 			}
 		}
 		return rawProperties;
+	}
+	
+	public Set<String> getSitesUsingLTI()
+	{
+		List<Map<String, Object>> contents = ltiService.getContentsDao(null, null, 0, 0, null, true);
+		Set<String> tiiSiteIds = new HashSet<>();
+		for (Map<String, Object> map : contents)
+		{
+			String title = map.get("pagetitle").toString();
+			if ("Turnitin".equals(title))
+			{
+				String siteId = map.get("SITE_ID").toString();
+				if (StringUtils.isNotBlank(siteId))
+				{
+					tiiSiteIds.add(siteId);
+				}
+			}
+		}
+		return tiiSiteIds;
 	}
 }

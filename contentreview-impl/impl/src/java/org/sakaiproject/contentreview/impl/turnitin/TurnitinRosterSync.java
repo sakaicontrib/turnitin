@@ -384,9 +384,11 @@ public class TurnitinRosterSync {
 			return true;
 		}
 
-		if(contentReviewSiteAdvisor.siteCanUseLTIReviewService(site)){
+		// Removing this for now because due to the temporary cutover date feature a site may have both types of integration
+		// active and could still need roster sync
+		/*if(contentReviewSiteAdvisor.siteCanUseLTIReviewService(site)){
 			return false;
-		}
+		}*/
 		
 		Map<String, List<String>> enrollment = getInstructorsStudentsForSite(sakaiSiteID);
 

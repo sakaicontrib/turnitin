@@ -20,6 +20,7 @@
  **********************************************************************************/
 package org.sakaiproject.contentreview.impl.advisors;
 
+import java.util.Date;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
 import org.sakaiproject.site.api.Site;
 
@@ -30,6 +31,12 @@ public class DefaultSiteAdvisor implements ContentReviewSiteAdvisor {
 	}
 	
 	public boolean siteCanUseLTIReviewService(Site site) {
+		return true;
+	}
+	
+	@Override
+	public boolean siteCanUseLTIReviewServiceForAssignment(Site site, Date assignmentCreationDate)
+	{
 		return true;
 	}
 	

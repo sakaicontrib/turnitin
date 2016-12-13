@@ -20,6 +20,7 @@
  **********************************************************************************/
 package org.sakaiproject.contentreview.impl.advisors;
 
+import java.util.Date;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.site.api.Site;
@@ -51,6 +52,12 @@ public class SitePropertyAdvisor implements ContentReviewSiteAdvisor {
 		ResourceProperties properties = site.getProperties();		
 		String prop = properties.getProperty(siteLTIProperty);
 		return Boolean.valueOf(prop).booleanValue();
+	}
+	
+	@Override
+	public boolean siteCanUseLTIReviewServiceForAssignment(Site site, Date assignmentCreationDate)
+	{
+		return siteCanUseLTIReviewService(site);
 	}
 	
 	public boolean siteCanUseLTIDirectSubmission(Site site){
