@@ -11,6 +11,10 @@ public class FakeTiiUtil extends TurnitinLTIUtil{
 	public String getGlobalTurnitinLTIToolId(){
 		return "globalId";
 	}
+
+	public String getGlobalTurnitinReportsLTIToolId(){
+		return "globalReportsId";
+	}
 	
 	public TurnitinReturnValue makeLTIcall(int type, String urlParam, Map<String, String> ltiProps){
 		TurnitinReturnValue retVal = new TurnitinReturnValue();

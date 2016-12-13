@@ -109,7 +109,7 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 
 		M_assi = createMock(AssignmentService.class);
 		tiiService.setAssignmentService(M_assi);
-		M_ss = createMock(SiteService.class);
+		M_ss = EasyMock.createNiceMock(SiteService.class);
 		tiiService.setSiteService(M_ss);
 		M_lti = createMock(LTIService.class);
 		M_util.setLtiService(M_lti);
@@ -138,6 +138,8 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		Site siteA = createMock(Site.class);
 		expect(siteA.getShortDescription()).andStubReturn("shortdesc");
 		expect(siteA.getTitle()).andStubReturn("sitetitle");
+		ResourcePropertiesEdit siteProps = createMock(ResourcePropertiesEdit.class);
+		expect(siteA.getPropertiesEdit()).andStubReturn(siteProps);
 		replay(siteA);
 		
 		expect(M_ss.getSite("siteId")).andStubReturn(siteA);
