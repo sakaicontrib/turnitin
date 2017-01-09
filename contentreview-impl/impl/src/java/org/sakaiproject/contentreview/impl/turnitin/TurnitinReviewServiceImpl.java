@@ -2406,342 +2406,349 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		while (listIterator.hasNext()) {
 			currentItem = (ContentReviewItem) listIterator.next();
 
-			// has the item reached its next retry time?
-			if (currentItem.getNextRetryTime() == null)
-				currentItem.setNextRetryTime(new Date());
+			try
+			{
+				// has the item reached its next retry time?
+				if (currentItem.getNextRetryTime() == null)
+					currentItem.setNextRetryTime(new Date());
 
-			else if (currentItem.getNextRetryTime().after(new Date())) {
-				//we haven't reached the next retry time
-				log.info("next retry time not yet reached for item: " + currentItem.getId());
-				dao.update(currentItem);
-				continue;
-			}
+				else if (currentItem.getNextRetryTime().after(new Date())) {
+					//we haven't reached the next retry time
+					log.info("next retry time not yet reached for item: " + currentItem.getId());
+					dao.update(currentItem);
+					continue;
+				}
 
-			if (currentItem.getRetryCount() == null ) {
-				currentItem.setRetryCount(Long.valueOf(0));
-				currentItem.setNextRetryTime(this.getNextRetryTime(0));
-			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
-				processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED, null, null );
-				continue;
-			} else {
-				log.debug("Still have retries left, continuing. ItemID: " + currentItem.getId());
-				// Moving down to check for report generate speed.
-				//long l = currentItem.getRetryCount().longValue();
-				//l++;
-				//currentItem.setRetryCount(Long.valueOf(l));
-				//currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
-				//dao.update(currentItem);
-			}
-			
-			Site s;
-			try {
-				s = siteService.getSite(currentItem.getSiteId());
-			}
-			catch (IdUnusedException iue) {
-				log.warn("checkForReportsBulk: Site " + currentItem.getSiteId() + " not found!" + iue.getMessage());
-				long l = currentItem.getRetryCount();
-				l++;
-				currentItem.setRetryCount(l);
-				currentItem.setNextRetryTime(this.getNextRetryTime(l));
-				currentItem.setLastError("Site not found");
-				dao.update(currentItem);
-				continue;
-			}
-			//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
-			Optional<Date> dateOpt = getAssignmentCreationDate(currentItem.getTaskId());
-			if(dateOpt.isPresent() && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, dateOpt.get())){			
-				log.debug("getReviewScore using the LTI integration");			
-				
-				Map<String,String> ltiProps = new HashMap<> ();
-				ltiProps = putInstructorInfo(ltiProps, currentItem.getSiteId());
-				
-				String paperId = null;
-				if(currentItem.isResubmission()){//TODO until TII admits and solves the resubmission callback issue, this might be a workaround for single file submissions
-					log.debug("It's a resubmission");
-					try{
-						org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(currentItem.getTaskId());
-						AssignmentContent ac = a.getContent();
-						if(ac == null){
-							log.debug("Could not find the assignment content " + currentItem.getTaskId());
-						} else {
-							log.debug("Got assignment content " + currentItem.getTaskId());
-							//1 - inline, 2 - attach, 3 - both, 4 - non elec, 5 - single file
-							if(ac.getTypeOfSubmission() == 5 || ac.getTypeOfSubmission() == 1){
-								AssignmentSubmission as = assignmentService.getSubmission(currentItem.getSubmissionId());						
-								ResourceProperties aProperties = as.getProperties();
-								paperId = aProperties.getProperty("turnitin_id");
-							} //TODO should we? - else if(ac.getTypeOfSubmission() == 2 || ac.getTypeOfSubmission() == 3){
-						}
-					} catch(IdUnusedException | PermissionException e){
-						log.error("Couldn't get TII paper id for content " + currentItem.getContentId() + ": " + e.getMessage());
-					} catch(Exception e) {
-						log.error( "Unexpected exception getting TII paper id", e );
-					}
-				} else {//preferred way			
-					ContentResource cr;
-					try{
-						cr = contentHostingService.getResource(currentItem.getContentId());
-					} catch(Exception ex){
-						log.warn("Could not get content by id " + currentItem.getContentId() + " " + ex.getMessage());
-						long l = currentItem.getRetryCount();
-						l++;
-						currentItem.setRetryCount(l);
-						currentItem.setNextRetryTime(this.getNextRetryTime(l));
-						currentItem.setLastError("Could not get submission by id");
-						dao.update(currentItem);
-						continue;
-					}
-					ResourceProperties rp = cr.getProperties();
-					// we saw an unexplained null paperid. can't reproduce. In case we get it again
-					if (log.isDebugEnabled()) {
-					    Iterator<String> names = rp.getPropertyNames();
-					    StringBuilder debugMsg = new StringBuilder();
-						debugMsg.append( "resource properties" );
-					    while (names.hasNext()) 
-						{
-							debugMsg.append( " " ).append( names.next() );
-						}
-					    log.debug(debugMsg.toString());
-					}
-					paperId = rp.getProperty("turnitin_id");
+				if (currentItem.getRetryCount() == null ) {
+					currentItem.setRetryCount(Long.valueOf(0));
+					currentItem.setNextRetryTime(this.getNextRetryTime(0));
+				} else if (currentItem.getRetryCount().intValue() > maxRetry) {
+					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED, null, null );
+					continue;
+				} else {
+					log.debug("Still have retries left, continuing. ItemID: " + currentItem.getId());
+					// Moving down to check for report generate speed.
+					//long l = currentItem.getRetryCount().longValue();
+					//l++;
+					//currentItem.setRetryCount(Long.valueOf(l));
+					//currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+					//dao.update(currentItem);
 				}
 				
-				if(paperId == null){
-					log.warn("Could not find TII paper id for the content " + currentItem.getContentId());
+				Site s;
+				try {
+					s = siteService.getSite(currentItem.getSiteId());
+				}
+				catch (IdUnusedException iue) {
+					log.warn("checkForReportsBulk: Site " + currentItem.getSiteId() + " not found!" + iue.getMessage());
 					long l = currentItem.getRetryCount();
 					l++;
 					currentItem.setRetryCount(l);
 					currentItem.setNextRetryTime(this.getNextRetryTime(l));
-					currentItem.setLastError("Could not find TII paper id for the submission");
+					currentItem.setLastError("Site not found");
 					dao.update(currentItem);
 					continue;
 				}
-				
-				TurnitinReturnValue result = tiiUtil.makeLTIcall(TurnitinLTIUtil.INFO_SUBMISSION, paperId, ltiProps);
-				if(result.getResult() >= 0){
-					currentItem.setReviewScore(result.getResult());
-					currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
-					currentItem.setDateReportReceived(new Date());
-					currentItem.setLastError(null);
-					currentItem.setErrorCode(null);
-					dao.update(currentItem);
-
-					try
-					{
-						ContentResource resource = contentHostingService.getResource( currentItem.getContentId() );
-						boolean itemUpdated = updateItemAccess( resource.getId() );
-						if( !itemUpdated )
-						{
-							log.error( "Could not update cr item access status" );
-						}
-					}
-					catch( PermissionException | IdUnusedException | TypeException ex )
-					{
-						log.error( "Could not update cr item access status", ex );
-					}
-
-					//log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
-					log.debug("new report received: " + paperId + " -> " + currentItem.getReviewScore());
-				} else {
-					if(result.getResult() == -7){
-						log.debug("report is still pending for paper " + paperId);
-						currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
-						currentItem.setLastError( result.getErrorMessage() );
-						currentItem.setErrorCode( result.getResult() );
-					} else {
-						log.error("Error making LTI call");
-						long l = currentItem.getRetryCount();
-						l++;
-						currentItem.setRetryCount(l);
-						currentItem.setNextRetryTime(this.getNextRetryTime(l));
-						currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-						currentItem.setLastError("Report Data Error: " + result.getResult());
-					}
-					dao.update(currentItem);
-				}
-				
-				continue;
-			}
-			//////////////////////////////  OLD API INTEGRATION  ///////////////////////////////
-
-			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
-				currentItem.setStatus(Long.valueOf(4));
-				dao.update(currentItem);
-				continue;
-			}
-
-			if (!reportTable.containsKey(currentItem.getExternalId())) {
-				// get the list from turnitin and see if the review is available
-
-				log.debug("Attempting to update hashtable with reports for site " + currentItem.getSiteId());
-
-				String fcmd = "2";
-				String fid = "10";
-
-				try {
-					User user = userDirectoryService.getUser(currentItem.getUserId());
-				} catch (Exception e) {
-					log.error("Unable to look up user: " + currentItem.getUserId() + " for contentItem: " + currentItem.getId(), e);
-				}
-
-				String cid = currentItem.getSiteId();
-				String tem = getTEM(cid);
-
-				String utp = "2";
-
-				String assignid = currentItem.getTaskId();
-
-				String assign = currentItem.getTaskId();
-				String ctl = currentItem.getSiteId();
-
-				// TODO FIXME Current sgithens
-				// Move the update setRetryAttempts to here, and first call and
-				// check the assignment from TII to see if the generate until
-				// due is enabled. In that case we don't want to waste retry
-				// attempts and should just continue.
-				try {
-					// TODO FIXME This is broken at the moment because we need
-					// to have a userid, but this is assuming it's coming from
-					// the thread, but we're in a quartz job.
-					//Map curasnn = getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
-					// TODO FIXME Parameterize getAssignment method to take user information
-					Map getAsnnParams = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
-							"assign", getAssignmentTitle(currentItem.getTaskId()), "assignid", currentItem.getTaskId(), "cid", currentItem.getSiteId(), "ctl", currentItem.getSiteId(),
-							"fcmd", "7", "fid", "4", "utp", "2" );
-
-					getAsnnParams.putAll(getInstructorInfo(currentItem.getSiteId()));
-
-					Map curasnn = turnitinConn.callTurnitinReturnMap(getAsnnParams);
-
-					if (curasnn.containsKey("object")) {
-						Map curasnnobj = (Map) curasnn.get("object");
-						String reportGenSpeed = (String) curasnnobj.get("generate");
-						String duedate = (String) curasnnobj.get("dtdue");
-						SimpleDateFormat retform = ((SimpleDateFormat) DateFormat.getDateInstance());
-						retform.applyPattern(TURNITIN_DATETIME_FORMAT);
-						Date duedateObj = null;
-						try {
-							if (duedate != null) {
-								duedateObj = retform.parse(duedate);
+				//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
+				Optional<Date> dateOpt = getAssignmentCreationDate(currentItem.getTaskId());
+				if(dateOpt.isPresent() && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, dateOpt.get())){			
+					log.debug("getReviewScore using the LTI integration");			
+					
+					Map<String,String> ltiProps = new HashMap<> ();
+					ltiProps = putInstructorInfo(ltiProps, currentItem.getSiteId());
+					
+					String paperId = null;
+					if(currentItem.isResubmission()){//TODO until TII admits and solves the resubmission callback issue, this might be a workaround for single file submissions
+						log.debug("It's a resubmission");
+						try{
+							org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(currentItem.getTaskId());
+							AssignmentContent ac = a.getContent();
+							if(ac == null){
+								log.debug("Could not find the assignment content " + currentItem.getTaskId());
+							} else {
+								log.debug("Got assignment content " + currentItem.getTaskId());
+								//1 - inline, 2 - attach, 3 - both, 4 - non elec, 5 - single file
+								if(ac.getTypeOfSubmission() == 5 || ac.getTypeOfSubmission() == 1){
+									AssignmentSubmission as = assignmentService.getSubmission(currentItem.getSubmissionId());						
+									ResourceProperties aProperties = as.getProperties();
+									paperId = aProperties.getProperty("turnitin_id");
+								} //TODO should we? - else if(ac.getTypeOfSubmission() == 2 || ac.getTypeOfSubmission() == 3){
 							}
-						} catch (ParseException pe) {
-							log.warn("Unable to parse turnitin dtdue: " + duedate, pe);
+						} catch(IdUnusedException | PermissionException e){
+							log.error("Couldn't get TII paper id for content " + currentItem.getContentId() + ": " + e.getMessage());
+						} catch(Exception e) {
+							log.error( "Unexpected exception getting TII paper id", e );
 						}
-						if (reportGenSpeed != null && duedateObj != null &&
-							reportGenSpeed.equals("2") && duedateObj.after(new Date())) {
-							log.info("Report generate speed is 2, skipping for now. ItemID: " + currentItem.getId());
-							// If there was previously a transient error for this item, reset the status
-							if (ContentReviewItem.REPORT_ERROR_RETRY_CODE.equals(currentItem.getStatus())) {
-								currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
-								currentItem.setLastError(null);
-								currentItem.setErrorCode(null);
-								dao.update(currentItem);
-							}
-							continue;
-						}
-						else {
-							log.debug("Incrementing retry count for currentItem: " + currentItem.getId());
+					} else {//preferred way			
+						ContentResource cr;
+						try{
+							cr = contentHostingService.getResource(currentItem.getContentId());
+						} catch(Exception ex){
+							log.warn("Could not get content by id " + currentItem.getContentId() + " " + ex.getMessage());
 							long l = currentItem.getRetryCount();
 							l++;
 							currentItem.setRetryCount(l);
 							currentItem.setNextRetryTime(this.getNextRetryTime(l));
+							currentItem.setLastError("Could not get submission by id");
 							dao.update(currentItem);
+							continue;
 						}
+						ResourceProperties rp = cr.getProperties();
+						// we saw an unexplained null paperid. can't reproduce. In case we get it again
+						if (log.isDebugEnabled()) {
+							Iterator<String> names = rp.getPropertyNames();
+							StringBuilder debugMsg = new StringBuilder();
+							debugMsg.append( "resource properties" );
+							while (names.hasNext()) 
+							{
+								debugMsg.append( " " ).append( names.next() );
+							}
+							log.debug(debugMsg.toString());
+						}
+						paperId = rp.getProperty("turnitin_id");
 					}
-				} catch (SubmissionException | TransientSubmissionException e) {
-					log.error("Unable to check the report gen speed of the asnn for item: " + currentItem.getId(), e);
-				}
+					
+					if(paperId == null){
+						log.warn("Could not find TII paper id for the content " + currentItem.getContentId());
+						long l = currentItem.getRetryCount();
+						l++;
+						currentItem.setRetryCount(l);
+						currentItem.setNextRetryTime(this.getNextRetryTime(l));
+						currentItem.setLastError("Could not find TII paper id for the submission");
+						dao.update(currentItem);
+						continue;
+					}
+					
+					TurnitinReturnValue result = tiiUtil.makeLTIcall(TurnitinLTIUtil.INFO_SUBMISSION, paperId, ltiProps);
+					if(result.getResult() >= 0){
+						currentItem.setReviewScore(result.getResult());
+						currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
+						currentItem.setDateReportReceived(new Date());
+						currentItem.setLastError(null);
+						currentItem.setErrorCode(null);
+						dao.update(currentItem);
 
-				Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
-							"fid", fid,
-							"fcmd", fcmd,
-							"tem", tem,
-							"assign", assign,
-							"assignid", assignid,
-							"cid", cid,
-							"ctl", ctl,
-							"utp", utp
-					);
-					params.putAll(getInstructorInfo(currentItem.getSiteId()));
+						try
+						{
+							ContentResource resource = contentHostingService.getResource( currentItem.getContentId() );
+							boolean itemUpdated = updateItemAccess( resource.getId() );
+							if( !itemUpdated )
+							{
+								log.error( "Could not update cr item access status" );
+							}
+						}
+						catch( PermissionException | IdUnusedException | TypeException ex )
+						{
+							log.error( "Could not update cr item access status", ex );
+						}
 
-				Document document;
-
-				try {
-					document = turnitinConn.callTurnitinReturnDocument(params);
-				}
-				catch (TransientSubmissionException e) {
-					log.warn("Update failed due to TransientSubmissionException error: " + e.toString(), e);
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError(e.getMessage());
-					dao.update(currentItem);
-					break;
-				}
-				catch (SubmissionException e) {
-					log.warn("Update failed due to SubmissionException error: " + e.toString(), e);
-					currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
-					currentItem.setLastError(e.getMessage());
-					dao.update(currentItem);
-					break;
-				}
-
-				Element root = document.getDocumentElement();
-				if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
-					log.debug("Report list returned successfully");
-
-					NodeList objects = root.getElementsByTagName("object");
-					String objectId;
-					String similarityScore;
-					String overlap = "";
-					log.debug(objects.getLength() + " objects in the returned list");
-					for (int i=0; i<objects.getLength(); i++) {
-						similarityScore = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("similarityScore").item(0).getFirstChild())).getData().trim();
-						objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
-						if (similarityScore.compareTo("-1") != 0) {
-							overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
-							reportTable.put(objectId, Integer.valueOf(overlap));
+						//log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
+						log.debug("new report received: " + paperId + " -> " + currentItem.getReviewScore());
+					} else {
+						if(result.getResult() == -7){
+							log.debug("report is still pending for paper " + paperId);
+							currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
+							currentItem.setLastError( result.getErrorMessage() );
+							currentItem.setErrorCode( result.getResult() );
 						} else {
-							reportTable.put(objectId, -1);
+							log.error("Error making LTI call");
+							long l = currentItem.getRetryCount();
+							l++;
+							currentItem.setRetryCount(l);
+							currentItem.setNextRetryTime(this.getNextRetryTime(l));
+							currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+							currentItem.setLastError("Report Data Error: " + result.getResult());
+						}
+						dao.update(currentItem);
+					}
+					
+					continue;
+				}
+				//////////////////////////////  OLD API INTEGRATION  ///////////////////////////////
+
+				if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
+					currentItem.setStatus(Long.valueOf(4));
+					dao.update(currentItem);
+					continue;
+				}
+
+				if (!reportTable.containsKey(currentItem.getExternalId())) {
+					// get the list from turnitin and see if the review is available
+
+					log.debug("Attempting to update hashtable with reports for site " + currentItem.getSiteId());
+
+					String fcmd = "2";
+					String fid = "10";
+
+					try {
+						User user = userDirectoryService.getUser(currentItem.getUserId());
+					} catch (Exception e) {
+						log.error("Unable to look up user: " + currentItem.getUserId() + " for contentItem: " + currentItem.getId(), e);
+					}
+
+					String cid = currentItem.getSiteId();
+					String tem = getTEM(cid);
+
+					String utp = "2";
+
+					String assignid = currentItem.getTaskId();
+
+					String assign = currentItem.getTaskId();
+					String ctl = currentItem.getSiteId();
+
+					// TODO FIXME Current sgithens
+					// Move the update setRetryAttempts to here, and first call and
+					// check the assignment from TII to see if the generate until
+					// due is enabled. In that case we don't want to waste retry
+					// attempts and should just continue.
+					try {
+						// TODO FIXME This is broken at the moment because we need
+						// to have a userid, but this is assuming it's coming from
+						// the thread, but we're in a quartz job.
+						//Map curasnn = getAssignment(currentItem.getSiteId(), currentItem.getTaskId());
+						// TODO FIXME Parameterize getAssignment method to take user information
+						Map getAsnnParams = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
+								"assign", getAssignmentTitle(currentItem.getTaskId()), "assignid", currentItem.getTaskId(), "cid", currentItem.getSiteId(), "ctl", currentItem.getSiteId(),
+								"fcmd", "7", "fid", "4", "utp", "2" );
+
+						getAsnnParams.putAll(getInstructorInfo(currentItem.getSiteId()));
+
+						Map curasnn = turnitinConn.callTurnitinReturnMap(getAsnnParams);
+
+						if (curasnn.containsKey("object")) {
+							Map curasnnobj = (Map) curasnn.get("object");
+							String reportGenSpeed = (String) curasnnobj.get("generate");
+							String duedate = (String) curasnnobj.get("dtdue");
+							SimpleDateFormat retform = ((SimpleDateFormat) DateFormat.getDateInstance());
+							retform.applyPattern(TURNITIN_DATETIME_FORMAT);
+							Date duedateObj = null;
+							try {
+								if (duedate != null) {
+									duedateObj = retform.parse(duedate);
+								}
+							} catch (ParseException pe) {
+								log.warn("Unable to parse turnitin dtdue: " + duedate, pe);
+							}
+							if (reportGenSpeed != null && duedateObj != null &&
+								reportGenSpeed.equals("2") && duedateObj.after(new Date())) {
+								log.info("Report generate speed is 2, skipping for now. ItemID: " + currentItem.getId());
+								// If there was previously a transient error for this item, reset the status
+								if (ContentReviewItem.REPORT_ERROR_RETRY_CODE.equals(currentItem.getStatus())) {
+									currentItem.setStatus(ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE);
+									currentItem.setLastError(null);
+									currentItem.setErrorCode(null);
+									dao.update(currentItem);
+								}
+								continue;
+							}
+							else {
+								log.debug("Incrementing retry count for currentItem: " + currentItem.getId());
+								long l = currentItem.getRetryCount();
+								l++;
+								currentItem.setRetryCount(l);
+								currentItem.setNextRetryTime(this.getNextRetryTime(l));
+								dao.update(currentItem);
+							}
+						}
+					} catch (SubmissionException | TransientSubmissionException e) {
+						log.error("Unable to check the report gen speed of the asnn for item: " + currentItem.getId(), e);
+					}
+
+					Map params = TurnitinAPIUtil.packMap(turnitinConn.getBaseTIIOptions(),
+								"fid", fid,
+								"fcmd", fcmd,
+								"tem", tem,
+								"assign", assign,
+								"assignid", assignid,
+								"cid", cid,
+								"ctl", ctl,
+								"utp", utp
+						);
+						params.putAll(getInstructorInfo(currentItem.getSiteId()));
+
+					Document document;
+
+					try {
+						document = turnitinConn.callTurnitinReturnDocument(params);
+					}
+					catch (TransientSubmissionException e) {
+						log.warn("Update failed due to TransientSubmissionException error: " + e.toString(), e);
+						currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+						currentItem.setLastError(e.getMessage());
+						dao.update(currentItem);
+						break;
+					}
+					catch (SubmissionException e) {
+						log.warn("Update failed due to SubmissionException error: " + e.toString(), e);
+						currentItem.setStatus(ContentReviewItem.REPORT_ERROR_RETRY_CODE);
+						currentItem.setLastError(e.getMessage());
+						dao.update(currentItem);
+						break;
+					}
+
+					Element root = document.getDocumentElement();
+					if (((CharacterData) (root.getElementsByTagName("rcode").item(0).getFirstChild())).getData().trim().compareTo("72") == 0) {
+						log.debug("Report list returned successfully");
+
+						NodeList objects = root.getElementsByTagName("object");
+						String objectId;
+						String similarityScore;
+						String overlap = "";
+						log.debug(objects.getLength() + " objects in the returned list");
+						for (int i=0; i<objects.getLength(); i++) {
+							similarityScore = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("similarityScore").item(0).getFirstChild())).getData().trim();
+							objectId = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("objectID").item(0).getFirstChild())).getData().trim();
+							if (similarityScore.compareTo("-1") != 0) {
+								overlap = ((CharacterData) (((Element)(objects.item(i))).getElementsByTagName("overlap").item(0).getFirstChild())).getData().trim();
+								reportTable.put(objectId, Integer.valueOf(overlap));
+							} else {
+								reportTable.put(objectId, -1);
+							}
+
+							log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
+						}
+					} else {
+						log.debug("Report list request not successful");
+						log.debug(document.getTextContent());
+
+					}
+				}
+
+				int reportVal;
+				// check if the report value is now there (there may have been a
+				// failure to get the list above)
+				if (reportTable.containsKey(currentItem.getExternalId())) {
+					reportVal = ((reportTable.get(currentItem.getExternalId())));
+					log.debug("reportVal for " + currentItem.getExternalId() + ": " + reportVal);
+					if (reportVal != -1) {
+						currentItem.setReviewScore(reportVal);
+						currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
+						currentItem.setDateReportReceived(new Date());
+						currentItem.setLastError(null);
+						currentItem.setErrorCode(null);
+						dao.update(currentItem);
+
+						try
+						{
+							ContentResource resource = contentHostingService.getResource( currentItem.getContentId() );
+							boolean itemUpdated = updateItemAccess( resource.getId() );
+							if( !itemUpdated )
+							{
+								log.error( "Could not update cr item access status" );
+							}
+						}
+						catch( PermissionException | IdUnusedException | TypeException ex )
+						{
+							log.error( "Could not update cr item access status", ex );
 						}
 
-						log.debug("objectId: " + objectId + " similarity: " + similarityScore + " overlap: " + overlap);
+						log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
 					}
-				} else {
-					log.debug("Report list request not successful");
-					log.debug(document.getTextContent());
-
 				}
 			}
-
-			int reportVal;
-			// check if the report value is now there (there may have been a
-			// failure to get the list above)
-			if (reportTable.containsKey(currentItem.getExternalId())) {
-				reportVal = ((reportTable.get(currentItem.getExternalId())));
-				log.debug("reportVal for " + currentItem.getExternalId() + ": " + reportVal);
-				if (reportVal != -1) {
-					currentItem.setReviewScore(reportVal);
-					currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
-					currentItem.setDateReportReceived(new Date());
-					currentItem.setLastError(null);
-					currentItem.setErrorCode(null);
-					dao.update(currentItem);
-
-					try
-					{
-						ContentResource resource = contentHostingService.getResource( currentItem.getContentId() );
-						boolean itemUpdated = updateItemAccess( resource.getId() );
-						if( !itemUpdated )
-						{
-							log.error( "Could not update cr item access status" );
-						}
-					}
-					catch( PermissionException | IdUnusedException | TypeException ex )
-					{
-						log.error( "Could not update cr item access status", ex );
-					}
-
-					log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
-				}
+			catch (Exception e)
+			{
+				log.error(e.getMessage() + "\n" + e.getStackTrace());
 			}
 		}
 
