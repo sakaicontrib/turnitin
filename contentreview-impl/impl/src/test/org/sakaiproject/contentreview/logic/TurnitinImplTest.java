@@ -25,6 +25,7 @@ import org.sakaiproject.contentreview.model.ContentReviewItem;
 import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 import org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection;
 import org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl;
+import org.sakaiproject.contentreview.mocks.FakeSite;
 import org.sakaiproject.contentreview.mocks.FakeTiiUtil;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
 import org.sakaiproject.entity.api.ResourceProperties;
@@ -135,12 +136,7 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		opts.put("points", 100);
 		opts.put("assignmentContentId", "taskId");		
 		
-		Site siteA = createMock(Site.class);
-		expect(siteA.getShortDescription()).andStubReturn("shortdesc");
-		expect(siteA.getTitle()).andStubReturn("sitetitle");
-		ResourcePropertiesEdit siteProps = createMock(ResourcePropertiesEdit.class);
-		expect(siteA.getPropertiesEdit()).andStubReturn(siteProps);
-		replay(siteA);
+		Site siteA = new FakeSite("siteId");
 		
 		expect(M_ss.getSite("siteId")).andStubReturn(siteA);
 		replay(M_ss);
@@ -172,7 +168,6 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		M_assi.commitEdit(contentEdA);
 		EasyMock.expectLastCall();
 
-		Assignment assignA = createMock(Assignment.class);
 		expect(M_assi.getAssignment("taskId")).andStubReturn(assignA);
 		expect(M_assi.getSubmissions(assignA)).andStubReturn(null);
 		replay(M_assi);

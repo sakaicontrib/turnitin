@@ -84,6 +84,7 @@ import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.EntityProducer;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
+import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.entitybroker.EntityReference;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
@@ -1212,31 +1213,16 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			
 			String asnId = asnRefToId(taskId);  // taskId is an assignment reference, but we sometimes only want the assignment id
 			String ltiId = getActivityConfigValue(TurnitinConstants.STEALTHED_LTI_ID, asnId, TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, TurnitinConstants.PROVIDER_ID);
+			String ltiReportsId = null;
+
+			ltiReportsId = s.getProperties().getProperty("turnitin_reports_lti_id");
+			log.debug("This assignment has associated the following LTI Reports id: " + ltiReportsId);
 			
+			Map<String,String> ltiProps = new HashMap<>();
 			if (extraAsnnOpts == null){
 				throw new TransientSubmissionException("Create Assignment not successful. Empty extraAsnnOpts map");
 			}
 
-			taskId = extraAsnnOpts.get("assignmentContentId").toString();
-		
-			//check if it was already created
-			String tiiId;
-			String ltiId = null;
-			String ltiReportsId = null;
-			try {
-				AssignmentContent ac = assignmentService.getAssignmentContent(taskId);
-				ResourceProperties aProperties = ac.getProperties();
-				tiiId = aProperties.getProperty("turnitin_id");
-				log.debug("This assignment has associated the following TII id: " + tiiId);				
-				ltiId = aProperties.getProperty("lti_id");
-				log.debug("This assignment has associated the following LTI id: " + ltiId);
-				ltiReportsId = s.getProperties().getProperty("turnitin_reports_lti_id");
-				log.debug("This assignment has associated the following LTI id: " + ltiReportsId);
-			} catch (Exception e) {
-				log.debug("New TII assignment: " + taskId);
-			}
-			
-			Map<String,String> ltiProps = new HashMap<>();
 			ltiProps.put("context_id", siteId);
 			ltiProps.put("context_title", s.getTitle());
 			String contextLabel = s.getTitle();
@@ -1376,14 +1362,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			try{
 				securityService.pushAdvisor(advisor);
 				sakaiProps.setProperty(LTIService.LTI_TOOL_ID, globalId);
-				if(ltiId == null){
+				if(StringUtils.isEmpty(ltiId)){
 					ltiContent = tiiUtil.insertTIIToolContent(globalId, sakaiProps);
 				} else {//don't create lti tool if exists
 					ltiContent = tiiUtil.updateTIIToolContent(ltiId, sakaiProps);
 				}				
 				// replace the property
 				sakaiProps.setProperty(LTIService.LTI_TOOL_ID, globalReportsId);
-				if (ltiReportsId == null)
+				if (StringUtils.isEmpty(ltiReportsId))
 				{
 					ltiReportsContent = tiiUtil.insertTIIToolContent(globalReportsId, sakaiProps);
 				}
@@ -1402,39 +1388,39 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			} else if (ltiReportsContent == null){
 				throw new TransientSubmissionException("Create Assignment not successful. Could not create LTI Reports tool for the task: " + custom);
-			} else if (ltiId != null && !Boolean.TRUE.equals(ltiContent)){
-				// if ltiId != null, the lti already exists, so we did an update. ltiContent is Boolean.TRUE if the update was successful
+			} else if (!StringUtils.isEmpty(ltiId) && !Boolean.TRUE.equals(ltiContent)){
+				// if ltiId is not empty, the lti already exists, so we did an update. ltiContent is Boolean.TRUE if the update was successful
 				throw new TransientSubmissionException("Update Assignment not successful. Error updating LTI stealthed tool: " + ltiId);
 			} else if (ltiReportsId != null && !Boolean.TRUE.equals(ltiReportsContent)){
 				throw new TransientSubmissionException("Update Assignment not successful. Error updating LTI reports stealthed tool: " + ltiReportsContent);
-			} else if (ltiId == null && !(ltiContent instanceof Long)){
-				// if ltiId == null, the lti is new, so we did an insert. ltiContent is a Long primary key if the update was successful
+			} else if (StringUtils.isEmpty(ltiId) && !(ltiContent instanceof Long)){
+				// if ltiId is empty, the lti is new, so we did an insert. ltiContent is a Long primary key if the update was successful
 				throw new TransientSubmissionException("Create Assignment not successful. Error creating LTI stealthed tool: " + ltiContent);
 			} else if (ltiReportsId == null && !(ltiReportsContent instanceof Long)){
 				throw new TransientSubmissionException("Create Assignment not successful. Error creating LTI stealthed tool: " + ltiReportsContent);
 			}
-			if (ltiId == null || ltiReportsId == null) {//we inserted, need to record the IDs
+			if (StringUtils.isEmpty(ltiId) || ltiReportsId == null) {//we inserted, need to record the IDs
 				log.debug("LTI content tool id: " + ltiContent);
 				try{
-					AssignmentContentEdit ace = assignmentService.editAssignmentContent(taskId);
-					ResourcePropertiesEdit aPropertiesEdit = ace.getPropertiesEdit();
-					if (ltiId == null)
-					{
-						// new lti instance; record the ID from ltiContent
-						aPropertiesEdit.addProperty("lti_id", String.valueOf(ltiContent));
-					}
+
 					if (ltiReportsId == null)
 					{
 						ResourcePropertiesEdit rpe = s.getPropertiesEdit();
 						rpe.addProperty("turnitin_reports_lti_id", String.valueOf(ltiReportsContent));
 						siteService.save(s);
 					}
-					assignmentService.commitEdit(ace);
-				}catch(Exception e){
-					log.error("Could not store LTI tool ID " + ltiContent +" for assignment " + taskId);
-					log.error(e.getClass().getName() + " : " + e.getMessage());
-          throw new TransientSubmissionException("Create Assignment not successful. Error storing LTI stealthed reports tool: " + ltiReportsContent);
-        }
+				}
+				catch (IdUnusedException e)
+				{
+					log.error("Could not store reports LTI tool ID " + ltiReportsContent + " for site " + s.getId(), e);
+					throw new TransientSubmissionException("Create Assignment not successful. Error storing LTI stealthed reports tool: " + ltiReportsContent);
+				}
+				catch (PermissionException e)
+				{
+					log.error("Could not store reports LTI tool ID " + ltiReportsContent + " for site " + s.getId(), e);
+					throw new TransientSubmissionException("Create Assignment not successful. Error storing LTI stealthed reports tool: " + ltiReportsContent);
+				}
+
 				boolean added = saveOrUpdateActivityConfigEntry(TurnitinConstants.STEALTHED_LTI_ID, String.valueOf(ltiContent), asnId, TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID,
 						TurnitinConstants.PROVIDER_ID, true);
 				if (!added)
@@ -3483,8 +3469,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					TurnitinConstants.PROVIDER_ID);
 			securityService.pushAdvisor(advisor);
 			return tiiUtil.deleteTIIToolContent(ltiId);
-		} catch(IdUnusedException | PermissionException e){
-			log.warn("Error trying to delete TII tool content: " + e.getMessage());
 		} catch(Exception e) {
 			log.error( "Unexpected exception deleting TII tool", e );
 		} finally {
