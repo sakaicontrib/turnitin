@@ -10,6 +10,30 @@ improvements. This will track Rutgers production code.
 * sakai.properties has the properties I used for debugging. This includes
   our properties for the old implementation, so it may have more than you need
 
+## Database changes:
+
+There are conversion scripts supplied for both MySQL and Oracle:
+
+contentreview-impl/docs/sakai_11x-LTI_migration-mysql.sql
+contentreview-impl/docs/sakai_11x-LTI_migration-oracle.sql
+
+If you have used other code, your database may have a definition for
+CONTENTREVIEW_ITEM that will prevent Content Review from being able to
+add new assignments. If you have auto.ddl on, Hibernate will add any
+necessary fields. But it won't remove fields that shouldn't be there.
+The two fields that shouldn't be there but may be are "version" and
+"providerId". Either run the appropriate migration script mentioned
+above, or remove them manually or change the definition so that they
+default to null if no value is supplied.
+
+The above conversion scripts will also close off HTTP access for
+all submissions made prior to the date of running the conversion
+script (which should be the date of deployment of the new LTI
+code). For more information on why this is done, see the following
+JIRA ticket:
+
+https://jira.sakaiproject.org/browse/TII-240
+
 ## Steps to make this work:
 
 * Have your TurnitIn administrator contact Turnitin to enable the LTI integration for you. Once they have, your administrator will need to login, go to integrations, and configure it. The output of this will be a secret key (which you choose) and the numeric account number of your account at TII.
@@ -132,13 +156,3 @@ Once you’re created the LTI tool, go to the turnitin Sakai site and add the to
 Configure turnitin in sakai.properties and restart. See sakai.properties here.
 
 That file includes the values we were using for the old interface. I’m not sure whether you can remove them or not.
-
-## WARNING:
-
-If you have used other code, your database may have a definition for
-CONTENTREVIEW_ITEM that will prevent Content Review from being able to
-add new assignments. If you have auto.ddl on, Hibernate will add any
-necessary fields. But it won't remove fields that shouldn't be there.
-The two fields that shouldn't be there but may be are "version" and
-"providerId". Either remove them or change the definition is that they
-default to null if no value is supplied.
