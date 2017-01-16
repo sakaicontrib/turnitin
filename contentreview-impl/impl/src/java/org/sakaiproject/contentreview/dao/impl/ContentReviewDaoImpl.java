@@ -43,6 +43,8 @@ public class ContentReviewDaoImpl
 
 	private static final Log log = LogFactory.getLog(ContentReviewDaoImpl.class);
 
+	private static final String SQL_UPDATE_EXTERNAL_ID = "UPDATE CONTENTREVIEW_ITEM SET EXTERNALID = :externalId WHERE CONTENTID = :contentId";
+
 	private static final String SQL_UPDATE_IS_URL_ACCESSED = "UPDATE CONTENTREVIEW_ITEM SET URLACCESSED = :isUrlAccessed WHERE CONTENTID = :contentID";
 
 	public void init() {
@@ -211,6 +213,22 @@ public class ContentReviewDaoImpl
 	      } catch (Exception ex) {
 	         log.error("Could not cleanup the lock ("+lockId+") after failure: " + ex.getMessage(), ex);
 	      }
+	   }
+
+	   /**
+	    * {@inheritDoc}
+	    */
+	   public boolean updateExternalId(String contentId, String externalId)
+	   {
+	       Session session = getSessionFactory().openSession();
+	       Transaction tx = session.beginTransaction();
+	       SQLQuery query = session.createSQLQuery(SQL_UPDATE_EXTERNAL_ID);
+	       query.setParameter("externalId", externalId);
+	       query.setParameter("contentId", contentId);
+	       int result = query.executeUpdate();
+	       tx.commit();
+	       session.close();
+	       return result > 0;
 	   }
 	
 }

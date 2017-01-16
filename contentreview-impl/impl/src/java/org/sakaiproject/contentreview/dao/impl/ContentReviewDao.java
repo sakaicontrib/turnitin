@@ -68,4 +68,12 @@ public interface ContentReviewDao extends CompleteGenericDao {
 	    * @return whether the update was successful
 	    */
 	   public boolean updateIsUrlAccessed( String contentID, boolean isUrlAccessed );
+
+	   /**
+	    * Updates the externalId field of the contentreview_item with the specified contentId
+	    * @param contentId the contentId of the contentreview_item to be updated
+	    * @param externalId the ID supplied remotely by the content review service for this item
+	    * @return whether the update was successful
+	    */
+	   public boolean updateExternalId(String contentId, String externalId);
 }

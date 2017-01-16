@@ -2034,6 +2034,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					log.error("PermissionException: no permission for assignment with id: " + currentItem.getTaskId(), e);
 					a = null;
 				}
+
 				String tiiId = "";
 				if (a != null)
 				{
@@ -2050,54 +2051,25 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				
 				TurnitinReturnValue result = new TurnitinReturnValue();
 				result.setResult( -1 );
-				if(currentItem.isResubmission()){//TODO decide resubmission process
-					log.debug("It's a resubmission");
-					//check we have TII id
-					String tiiPaperId = null;
-					try{
-						AssignmentContent ac = null;
-						if (a == null)
-						{
-							log.error("Could not find the assignment: " + currentItem.getTaskId());
-						}
-						else
-						{
-							ac = a.getContent();
-						}
-						if(ac == null){
-							log.debug("Could not find the assignment content for assignment: " + currentItem.getTaskId());
-						} else {
-							log.debug("Got assignment content " + currentItem.getTaskId());
-							//1 - inline, 2 - attach, 3 - both, 4 - non elec, 5 - single file
-							if(ac.getTypeOfSubmission() == 5 || ac.getTypeOfSubmission() == 1){
-								AssignmentSubmission as = assignmentService.getSubmission(currentItem.getSubmissionId());						
-								ResourceProperties aProperties = as.getProperties();
-								tiiPaperId = aProperties.getProperty("turnitin_id");
-							} else if(ac.getTypeOfSubmission() == 2 || ac.getTypeOfSubmission() == 3){//won't work as files are different
-								ContentResource content = contentHostingService.getResource(currentItem.getContentId());
-								ResourceProperties aProperties = content.getProperties();
-								tiiPaperId = aProperties.getProperty("turnitin_id");
-							} else {
-								log.debug("Not valid type of assignment " + ac.getTypeOfSubmission());
-							}
-						}
-					} catch(IdUnusedException | PermissionException | TypeException e){
-						log.error("Couldn't get TII paper id for content " + currentItem.getContentId() + ": " + e.getMessage());
-					} catch(Exception e) {
-						log.error( "Unexpected exception getting TII paper ID", e );
-					}
-					if(tiiPaperId != null){
-						log.debug("This content has associated the following TII id: " + tiiPaperId);
-						currentItem.setExternalId(tiiPaperId);
+				boolean isResubmission = false;
+				if(currentItem.isResubmission())
+				{
+					AssignmentContent ac = a.getContent();
+					// Resubmit only for submission types that allow only one file per submission
+					String tiiPaperId = currentItem.getExternalId();
+					// 1 - inline, 2 - attach, 3 - both, 4 - non elec, 5 - single file
+					int type = ac.getTypeOfSubmission();
+					if (tiiPaperId != null && (type == 1 || type == 5))
+					{
+						isResubmission = true;
 						result = tiiUtil.makeLTIcall(TurnitinLTIUtil.RESUBMIT, tiiPaperId, ltiProps);
-					} else {//normal submission?
-						log.debug("doing a submission instead");
-						result = tiiUtil.makeLTIcall(TurnitinLTIUtil.SUBMIT, tiiId, ltiProps);
 					}
-				} else {
+				}
+				if (!isResubmission)
+				{
 					result = tiiUtil.makeLTIcall(TurnitinLTIUtil.SUBMIT, tiiId, ltiProps);
 				}
-				
+
 				if(result.getResult() >= 0){
 					log.debug("LTI submission successful");
 					//problems overriding this on callback
@@ -2284,6 +2256,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setDateSubmitted(new Date());
 					success++;
 					dao.update(currentItem);
+					dao.updateExternalId(currentItem.getContentId(), externalId);
 					releaseLock( currentItem );
 				} else {
 					log.warn("invalid external id");
@@ -2457,56 +2430,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					Map<String,String> ltiProps = new HashMap<> ();
 					ltiProps = putInstructorInfo(ltiProps, currentItem.getSiteId());
 					
-					String paperId = null;
-					if(currentItem.isResubmission()){//TODO until TII admits and solves the resubmission callback issue, this might be a workaround for single file submissions
-						log.debug("It's a resubmission");
-						try{
-							org.sakaiproject.assignment.api.Assignment a = assignmentService.getAssignment(currentItem.getTaskId());
-							AssignmentContent ac = a.getContent();
-							if(ac == null){
-								log.debug("Could not find the assignment content " + currentItem.getTaskId());
-							} else {
-								log.debug("Got assignment content " + currentItem.getTaskId());
-								//1 - inline, 2 - attach, 3 - both, 4 - non elec, 5 - single file
-								if(ac.getTypeOfSubmission() == 5 || ac.getTypeOfSubmission() == 1){
-									AssignmentSubmission as = assignmentService.getSubmission(currentItem.getSubmissionId());						
-									ResourceProperties aProperties = as.getProperties();
-									paperId = aProperties.getProperty("turnitin_id");
-								} //TODO should we? - else if(ac.getTypeOfSubmission() == 2 || ac.getTypeOfSubmission() == 3){
-							}
-						} catch(IdUnusedException | PermissionException e){
-							log.error("Couldn't get TII paper id for content " + currentItem.getContentId() + ": " + e.getMessage());
-						} catch(Exception e) {
-							log.error( "Unexpected exception getting TII paper id", e );
-						}
-					} else {//preferred way			
-						ContentResource cr;
-						try{
-							cr = contentHostingService.getResource(currentItem.getContentId());
-						} catch(Exception ex){
-							log.warn("Could not get content by id " + currentItem.getContentId() + " " + ex.getMessage());
-							long l = currentItem.getRetryCount();
-							l++;
-							currentItem.setRetryCount(l);
-							currentItem.setNextRetryTime(this.getNextRetryTime(l));
-							currentItem.setLastError("Could not get submission by id");
-							dao.update(currentItem);
-							continue;
-						}
-						ResourceProperties rp = cr.getProperties();
-						// we saw an unexplained null paperid. can't reproduce. In case we get it again
-						if (log.isDebugEnabled()) {
-							Iterator<String> names = rp.getPropertyNames();
-							StringBuilder debugMsg = new StringBuilder();
-							debugMsg.append( "resource properties" );
-							while (names.hasNext()) 
-							{
-								debugMsg.append( " " ).append( names.next() );
-							}
-							log.debug(debugMsg.toString());
-						}
-						paperId = rp.getProperty("turnitin_id");
-					}
+					String paperId = currentItem.getExternalId();
 					
 					if(paperId == null){
 						log.warn("Could not find TII paper id for the content " + currentItem.getContentId());
@@ -3450,10 +3374,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		try
 		{
 			String ltiReportsId = siteService.getSite(siteId).getProperties().getProperty("turnitin_reports_lti_id");
-			ContentResource resource = null;
-			resource = contentHostingService.getResource(contentId);
-			ResourceProperties resourceProperties = resource.getProperties();
-			String ltiResourceId = resourceProperties.getProperty("turnitin_id");
+			String ltiResourceId = item.getExternalId();
 			if (ltiResourceId == null)
 			{
 				// Fallback: link to assignment
@@ -3569,8 +3490,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 						if (StringUtils.isNotBlank(tiiPaperId))
 						{
 							log.info("Will write " + tiiPaperId + " as external id for item " + item.getId());
-							item.setExternalId(tiiPaperId);
-							dao.update(item);
+							dao.updateExternalId(item.getContentId(), tiiPaperId);
 						}
 					}
 					catch (Exception e)

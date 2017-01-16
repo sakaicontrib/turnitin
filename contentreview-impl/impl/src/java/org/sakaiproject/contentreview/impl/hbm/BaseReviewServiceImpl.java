@@ -383,6 +383,11 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 	public boolean updateItemAccess(String contentId){
 		return dao.updateIsUrlAccessed( contentId, true );
 	}
+
+	public boolean updateExternalId(String contentId, String externalId)
+	{
+		return dao.updateExternalId(contentId, externalId);
+	}
 		
 	public boolean updateExternalGrade(String contentId, String score){
 		ContentReviewItem cri = getFirstItemByContentId(contentId);

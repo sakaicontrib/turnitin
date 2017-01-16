@@ -16,7 +16,7 @@
 		<property name="userId" type="string" length="255" not-null="false" />
 		<property name="siteId" type="string" length="255" not-null="false" />
 		<property name="taskId" type="string" length="255" not-null="false" />
-		<property name="externalId" type="string" length="255" not-null="false" />
+		<property name="externalId" type="string" length="255" not-null="false" insert="true" update="false"/>
 		<property name="dateQueued" type="java.util.Date" not-null="false"/>
 		<property name="dateSubmitted" type="java.util.Date" not-null="false"/>
 		<property name="dateReportReceived" type="java.util.Date" not-null="false"/>
