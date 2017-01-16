@@ -123,7 +123,8 @@ public class SubmissionCallbackServlet extends HttpServlet {
 		//M_log.debug(json.toString());
 		
 		String submissionId = json.getString("lis_result_sourcedid");
-		int tiiPaperId = json.getInt("paperid");
+		// This may look silly, but JSONObject will throw an exception for getString() here
+		String tiiPaperId = String.valueOf(json.getInt("paperid"));
 		//ext_outcomes_tool_placement_url parameter can also be processed if necessary
 		SecurityService securityService = (SecurityService) ComponentManager.get(SecurityService.class);
 		SecurityAdvisor yesMan = (String userId, String function, String reference)->{return SecurityAdvice.ALLOWED;};
@@ -134,16 +135,13 @@ public class SubmissionCallbackServlet extends HttpServlet {
 				M_log.debug("Could not find the content review item for content " + submissionId);
 				return;
 			} else {
-				ContentResourceEdit cre = ContentHostingService.editResource(cri.getContentId());
-				M_log.debug("Got content resource");
-				ResourcePropertiesEdit aPropertiesEdit = cre.getPropertiesEdit();
-				aPropertiesEdit.addProperty("turnitin_id", String.valueOf(tiiPaperId));
-				ContentHostingService.commitResource(cre, NotificationService.NOTI_NONE);//TODO check
+				cri.setExternalId(tiiPaperId);
+				contentReviewService.updateExternalId(cri.getContentId(), tiiPaperId);
 				M_log.debug("Successfully stored external id into content resource.");
 				//NOTE: storing it on the submission too, resubmission process has to be revised
 				AssignmentSubmissionEdit ase = AssignmentService.editSubmission(cri.getSubmissionId());
-				aPropertiesEdit = ase.getPropertiesEdit();
-				aPropertiesEdit.addProperty("turnitin_id", String.valueOf(tiiPaperId));
+				ResourcePropertiesEdit aPropertiesEdit = ase.getPropertiesEdit();
+				aPropertiesEdit.addProperty("turnitin_id", tiiPaperId);
 				AssignmentService.commitEditFromCallback(ase);
 			}
 		}catch(Exception e){

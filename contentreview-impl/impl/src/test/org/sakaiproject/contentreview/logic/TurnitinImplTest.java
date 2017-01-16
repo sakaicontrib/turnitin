@@ -249,8 +249,6 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		expect(r.getId()).andStubReturn("contentId");
 		expect(rp.getNamePropDisplayName()).andStubReturn("displayName");
 		expect(rp.getProperty("displayName")).andStubReturn("fileName");
-		expect(rp.getProperty("turnitin_id")).andStubReturn("123456");
-		expect(rp.getPropertyNames()).andStubReturn(Arrays.asList(new String[]{"displayName", "turnitin_id"}).iterator());
 		replay(M_con);
 		replay(r);
 		replay(rp);
