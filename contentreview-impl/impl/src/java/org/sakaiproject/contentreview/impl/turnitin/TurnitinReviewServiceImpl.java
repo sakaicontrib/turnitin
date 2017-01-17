@@ -1814,6 +1814,28 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			return nextItem;
 		}
 
+		// submit items that are awaiting reports, but the externalId is null (Ie. they've been submitted, but the callback to set the externalId failed).
+		search = new Search();
+		search.addRestriction(new Restriction("status", ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE));
+		search.addRestriction(new Restriction("externalId", "", Restriction.NULL));
+		notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
+		nextItem = getNotSubmittedItemPastRetryTime(notSubmittedItems);
+		if (nextItem != null)
+		{
+			return nextItem;
+		}
+
+		// submit items that are awaiting reports in an errory_retry state, and the externalId is null (similar to above condition, just happens to be in an errory_retry state)
+		search = new Search();
+		search.addRestriction(new Restriction("status", ContentReviewItem.REPORT_ERROR_RETRY_CODE));
+		search.addRestriction(new Restriction("externalId", "", Restriction.NULL));
+		notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
+		nextItem = getNotSubmittedItemPastRetryTime(notSubmittedItems);
+		if (nextItem != null)
+		{
+			return nextItem;
+		}
+
 		// Submit items that were previously marked as missing submitter details (first name, last name, email)
 		search = new Search();
 		search.addRestriction( new Restriction( "status", ContentReviewItem.SUBMISSION_ERROR_USER_DETAILS_CODE ) );
@@ -2288,8 +2310,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				processError( currentItem, status, "Submission Error: " + rMessage + "(" + rCode + ")", Integer.valueOf(rCode) );
 				errors++;
 			}
-
-			getNextItemInSubmissionQueue();
 		}
 
 		log.info("Submission queue run completed: " + success + " items submitted, " + errors + " errors.");
@@ -2362,13 +2382,17 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		log.info("Fetching reports from Turnitin");
 
 		// get the list of all items that are waiting for reports
+		// but skip items with externalId = null, this happens when the LTI integration's callback fails. In this case, they'll be resubmitted by the queue job.
+		// For the Sakai API integration, we should never enter the report state with externalId = null
 		List<ContentReviewItem> awaitingReport = dao.findByProperties(ContentReviewItem.class,
-				new String[] { "status" },
-				new Object[] { ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE});
+				new String[] { "status", "externalId" },
+				new Object[] { ContentReviewItem.SUBMITTED_AWAITING_REPORT_CODE, "" },
+				new int[] { dao.EQUALS, dao.NOT_NULL });
 
 		awaitingReport.addAll(dao.findByProperties(ContentReviewItem.class,
-				new String[] { "status" },
-				new Object[] { ContentReviewItem.REPORT_ERROR_RETRY_CODE}));
+				new String[] { "status", "externalId" },
+				new Object[] { ContentReviewItem.REPORT_ERROR_RETRY_CODE, "" },
+				new int[] { dao.EQUALS, dao.NOT_NULL }));
 
 		Iterator<ContentReviewItem> listIterator = awaitingReport.iterator();
 		HashMap<String, Integer> reportTable = new HashMap<>();
