@@ -37,6 +37,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -145,6 +146,9 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	private String defaultClassPassword = null;
 
 	private List<String> enabledSiteTypes;
+
+	// These are error messages from turnitin for which the item should never be retried, because it will never recover (Eg. less than 20 words, invalid file, etc.)
+	private Set<String> terminalQueueErrors;
 
 	// Define Turnitin's acceptable file extensions and MIME types, order of these arrays DOES matter
 	private final String[] DEFAULT_ACCEPTABLE_FILE_EXTENSIONS = new String[] {
@@ -341,6 +345,14 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		preferGuestEidEmail = serverConfigurationService.getBoolean("turnitin.preferGuestEidEmail", true);
 
 		enabledSiteTypes = Arrays.asList(ArrayUtils.nullToEmpty(serverConfigurationService.getStrings("turnitin.sitetypes")));
+
+		String[] strTerminalQueueErrors = serverConfigurationService.getStrings("turnitin.terminalQueueErrors");
+		if (strTerminalQueueErrors == null)
+		{
+			strTerminalQueueErrors = new String[]{"Your submission does not contain valid text.", "Your submission must contain 20 words or more.", "You must upload a supported file type for this assignment."};
+		}
+		terminalQueueErrors = new HashSet<>(strTerminalQueueErrors.length);
+		Collections.addAll(terminalQueueErrors, strTerminalQueueErrors);
 
 		log.info("init(): spoilEmailAddresses=" + spoilEmailAddresses + 
 		          " preferSystemProfileEmail=" + preferSystemProfileEmail + 
@@ -2105,17 +2117,20 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 					dao.update(currentItem);
 					releaseLock(currentItem);
 				} else {
-					long l = currentItem.getRetryCount();
-					l++;
-					currentItem.setRetryCount(l);
-					currentItem.setNextRetryTime(this.getNextRetryTime(l));
-					String returnedError = ltiProps.get("returnedError");
-					if( returnedError == null )
+					Long errorCode = ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE;
+					// TII-242 - evaluate result.getErrorMessage() to prevent unnecessary retries if the error is terminal
+					if (terminalQueueErrors.contains(result.getErrorMessage()))
 					{
-						returnedError = "Submission Error: " + returnedError;
+						errorCode = ContentReviewItem.SUBMISSION_ERROR_NO_RETRY_CODE;
 					}
-					log.warn("LTI submission error");
-					processError( currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, returnedError, null );
+					else
+					{
+						long l = currentItem.getRetryCount();
+						l++;
+						currentItem.setRetryCount(l);
+						currentItem.setNextRetryTime(this.getNextRetryTime(l));
+					}
+					processError( currentItem, errorCode, "Submission Error: " + result.getErrorMessage(), null );
 					errors++;
 				}
 
