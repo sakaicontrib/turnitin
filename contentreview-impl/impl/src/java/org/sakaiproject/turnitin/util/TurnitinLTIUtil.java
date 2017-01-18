@@ -31,8 +31,12 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 
 import org.tsugi.basiclti.BasicLTIUtil;
+import org.tsugi.lti2.LTI2Vars;
+import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.api.ServerConfigurationService;
+import org.sakaiproject.lti.api.LTIRoleAdvisor;
 import org.sakaiproject.lti.api.LTIService;
+import org.sakaiproject.site.api.SiteService;
 
 import org.sakaiproject.turnitin.api.TurnitinLTIAPI;
 import org.w3c.dom.DOMException;
@@ -70,7 +74,9 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 	private String endpoint = null;
 	private String turnitinSite = null;
 	private String turnitinReportsSite = null;
-	
+
+	private static LTIRoleAdvisor ltiRoleAdvisor = null;
+
 	private static final String SUCCESS_TEXT = "fullsuccess";
 	
 	private LTIService ltiService;
@@ -78,9 +84,19 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		this.ltiService = ltiService;
 	}
 	
+	private SecurityService securityService;
+	public void setSecurityService(SecurityService securityService) {
+		this.securityService = securityService;
+	}
+
 	private ServerConfigurationService serverConfigurationService;
 	public void setServerConfigurationService(ServerConfigurationService serverConfigurationService) {
 		this.serverConfigurationService = serverConfigurationService;
+	}
+
+	private SiteService siteService;
+	public void setSiteService(SiteService siteService) {
+		this.siteService = siteService;
 	}
 	
 	public void init() {
@@ -104,6 +120,19 @@ public class TurnitinLTIUtil implements TurnitinLTIAPI {
 		// If we're being asked to create it.
 		if (serverConfigurationService.getBoolean("turnitin.lti.globalCreate", false)) {
 			addGlobalTurnitinLTIToolData();
+		}
+
+		// This bean is not explicitly a singleton, so it could be instantiated/init'd multiple times?
+		// ltiRoleAdvisor has been declared as static, and this "== null" check will ensure that only one will be instantiated in memory
+		if (ltiRoleAdvisor == null)
+		{
+			final SecurityService SECURITY_SERVICE = securityService;
+			final SiteService SITE_SERVICE = siteService;
+			LTIRoleAdvisor turnitinRoleAdvisor = (String userId, String context, String ltiSiteId)->(
+				SECURITY_SERVICE.unlock("asn.grade", SITE_SERVICE.siteReference(context)) ? LTI2Vars.MEMBERSHIP_ROLE_INSTRUCTOR : LTI2Vars.MEMBERSHIP_ROLE_LEARNER
+			);
+			ltiService.registerLTIRoleAdvisor(turnitinSite, turnitinRoleAdvisor);
+			ltiService.registerLTIRoleAdvisor(turnitinReportsSite, turnitinRoleAdvisor);
 		}
 	}
 	
