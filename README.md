@@ -31,8 +31,12 @@ all submissions made prior to the date of running the conversion
 script (which should be the date of deployment of the new LTI
 code). For more information on why this is done, see the following
 JIRA ticket:
-
 https://jira.sakaiproject.org/browse/TII-240
+
+A redundant "custom_" prefix has also been removed from custom fields in LTI_CONTENT rows specific to Turnitin.
+NB: Two update queries are included because the custom column may be semicolon or new line delimited; apply only the appropriate query!
+For additional info, see the following JIRA ticket:
+https://jira.sakaiproject.org/browse/TII-243
 
 ## Steps to make this work:
 
