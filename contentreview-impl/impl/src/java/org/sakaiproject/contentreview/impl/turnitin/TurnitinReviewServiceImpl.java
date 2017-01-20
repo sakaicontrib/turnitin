@@ -1216,10 +1216,19 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			log.warn("createAssignment: Site " + siteId + " not found!" + iue.getMessage());
 			throw new TransientSubmissionException("Create Assignment not successful. Site " + siteId + " not found");
 		}
-		
+		org.sakaiproject.assignment.api.Assignment asn;
+		try
+		{
+			asn = assignmentService.getAssignment(taskId);
+		}
+		catch (IdUnusedException|PermissionException e)
+		{
+			asn = null;
+		}
+
 		//////////////////////////////  NEW LTI INTEGRATION  ///////////////////////////////
 		
-		Optional<Date> asnCreationDateOpt = getAssignmentCreationDate(taskId);
+		Optional<Date> asnCreationDateOpt = getAssignmentCreationDate(asn);
 		if(asnCreationDateOpt.isPresent() && siteAdvisor.siteCanUseLTIReviewServiceForAssignment(s, asnCreationDateOpt.get())){
 			log.debug("Creating new TII assignment using the LTI integration");
 			
@@ -1446,23 +1455,20 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			try{
 				log.debug("Adding previous submissions");
 				//this will be done always - no problem, extra checks
-				org.sakaiproject.assignment.api.Assignment a = null;
-				a = assignmentService.getAssignment(taskId);
-				if(a == null) return;
-				log.debug("Assignment " + a.getId() + " - " + a.getTitle());
-				List<AssignmentSubmission> submissions = assignmentService.getSubmissions(a);
+				log.debug("Assignment " + asn.getId() + " - " + asn.getTitle());
+				List<AssignmentSubmission> submissions = assignmentService.getSubmissions(asn);
 				if(submissions != null){
 					for(AssignmentSubmission sub : submissions){
 						//if submitted
 						if(sub.getSubmitted()){
 							log.debug("Submission " + sub.getId());
-							boolean allowAnyFile = a.getContent().isAllowAnyFile();
+							boolean allowAnyFile = asn.getContent().isAllowAnyFile();
 							List<ContentResource> resources = getAllAcceptableAttachments(sub,allowAnyFile);
 							for(ContentResource resource : resources){
 								//if it wasnt added
 								if(getFirstItemByContentId(resource.getId()) == null){
 									log.debug("was not added");								
-									queueContent(sub.getSubmitterId(), null, a.getReference(), resource.getId(), sub.getId(), false);
+									queueContent(sub.getSubmitterId(), null, asn.getReference(), resource.getId(), sub.getId(), false);
 								}
 								//else - is there anything or any status we should check?
 							}
@@ -3624,13 +3630,22 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		try
 		{
 			org.sakaiproject.assignment.api.Assignment asn = assignmentService.getAssignment(assignmentRef);
-			Date date = new Date(asn.getTimeCreated().getTime());
-			return Optional.of(date);
+			return getAssignmentCreationDate(asn);
 		}
 		catch(IdUnusedException | PermissionException e)
 		{
 			return Optional.empty();
 		}
+	}
+
+	private Optional<Date> getAssignmentCreationDate(org.sakaiproject.assignment.api.Assignment asn)
+	{
+		if (asn == null)
+		{
+			return Optional.empty();
+		}
+		Date date = new Date(asn.getTimeCreated().getTime());
+		return Optional.of(date);
 	}
 
 	/**
