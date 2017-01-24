@@ -1280,7 +1280,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			ltiProps.put("resource_link_description", description);
 
 			// TII-245
-			if (!StringUtils.isEmpty(ltiId))
+			if (!StringUtils.isBlank(ltiId))
 			{
 				// This is an existing LTI instance, need to handle student extensions
 				handleIndividualExtension(extensionDate, taskId, extraAsnnOpts);
@@ -1757,7 +1757,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		// We keep track of this in the activity config table to save us from querying every submission to find the latest extension.
 		// This comes at the cost that we can never move TII's due date earlier once we've granted an extension; we can only push it out
 		String strLatestExtensionDate = getActivityConfigValue(TurnitinConstants.TURNITIN_ASN_LATEST_INDIVIDUAL_EXTENSION_DATE, TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, taskId, TurnitinConstants.PROVIDER_ID);
-		if (extensionDate != null || !StringUtils.isEmpty(strLatestExtensionDate))
+		if (extensionDate != null || !StringUtils.isBlank(strLatestExtensionDate))
 		{
 			// The due date we're sending to TII (latest of accept until / resubmit accept until)
 			long timestampDue = (Long) extraAsnOpts.get("timestampDue");
@@ -1765,7 +1765,7 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			{
 				// Find what's later: the new extension date or the latest existing extension date
 				long latestExtensionDate = 0;
-				if (!StringUtils.isEmpty(strLatestExtensionDate))
+				if (!StringUtils.isBlank(strLatestExtensionDate))
 				{
 					latestExtensionDate = Long.parseLong(strLatestExtensionDate);
 				}
