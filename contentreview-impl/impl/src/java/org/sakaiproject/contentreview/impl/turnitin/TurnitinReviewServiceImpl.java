@@ -3548,7 +3548,38 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			
 		}
 	}
+
+	@Override
+	public boolean validateActivityConfiguration(String toolId, String activityId)
+	{
+		// if new integration, check for the turnitin assignment id and the stealthed lti id
+		boolean useLTI;
+		try
+		{
+			// assume we're always in assignments since this is just a temporary check until
+			// we remove the legacy integration
+			org.sakaiproject.assignment.api.Assignment asn = assignmentService.getAssignment(activityId);
+			Site site = siteService.getSite(asn.getContext());
+			useLTI = siteAdvisor.siteCanUseLTIReviewServiceForAssignment(site, new Date(asn.getTimeCreated().getTime()));
+		}
+		catch (IdUnusedException | PermissionException e)
+		{
+			log.debug("Unable to find Assignment for the given activity id (" + activityId + ")", e);
+			return false;
+		}
+
+		return !useLTI || (!getActivityConfigValue(TurnitinConstants.TURNITIN_ASN_ID, activityId, toolId, TurnitinConstants.PROVIDER_ID).isEmpty()
+				&& !getActivityConfigValue(TurnitinConstants.STEALTHED_LTI_ID, activityId, toolId, TurnitinConstants.PROVIDER_ID).isEmpty());
+	}
+
+	@Override
+	public String getLocalizedInvalidAsnConfigError()
+	{
+		ResourceLoader rl = new ResourceLoader(userDirectoryService.getCurrentUser().getId(), "turnitin");
 		
+		return rl.getString("invalid_asn_config");
+	}
+
 	private List<ContentResource> getAllAcceptableAttachments(AssignmentSubmission sub, boolean allowAnyFile){
 		List attachments = sub.getSubmittedAttachments();
 		List<ContentResource> resources = new ArrayList<>();
