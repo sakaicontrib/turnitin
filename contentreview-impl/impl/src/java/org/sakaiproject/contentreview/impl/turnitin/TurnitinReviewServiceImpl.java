@@ -1200,14 +1200,29 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 	 *
 	 * @param siteId
 	 * @param taskId an assignment reference
-	 * @param extraAsnnOpts
+	 * @param extraAsnOpts
 	 * @throws SubmissionException
 	 * @throws TransientSubmissionException
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts) throws SubmissionException, TransientSubmissionException {
+	public void createAssignment(String siteId, String asnId, Map<String, Object> extraAsnOpts) throws SubmissionException, TransientSubmissionException {
+		syncAssignment(siteId, asnId, extraAsnOpts, null);
+	}
 
+	/**
+	 * @inheritDoc
+	 */
+	public void offerIndividualExtension(String siteId, String asnId, Map<String, Object> extraAsnOpts, Date extensionDate) throws SubmissionException, TransientSubmissionException
+	{
+		syncAssignment(siteId, asnId, extraAsnOpts, extensionDate);
+	}
+
+	/**
+	 * Syncs an assignment and handles individual student extensions
+	 */
+	public void syncAssignment(String siteId, String taskId, Map<String, Object> extraAsnnOpts, Date extensionDate) throws SubmissionException, TransientSubmissionException
+	{
 		Site s = null;
 		try {
 			s = siteService.getSite(siteId);
@@ -1263,6 +1278,13 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				}
 			}
 			ltiProps.put("resource_link_description", description);
+
+			// TII-245
+			if (!StringUtils.isEmpty(ltiId))
+			{
+				// This is an existing LTI instance, need to handle student extensions
+				handleIndividualExtension(extensionDate, taskId, extraAsnnOpts);
+			}
 			
 			String custom = BasicLTIConstants.RESOURCE_LINK_ID + "=" + taskId;
 			custom += "\n" + BasicLTIConstants.RESOURCE_LINK_TITLE + "=" + title;
@@ -1272,6 +1294,8 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 			{
 				long timestampOpen = (Long) extraAsnnOpts.get("timestampOpen");
 				long timestampDue = (Long) extraAsnnOpts.get("timestampDue");
+				// TII-245 - add a buffer to the TII due date to give time for the process queue job
+				timestampDue += serverConfigurationService.getInt("contentreview.due.date.queue.job.buffer.minutes", 0) * 60000;
 				ZonedDateTime open = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestampOpen), ZoneOffset.UTC);
 				ZonedDateTime due = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestampDue), ZoneOffset.UTC);
 				// Turnitin requires dates in ISO8601 format. The example from their documentation is "2014-12-10T07:43:43Z".
@@ -1721,6 +1745,55 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 	}
 
+	/**
+	 * TII-245
+	 * Handles individual extensions
+	 * After Turnitin's due date, it will only accept a paper if one has not already been submitted.
+	 * When "Select User(s)and Allow Resubmission" is used, we have to push the due date back on the TII end to accommodate multiple submissions
+	 */
+	private void handleIndividualExtension(Date extensionDate, String taskId, Map<String, Object> extraAsnOpts)
+	{
+		// Get the latest offered extenion.
+		// We keep track of this in the activity config table to save us from querying every submission to find the latest extension.
+		// This comes at the cost that we can never move TII's due date earlier once we've granted an extension; we can only push it out
+		String strLatestExtensionDate = getActivityConfigValue(TurnitinConstants.TURNITIN_ASN_LATEST_INDIVIDUAL_EXTENSION_DATE, TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, taskId, TurnitinConstants.PROVIDER_ID);
+		if (extensionDate != null || !StringUtils.isEmpty(strLatestExtensionDate))
+		{
+			// The due date we're sending to TII (latest of accept until / resubmit accept until)
+			long timestampDue = (Long) extraAsnOpts.get("timestampDue");
+			try
+			{
+				// Find what's later: the new extension date or the latest existing extension date
+				long latestExtensionDate = 0;
+				if (!StringUtils.isEmpty(strLatestExtensionDate))
+				{
+					latestExtensionDate = Long.parseLong(strLatestExtensionDate);
+				}
+				if (extensionDate != null)
+				{
+					// We are offering a student an individual extension, handle if it's later than the current latest extension date
+					long lExtensionDate = extensionDate.getTime();
+					if (lExtensionDate > latestExtensionDate)
+					{
+						// we have a new latest extension date
+						saveOrUpdateActivityConfigEntry(TurnitinConstants.TURNITIN_ASN_LATEST_INDIVIDUAL_EXTENSION_DATE, String.valueOf(lExtensionDate), TurnitinConstants.SAKAI_ASSIGNMENT_TOOL_ID, taskId, TurnitinConstants.PROVIDER_ID, true);
+						latestExtensionDate = lExtensionDate;
+					}
+				}
+
+				// Push Turnitin's due date back if we need to accommodate an extension later than the due date
+				if (latestExtensionDate > timestampDue)
+				{
+					// push the due date to the latest extension date
+					extraAsnOpts.put("timestampDue", Long.valueOf(latestExtensionDate));
+				}
+			}
+			catch (NumberFormatException nfe)
+			{
+				log.warn("NumberFormatException thrown when parsing either the latest extension date: " + strLatestExtensionDate + ", or the timestampDue option: " + timestampDue);
+			}
+		}
+	}
 
 
 	/**
