@@ -76,6 +76,7 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		this.siteAdvisor = crsa;
 	}
 
+	@Override
 	public void queueContent(String userId, String siteId, String taskId, List<ContentResource> content, String submissionId, boolean isResubmission)
 			throws QueueException {
 
@@ -83,8 +84,26 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 			return;
 		}
 
-		for (ContentResource contentRes : content) {
-			queueContent(userId, siteId, taskId, contentRes.getId(), submissionId, isResubmission);
+		for (ContentResource contentRes : content)
+		{
+			try
+			{
+				queueContent(userId, siteId, taskId, contentRes.getId(), submissionId, isResubmission);
+			}
+			catch (QueueException qe)
+			{
+				// QueueException is thrown if this content item is already queued. This will be a problem for
+				// a multiple attachments + resubmission scenario where a new file is added to an
+				// already queued submission. Log but ignore the exception if this might be the case, and continue on to the 
+				// next item. Otherwise, allow the exception to bubble up.
+				if (!isResubmission || content.size() == 1)
+				{
+					throw qe;
+				}
+				
+				log.info(String.format("Unable to queue content item %s for submission id %s (task: %s, site: %s). Error was: %s",
+						contentRes.getId(), submissionId, taskId, siteId, qe.getMessage()));
+			}
 		}
 
 	}
