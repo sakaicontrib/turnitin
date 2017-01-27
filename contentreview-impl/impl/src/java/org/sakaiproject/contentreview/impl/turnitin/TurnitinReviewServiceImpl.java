@@ -1488,11 +1488,22 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 							log.debug("Submission " + sub.getId());
 							boolean allowAnyFile = asn.getContent().isAllowAnyFile();
 							List<ContentResource> resources = getAllAcceptableAttachments(sub,allowAnyFile);
+
+							// determine the owner of the submission for purposes of content review
+							String ownerId = asn.isGroup() ? sub.getSubmittedForGroupByUserId() : sub.getSubmitterId();
+							if (ownerId.isEmpty())
+							{
+								String msg = "Unable to submit content items to review service for submission %s to assignment %s. "
+										+ "An appropriate owner for the submission cannot be determined.";
+								log.warn(String.format(msg, sub.getId(), asn.getId()));
+								continue;
+							}
+
 							for(ContentResource resource : resources){
 								//if it wasnt added
 								if(getFirstItemByContentId(resource.getId()) == null){
-									log.debug("was not added");								
-									queueContent(sub.getSubmitterId(), null, asn.getReference(), resource.getId(), sub.getId(), false);
+									log.debug("was not added");
+									queueContent(ownerId, null, asn.getReference(), resource.getId(), sub.getId(), false);
 								}
 								//else - is there anything or any status we should check?
 							}

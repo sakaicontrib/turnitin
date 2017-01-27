@@ -288,7 +288,6 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		replay(cr);
 		List<ContentResource> contents = new ArrayList();
 		contents.add(cr);
-		//tiiService.queueContent("userId", "siteId", "taskId", "contentId", "submissionId");
 		tiiService.queueContent("userId", "siteId", "taskId", contents, "submissionId", false);
 		
 		//TEST 2
