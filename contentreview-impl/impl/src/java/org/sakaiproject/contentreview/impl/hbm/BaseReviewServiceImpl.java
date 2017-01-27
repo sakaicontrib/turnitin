@@ -113,9 +113,9 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 	
 		log.debug("Method called queueContent(" + userId + "," + siteId + "," + contentId + ")");
 
-		if (userId == null) {
-			log.debug("Using current user");
-			userId = userDirectoryService.getCurrentUser().getId();
+		if (StringUtils.isBlank(userId))
+		{
+			throw new QueueException("Unable to queue content item " + contentId + ", a userId was not provided.");
 		}
 
 		if (siteId == null) {
@@ -150,47 +150,6 @@ public abstract class BaseReviewServiceImpl implements ContentReviewService {
 		if(isResubmission){
 			item.setResubmission(true);
 		}
-		dao.save(item);
-	}
-	
-	public void queueContent(String userId, String siteId, String taskId, String contentId)
-			throws QueueException {
-	
-		log.debug("Method called queueContent(" + userId + "," + siteId + "," + contentId + ")");
-
-		if (userId == null) {
-			log.debug("Using current user");
-			userId = userDirectoryService.getCurrentUser().getId();
-		}
-
-		if (siteId == null) {
-			log.debug("Using current site");
-			siteId = toolManager.getCurrentPlacement().getContext();
-		}
-
-		if (taskId == null) {
-			log.debug("Generating default taskId");
-			taskId = siteId + " " + defaultAssignmentName;
-		}
-
-		log.debug("Adding content: " + contentId + " from site " + siteId
-					+ " and user: " + userId + " for task: " + taskId + " to submission queue");
-
-		/*
-		 * first check that this content has not been submitted before this may
-		 * not be the best way to do this - perhaps use contentId as the primary
-		 * key for now id is the primary key and so the database won't complain
-		 * if we put in repeats necessitating the check
-		 */
-
-		List<ContentReviewItem> existingItems = getItemsByContentId(contentId);
-		if (existingItems.size() > 0) {
-			throw new QueueException("Content " + contentId + " is already queued, not re-queued");
-		}
-		ContentReviewItem item = new ContentReviewItem(userId, siteId, taskId, contentId, new Date(),
-			ContentReviewItem.NOT_SUBMITTED_CODE);
-		item.setNextRetryTime(new Date());
-		item.setUrlAccessed(false);
 		dao.save(item);
 	}
 
