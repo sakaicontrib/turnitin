@@ -1,16 +1,11 @@
 package org.sakaiproject.contentreview.logic;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.assignment.api.Assignment;
@@ -27,6 +22,8 @@ import org.sakaiproject.contentreview.impl.turnitin.TurnitinAccountConnection;
 import org.sakaiproject.contentreview.impl.turnitin.TurnitinReviewServiceImpl;
 import org.sakaiproject.contentreview.mocks.FakeSite;
 import org.sakaiproject.contentreview.mocks.FakeTiiUtil;
+import org.sakaiproject.contentreview.mocks.FakeTime;
+import org.sakaiproject.contentreview.model.ContentReviewActivityConfigEntry;
 import org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.entity.api.ResourcePropertiesEdit;
@@ -37,6 +34,7 @@ import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.turnitin.util.TurnitinLTIUtil;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
@@ -44,17 +42,11 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
-import static org.mockito.Mockito.*;
-import org.sakaiproject.contentreview.mocks.FakeTime;
-import org.sakaiproject.contentreview.model.ContentReviewActivityConfigEntry;
-import org.sakaiproject.contentreview.turnitin.TurnitinConstants;
 
  @ContextConfiguration(locations={
 		"/hibernate-test.xml",
 		"/spring-hibernate.xml" })
 public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
-	
-	private static final Log log = LogFactory.getLog(TurnitinImplTest.class);
 	
 	private AssignmentService M_assi;
 	private SiteService	M_ss;
@@ -267,6 +259,7 @@ public class TurnitinImplTest extends AbstractJUnit4SpringContextTests {
 		expect(M_assi.getAssignment("taskId")).andStubReturn(assignA);
 		expect(M_assi.getAssignment("task")).andStubReturn(assignA);//from dao test
 		AssignmentContent contentA = createMock(AssignmentContent.class);
+		expect(contentA.getAllowReviewService()).andStubReturn(true);
 		expect(assignA.getContent()).andStubReturn(contentA);
 		expect(assignA.getId()).andStubReturn("taskId");
 		replay(M_assi);

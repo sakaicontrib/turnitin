@@ -58,7 +58,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.EmailValidator;
-import org.hibernate.criterion.Restrictions;
 import org.tsugi.basiclti.BasicLTIConstants;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
@@ -2002,6 +2001,27 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 
 			log.debug("Attempting to submit content: " + currentItem.getContentId() + " for user: " + currentItem.getUserId() + " and site: " + currentItem.getSiteId());
 
+			// Attempt to get the contentreview_item's associated assignment
+			org.sakaiproject.assignment.api.Assignment a = null;
+			try {
+				a = assignmentService.getAssignment(currentItem.getTaskId());
+			}
+			catch (IdUnusedException e) {
+				// If the assignment no longer exists, delete the contentreview_item and continue to next iteration
+				log.warn("No assignment with ID = " + currentItem.getTaskId() + ", deleting contentreview_item", e);
+				dao.delete(currentItem);
+				continue;
+			} catch (PermissionException e) {
+				log.warn("No permission for assignment with ID = " + currentItem.getTaskId(), e);
+			}
+
+			// If associated assignment does not have content review enabled, delete the contentreview_item and continue to next iteration
+			if (a != null && !a.getContent().getAllowReviewService()) {
+				log.warn("Assignment with ID = " + currentItem.getTaskId() + " does not have content review enabled; deleting contentreview_item");
+				dao.delete(currentItem);
+				continue;
+			}
+
 			if (currentItem.getRetryCount() == null ) {
 				currentItem.setRetryCount(Long.valueOf(0));
 				currentItem.setNextRetryTime(this.getNextRetryTime(0));
@@ -2142,22 +2162,6 @@ public class TurnitinReviewServiceImpl extends BaseReviewServiceImpl {
 				ltiProps.put("lis_outcome_service_url", serverConfigurationService.getServerUrl() + "/sakai-contentreview-tool-tii/grading-servlet");
 				ltiProps.put("lis_result_sourcedid", currentItem.getContentId());
 				ltiProps.put("xmlresponse","1");//mandatatory
-				
-				org.sakaiproject.assignment.api.Assignment a;
-				try
-				{
-					a = assignmentService.getAssignment(currentItem.getTaskId());
-				}
-				catch (IdUnusedException e)
-				{
-					log.error("IdUnusedException: no assignment with id: " + currentItem.getTaskId(), e);
-					a = null;
-				}
-				catch (PermissionException e)
-				{
-					log.error("PermissionException: no permission for assignment with id: " + currentItem.getTaskId(), e);
-					a = null;
-				}
 
 				String tiiId = "";
 				if (a != null)
