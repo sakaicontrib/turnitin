@@ -142,7 +142,7 @@ public class SubmissionCallbackServlet extends HttpServlet {
 				AssignmentService.commitEditFromCallback(ase);
 			}
 		} catch(IdUnusedException | PermissionException | InUseException e) {
-			LOG.error("Could not find submission with id " + submissionId + " or store the TII submission id: " + e.getMessage());
+			LOG.debug("Could not find submission with id " + submissionId + " or store the TII submission id: " + e.getMessage());
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		} finally {
 			securityService.popAdvisor(yesMan);
